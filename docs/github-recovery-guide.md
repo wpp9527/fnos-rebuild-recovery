@@ -4,7 +4,89 @@
 
 ---
 
-## 前置条件
+## 无代理访问方案
+
+如果新机器无法直接访问 GitHub，使用以下方法：
+
+### 方法 1：下载 ZIP 包（推荐）
+
+```bash
+# 使用 GitHub 代理镜像下载
+wget https://ghproxy.com/https://github.com/wpp9527/fnos-rebuild-recovery/archive/refs/heads/main.zip
+unzip main.zip
+cd fnos-rebuild-recovery-main
+```
+
+或直接下载：
+```bash
+# GitHub 官方 ZIP
+wget https://github.com/wpp9527/fnos-rebuild-recovery/archive/refs/heads/main.zip
+```
+
+### 方法 2：使用 Gitee 镜像
+
+```bash
+# 如果有 Gitee 账号，可先 Fork 到 Gitee
+git clone https://gitee.com/YOUR_USERNAME/fnos-rebuild-recovery.git
+```
+
+### 方法 3：使用代理加速
+
+```bash
+# ghproxy 加速
+git clone https://ghproxy.com/https://github.com/wpp9527/fnos-rebuild-recovery.git
+
+# 或 fastgit 加速
+git clone https://hub.fastgit.xyz/wpp9527/fnos-rebuild-recovery.git
+```
+
+### 方法 4：离线传输
+
+1. 在有网络的机器上下载：
+```bash
+git clone https://github.com/wpp9527/fnos-rebuild-recovery.git
+cd fnos-rebuild-recovery
+tar -czf ../fnos-rebuild-recovery.tar.gz .
+```
+
+2. 通过 U盘/内网传输到新机器
+
+3. 在新机器上解压：
+```bash
+mkdir -p /opt/restore
+tar -xzf fnos-rebuild-recovery.tar.gz -C /opt/restore
+cd /opt/restore
+```
+
+---
+
+## 快速恢复（推荐）
+
+### 交互式恢复脚本
+
+```bash
+# 克隆仓库
+git clone https://github.com/wpp9527/fnos-rebuild-recovery.git
+cd fnos-rebuild-recovery
+
+# 运行交互式恢复
+bash restore/interactive-restore.sh
+```
+
+脚本提供菜单选项：
+1. **完整恢复** — 一键恢复所有内容
+2. **选择性恢复** — 选择要恢复的层
+3. **仅恢复配置** — 只恢复配置文件
+4. **仅恢复数据** — 只恢复数据文件
+5. **查看恢复计划** — 预览恢复步骤
+6. **验证恢复结果** — 检查恢复完整性
+7. **运行系统审计** — 检查运行状态
+
+---
+
+## 手动恢复
+
+### 前置条件
 
 ### 必须有
 - 一台干净的 Linux 机器（推荐 Debian/Ubuntu）
