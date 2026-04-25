@@ -71,6 +71,20 @@ targets:
   fnos:
     status: $FNOS_STATUS
     latest_path: "$FNOS_TARGET_LATEST"
+must_back_up_local_state:
+  - /opt/fnos-media-stack/homarr/config
+  - /opt/fnos-media-stack/homarr/appdata
+  - /opt/fnos-media-stack/halo/config
+  - /opt/fnos-media-stack/halo/content
+  - /opt/fnos-media-stack/qbittorrent/config
+  - /opt/fnos-media-stack/jackett/config
+  - /opt/fnos-media-stack/radarr/config
+  - /opt/fnos-media-stack/sonarr/config
+  - /opt/fnos-media-stack/prowlarr/config
+  - /opt/fnos-media-stack/bazarr/config
+  - /opt/fnos-media-stack/seerr/config
+  - /opt/fnos-media/services/hermes-openwebui/data
+  - /opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths
 EOF
 
 cat > "$SHARED_ROOT/restore-guides/latest/restore-order.md" <<EOF
@@ -80,8 +94,9 @@ cat > "$SHARED_ROOT/restore-guides/latest/restore-order.md" <<EOF
 2. Restore PVE inventory from pve/latest
 3. Restore fnOS VM structure and service layout
 4. Restore fnOS config set from fnos/latest
-5. Restore OpenClaw workspace and scripts from services/openclaw/latest
-6. Restore remaining service-level configuration
+5. Restore high-value local state (fnos-media-stack configs, Homarr appdata, Hermes OpenWebUI data, cliproxyapi auths)
+6. Restore OpenClaw workspace and scripts from services/openclaw/latest
+7. Restore remaining service-level configuration
 EOF
 
 cat > "$SHARED_ROOT/network-map/latest/host-service-map.yaml" <<EOF
