@@ -1,0 +1,10 @@
+services:
+  - name: openclaw
+    layer: 40-openclaw
+    critical: true
+  - name: media-stack
+    layer: 30-services
+    critical: false
+  - name: channels
+    layer: 30-services
+    critical: false

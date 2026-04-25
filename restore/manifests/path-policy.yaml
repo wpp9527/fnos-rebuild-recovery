@@ -1,0 +1,12 @@
+tier1:
+  - /opt/fnos-media/manifests
+  - /opt/fnos-media/services/media-stack
+  - /opt/fnos-media/services/openclaw
+
+tier2:
+  - /opt/fnos-media/downloads
+  - /opt/fnos-media/cache
+
+tier3:
+  - /opt/fnos-media/media
+  - /opt/fnos-media/firmware

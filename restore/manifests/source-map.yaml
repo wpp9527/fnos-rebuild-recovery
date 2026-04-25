@@ -1,0 +1,10 @@
+sources:
+  github:
+    enabled: true
+  nas:
+    enabled: true
+  hybrid:
+    enabled: true
+    order:
+      - github
+      - nas
