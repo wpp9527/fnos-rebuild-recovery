@@ -71,6 +71,54 @@ if [[ -n "$CHANNELS_SECRETS" && -d "$CHANNELS_SECRETS" ]]; then
   done
 fi
 
+# ---- fnos-media-stack secrets from containers ----
+if command -v docker >/dev/null 2>&1; then
+  ensure_dir "$SECRETS_DEST/fnos-media-stack"
+  
+  # Homarr
+  HOMARR_ENV=$(docker inspect homarr --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null || true)
+  if [[ -n "$HOMARR_ENV" ]]; then
+    HOMARR_PASSWORD=$(echo "$HOMARR_ENV" | grep '^AUTH_PASSWORD=' | cut -d= -f2- || true)
+    HOMARR_ENC_KEY=$(echo "$HOMARR_ENV" | grep '^SECRET_ENCRYPTION_KEY=' | cut -d= -f2- || true)
+    if [[ -n "$HOMARR_PASSWORD" && "$HOMARR_PASSWORD" != '' ]]; then
+      echo "HOMARR_AUTH_PASSWORD=$HOMARR_PASSWORD" >> "$SECRETS_DEST/fnos-media-stack/.env.tmp"
+    fi
+    if [[ -n "$HOMARR_ENC_KEY" && "$HOMARR_ENC_KEY" != '' ]]; then
+      echo "HOMARR_SECRET_ENCRYPTION_KEY=$HOMARR_ENC_KEY" >> "$SECRETS_DEST/fnos-media-stack/.env.tmp"
+    fi
+  fi
+  
+  # Halo
+  HALO_ENV=$(docker inspect halo-blog --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null || true)
+  if [[ -n "$HALO_ENV" ]]; then
+    HALO_PASSWORD=$(echo "$HALO_ENV" | grep '^HALO_SECURITY_INITIALIZER_PASSWORD=' | cut -d= -f2- || true)
+    if [[ -n "$HALO_PASSWORD" && "$HALO_PASSWORD" != '' ]]; then
+      echo "HALO_INITIALIZER_PASSWORD=$HALO_PASSWORD" >> "$SECRETS_DEST/fnos-media-stack/.env.tmp"
+    fi
+  fi
+  
+  # Jellyfin
+  JELLYFIN_ENV=$(docker inspect jellyfin --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null || true)
+  if [[ -n "$JELLYFIN_ENV" ]]; then
+    JELLYFIN_KEY=$(echo "$JELLYFIN_ENV" | grep '^JELLYFIN_API_KEY=' | cut -d= -f2- || true)
+    if [[ -n "$JELLYFIN_KEY" && "$JELLYFIN_KEY" != '' ]]; then
+      echo "JELLYFIN_API_KEY=$JELLYFIN_KEY" >> "$SECRETS_DEST/fnos-media-stack/.env.tmp"
+    fi
+  fi
+  
+  # Finalize fnos-media-stack.env if we have any secrets
+  if [[ -f "$SECRETS_DEST/fnos-media-stack/.env.tmp" ]]; then
+    {
+      echo "# fnos-media-stack recovery secrets"
+      echo "# Generated: $(date -Is)"
+      cat "$SECRETS_DEST/fnos-media-stack/.env.tmp"
+    } > "$SECRETS_DEST/fnos-media-stack.env"
+    rm -f "$SECRETS_DEST/fnos-media-stack/.env.tmp"
+    log "published fnos-media-stack.env (from containers)"
+  fi
+  rm -rf "$SECRETS_DEST/fnos-media-stack"
+fi
+
 # ---- Channels secrets from running containers ----
 # Extract secrets from Docker containers that have them in env
 if command -v docker >/dev/null 2>&1; then
@@ -79,8 +127,8 @@ if command -v docker >/dev/null 2>&1; then
   # Feishu channel
   FEISHU_ENV=$(docker inspect feishu-observe --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null || true)
   if [[ -n "$FEISHU_ENV" ]]; then
-    FEISHU_SECRET=$(echo "$FEISHU_ENV" | grep '^FEISHU_APP_SECRET=' | cut -d= -f2)
-    OPENAI_KEY=$(echo "$FEISHU_ENV" | grep '^OPENAI_API_KEY=' | cut -d= -f2)
+    FEISHU_SECRET=$(echo "$FEISHU_ENV" | grep '^FEISHU_APP_SECRET=' | cut -d= -f2 || true)
+    OPENAI_KEY=$(echo "$FEISHU_ENV" | grep '^OPENAI_API_KEY=' | cut -d= -f2 || true)
     if [[ -n "$FEISHU_SECRET" || -n "$OPENAI_KEY" ]]; then
       {
         echo "# Feishu channel recovery secrets"
@@ -95,8 +143,8 @@ if command -v docker >/dev/null 2>&1; then
   # QQ channel
   QQ_ENV=$(docker inspect qq-observe --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null || true)
   if [[ -n "$QQ_ENV" ]]; then
-    QQ_SECRET=$(echo "$QQ_ENV" | grep '^QQ_APP_SECRET=' | cut -d= -f2)
-    OPENAI_KEY=$(echo "$QQ_ENV" | grep '^OPENAI_API_KEY=' | cut -d= -f2)
+    QQ_SECRET=$(echo "$QQ_ENV" | grep '^QQ_APP_SECRET=' | cut -d= -f2 || true)
+    OPENAI_KEY=$(echo "$QQ_ENV" | grep '^OPENAI_API_KEY=' | cut -d= -f2 || true)
     if [[ -n "$QQ_SECRET" || -n "$OPENAI_KEY" ]]; then
       {
         echo "# QQ channel recovery secrets"
@@ -109,14 +157,17 @@ if command -v docker >/dev/null 2>&1; then
   fi
   
   # OpenClaw gateway token (from any container that has it)
-  GATEWAY_TOKEN=$(docker inspect feishu-observe --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^OPENCLAW_GATEWAY_AUTH_TOKEN=' | cut -d= -f2 | head -n 1 || true)
-  if [[ -n "$GATEWAY_TOKEN" ]]; then
-    {
-      echo "# OpenClaw gateway recovery secrets"
-      echo "# Generated: $(date -Is)"
-      echo "OPENCLAW_GATEWAY_AUTH_TOKEN=$GATEWAY_TOKEN"
-    } > "$SECRETS_DEST/openclaw.env"
-    log "published openclaw.env (from container)"
+  GATEWAY_ENV=$(docker inspect feishu-observe --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null || true)
+  if [[ -n "$GATEWAY_ENV" ]]; then
+    GATEWAY_TOKEN=$(echo "$GATEWAY_ENV" | grep '^OPENCLAW_GATEWAY_AUTH_TOKEN=' | cut -d= -f2 | head -n 1 || true)
+    if [[ -n "$GATEWAY_TOKEN" ]]; then
+      {
+        echo "# OpenClaw gateway recovery secrets"
+        echo "# Generated: $(date -Is)"
+        echo "OPENCLAW_GATEWAY_AUTH_TOKEN=$GATEWAY_TOKEN"
+      } > "$SECRETS_DEST/openclaw.env"
+      log "published openclaw.env (from container)"
+    fi
   fi
 fi
 
