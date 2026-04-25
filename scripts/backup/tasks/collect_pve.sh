@@ -54,6 +54,15 @@ run_remote 'pct list || true' > "$PVE_STAGE_DIR/ct-list.txt"
 run_remote 'pvesm status || true' > "$PVE_STAGE_DIR/storage-list.txt"
 run_remote 'cat /etc/network/interfaces' > "$PVE_STAGE_DIR/network-interfaces.txt"
 
+# Collect /etc/pve configuration
+run_remote 'mkdir -p /tmp/pve-backup && cp -r /etc/pve/* /tmp/pve-backup/ 2>/dev/null || true' || true
+run_remote 'tar -czf /tmp/pve-config.tar.gz -C /tmp/pve-backup . 2>/dev/null || true' || true
+sshpass -p "$PVE_SSH_PASSWORD" scp \
+  -o StrictHostKeyChecking=no \
+  -o UserKnownHostsFile=/tmp/openclaw_known_hosts \
+  "$PVE_SSH_USER@$PVE_SSH_HOST:/tmp/pve-config.tar.gz" "$PVE_STAGE_DIR/pve-config.tar.gz" 2>/dev/null || true
+run_remote 'rm -rf /tmp/pve-backup /tmp/pve-config.tar.gz' || true
+
 cat > "$PVE_STAGE_DIR/restore-notes.md" <<EOF
 # PVE Restore Notes
 
@@ -71,7 +80,7 @@ Collected in this phase:
 - /etc/network/interfaces
 
 Next upgrade target:
-- collect selected /etc/pve configuration exports
+- pve-config.tar.gz contains /etc/pve exports
 EOF
 
 cat > "$REPORT_DIR/pve-connectivity-ok.md" <<EOF
