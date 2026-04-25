@@ -18,6 +18,14 @@ log "orchestrator start"
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" bash "$SCRIPT_DIR/tasks/collect_openclaw.sh"
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" PVE_ENABLED="${PVE_ENABLED:-0}" PVE_SSH_HOST="${PVE_SSH_HOST:-}" bash "$SCRIPT_DIR/tasks/collect_pve.sh"
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" FNOS_ENABLED="${FNOS_ENABLED:-0}" FNOS_SSH_HOST="${FNOS_SSH_HOST:-}" bash "$SCRIPT_DIR/tasks/collect_fnos.sh"
+
+# Collect LXC proxy if PVE is enabled
+if [[ "${PVE_ENABLED:-0}" == "1" && -n "${PVE_SSH_HOST:-}" ]]; then
+  BACKUP_ROOT="$BACKUP_ROOT" \
+  PVE_SSH_HOST="${PVE_SSH_HOST:-}" \
+  PVE_SSH_PASSWORD="${PVE_SSH_PASSWORD:-}" \
+  bash "$SCRIPT_DIR/tasks/collect_lxc_proxy.sh" || log "collect_lxc_proxy: failed"
+fi
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="${TIMESTAMP:-}" bash "$SCRIPT_DIR/tasks/publish_latest.sh"
 
 # Publish recovery-critical secrets to NAS
