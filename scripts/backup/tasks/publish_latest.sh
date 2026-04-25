@@ -13,16 +13,41 @@ TIMESTAMP="${TIMESTAMP:-$(now_ts)}"
 require_dir "$STAGING_ROOT/openclaw"
 require_dir "$BACKUP_ROOT"
 
-TARGET_BASE="$BACKUP_ROOT/services/openclaw"
-TARGET_LATEST="$TARGET_BASE/latest"
-TMP_TARGET="$(stage_tmp_dir "$TARGET_BASE" latest)"
+publish_tree() {
+  local source_dir="$1"
+  local target_base="$2"
+  local target_latest="$target_base/latest"
+  local tmp_target="$target_base/.tmp-latest-$TIMESTAMP-$$"
 
-ensure_dir "$TARGET_BASE"
-rm -rf "$TMP_TARGET"
-ensure_dir "$TMP_TARGET"
-rsync -rltD --delete "$STAGING_ROOT/openclaw/" "$TMP_TARGET/"
-rm -rf "$TARGET_LATEST"
-mv "$TMP_TARGET" "$TARGET_LATEST"
+  ensure_dir "$target_base"
+  rm -rf "$tmp_target"
+  ensure_dir "$tmp_target"
+  rsync -rltD --delete "$source_dir/" "$tmp_target/"
+  if [[ -e "$target_latest" && ! -d "$target_latest" ]]; then
+    rm -f "$target_latest"
+  else
+    rm -rf "$target_latest"
+  fi
+  mv "$tmp_target" "$target_latest"
+}
+
+OPENCLAW_TARGET_BASE="$BACKUP_ROOT/services/openclaw"
+OPENCLAW_TARGET_LATEST="$OPENCLAW_TARGET_BASE/latest"
+publish_tree "$STAGING_ROOT/openclaw" "$OPENCLAW_TARGET_BASE"
+
+PVE_STATUS="not-configured"
+PVE_TARGET_LATEST=""
+if [[ -d "$STAGING_ROOT/pve" ]]; then
+  publish_tree "$STAGING_ROOT/pve" "$BACKUP_ROOT/pve"
+  PVE_TARGET_LATEST="$BACKUP_ROOT/pve/latest"
+fi
+
+FNOS_STATUS="not-configured"
+FNOS_TARGET_LATEST=""
+if [[ -d "$STAGING_ROOT/fnos" ]]; then
+  publish_tree "$STAGING_ROOT/fnos" "$BACKUP_ROOT/fnos"
+  FNOS_TARGET_LATEST="$BACKUP_ROOT/fnos/latest"
+fi
 
 SHARED_ROOT="$BACKUP_ROOT/shared"
 ensure_dir "$SHARED_ROOT/version-index/latest"
@@ -30,8 +55,6 @@ ensure_dir "$SHARED_ROOT/restore-guides/latest"
 ensure_dir "$SHARED_ROOT/change-log/latest"
 ensure_dir "$SHARED_ROOT/network-map/latest"
 
-PVE_STATUS="not-configured"
-FNOS_STATUS="not-configured"
 [[ -f "$STAGING_ROOT/reports/pve-connectivity-ok.md" ]] && PVE_STATUS="connectivity-ok"
 [[ -f "$STAGING_ROOT/reports/fnos-local-collection-ok.md" ]] && FNOS_STATUS="success"
 
@@ -41,11 +64,13 @@ generated_at: "$TIMESTAMP"
 targets:
   openclaw:
     status: success
-    latest_path: "$TARGET_LATEST"
+    latest_path: "$OPENCLAW_TARGET_LATEST"
   pve:
     status: $PVE_STATUS
+    latest_path: "$PVE_TARGET_LATEST"
   fnos:
     status: $FNOS_STATUS
+    latest_path: "$FNOS_TARGET_LATEST"
 EOF
 
 cat > "$SHARED_ROOT/restore-guides/latest/restore-order.md" <<EOF
@@ -66,7 +91,7 @@ hosts:
     backup_root: "$BACKUP_ROOT"
 services:
   openclaw:
-    latest_path: "$TARGET_LATEST"
+    latest_path: "$OPENCLAW_TARGET_LATEST"
 EOF
 
 cat > "$SHARED_ROOT/change-log/latest/change-summary-$TIMESTAMP.md" <<EOF
@@ -75,8 +100,8 @@ cat > "$SHARED_ROOT/change-log/latest/change-summary-$TIMESTAMP.md" <<EOF
 Generated at: $TIMESTAMP
 
 - openclaw: success
-- pve: not-configured
-- fnos: not-configured
+- pve: $PVE_STATUS
+- fnos: $FNOS_STATUS
 EOF
 
-log "publish_latest complete: $TARGET_LATEST"
+log "publish_latest complete: $OPENCLAW_TARGET_LATEST"
