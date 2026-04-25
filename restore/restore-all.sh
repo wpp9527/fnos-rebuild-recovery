@@ -54,7 +54,7 @@ case "$ACTION" in
     RESTORE_STATE_ROOT="$STATE_ROOT" RESTORE_TARGET_ROOT="${RESTORE_TARGET_ROOT:-$STATE_ROOT/target}" PVE_LATEST_ROOT="$PVE_LATEST_ROOT" bash "$SCRIPT_DIR/layers/10-pve.sh" apply
     RESTORE_STATE_ROOT="$STATE_ROOT" RESTORE_TARGET_ROOT="${RESTORE_TARGET_ROOT:-$STATE_ROOT/target}" FNOS_LATEST_ROOT="${FNOS_LATEST_ROOT:-/mnt/nas/backup/fnos/latest}" bash "$SCRIPT_DIR/layers/20-fnos.sh" apply
     RESTORE_STATE_ROOT="$STATE_ROOT" RESTORE_TARGET_ROOT="${RESTORE_TARGET_ROOT:-$STATE_ROOT/target}" OPENCLAW_LATEST_ROOT="${OPENCLAW_LATEST_ROOT:-/mnt/nas/backup/services/openclaw/latest}" bash "$SCRIPT_DIR/layers/40-openclaw.sh" apply
-    RESTORE_STATE_ROOT="$STATE_ROOT" RESTORE_TARGET_ROOT="${RESTORE_TARGET_ROOT:-$STATE_ROOT/target}" SECRETS_TEMPLATE_PATH="${SECRETS_TEMPLATE_PATH:-$SCRIPT_DIR/templates/secrets/.env.example}" SECRETS_REAL_DIR="${SECRETS_REAL_DIR:-/mnt/nas/backup/shared/secrets/latest/openclaw}" bash "$SCRIPT_DIR/layers/50-secrets.sh" apply
+    RESTORE_STATE_ROOT="$STATE_ROOT" RESTORE_TARGET_ROOT="${RESTORE_TARGET_ROOT:-$STATE_ROOT/target}" SECRETS_TEMPLATE_PATH="${SECRETS_TEMPLATE_PATH:-$SCRIPT_DIR/templates/secrets/.env.example}" SECRETS_REAL_DIR="${SECRETS_REAL_DIR:-/mnt/nas/backup/shared/secrets/latest}" bash "$SCRIPT_DIR/layers/50-secrets.sh" apply
     RESTORE_STATE_ROOT="$STATE_ROOT" RESTORE_TARGET_ROOT="${RESTORE_TARGET_ROOT:-$STATE_ROOT/target}" bash "$SCRIPT_DIR/layers/30-services.sh" apply
     restore_write_report "$STATE_ROOT" "$SOURCE_MODE" "$SOURCE_SELECTED" "$TS" "apply" "PASS"
     echo "restore-all apply complete: $STATE_ROOT"

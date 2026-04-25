@@ -13,7 +13,7 @@ SECRETS_REAL_DIR="${SECRETS_REAL_DIR:-/mnt/nas/backup/shared/secrets/latest/open
 TS="$(restore_now_ts)"
 
 restore_init_dirs "$STATE_ROOT"
-restore_ensure_dir "$TARGET_ROOT/openclaw"
+restore_ensure_dir "$TARGET_ROOT/config/openclaw"
 
 read_real_value() {
   local key="$1"
@@ -21,7 +21,6 @@ read_real_value() {
   if [[ -f "$env_file" ]]; then
     awk -F= -v k="$key" '$1 == k { sub($1"=", ""); print }' "$env_file" | tail -n 1
   else
-    # Fallback: check channels directory for gateway token
     local channels_env="$SECRETS_REAL_DIR/channels/feishu.env"
     if [[ -f "$channels_env" ]]; then
       awk -F= -v k="$key" '$1 == k { sub($1"=", ""); print }' "$channels_env" | tail -n 1
@@ -42,9 +41,16 @@ secrets_plan() {
 }
 
 secrets_apply() {
-  local target_env="$TARGET_ROOT/openclaw/.env"
+  local target_env="$TARGET_ROOT/config/openclaw/.env"
   local missing=0
   : > "$target_env"
+
+  {
+    echo "# OpenClaw recovery secrets"
+    echo "# Generated: $(date -Is)"
+    echo "# DO NOT COMMIT THIS FILE"
+    echo
+  } > "$target_env"
 
   while IFS= read -r key; do
     [[ -n "$key" ]] || continue
@@ -65,6 +71,18 @@ secrets_apply() {
 
   if [[ "$missing" -ne 0 ]]; then
     exit 1
+  fi
+
+  # Copy fnos-media-stack secrets if available
+  if [[ -f "$SECRETS_REAL_DIR/fnos-media-stack.env" ]]; then
+    cp "$SECRETS_REAL_DIR/fnos-media-stack.env" "$TARGET_ROOT/config/fnos-media-stack.env"
+    chmod 600 "$TARGET_ROOT/config/fnos-media-stack.env"
+  fi
+
+  # Copy channel secrets
+  if [[ -d "$SECRETS_REAL_DIR/channels" ]]; then
+    restore_ensure_dir "$TARGET_ROOT/config/channels"
+    cp -r "$SECRETS_REAL_DIR/channels/"* "$TARGET_ROOT/config/channels/" 2>/dev/null || true
   fi
 
   echo "secrets apply complete: $target_env"
