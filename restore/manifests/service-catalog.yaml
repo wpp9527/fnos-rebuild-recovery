@@ -79,6 +79,8 @@ services:
     critical: false
     category: ai
     compose_path: services/hermes-openwebui/docker-compose.yml
+    must_back_up:
+      - /opt/fnos-media/services/hermes-openwebui/data
 
   - name: hermes-agent-app
     layer: 30-services

@@ -7,6 +7,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 LIVE_COMPOSE_PATH="${LIVE_COMPOSE_PATH:-/opt/fnos-media-stack/docker-compose.yml}"
 TEMPLATE_COMPOSE_PATH="${TEMPLATE_COMPOSE_PATH:-$(cd "$SCRIPT_DIR/.." && pwd)/restore/templates/services/fnos-media-stack/docker-compose.yml}"
+SERVICE_CATALOG_PATH="${SERVICE_CATALOG_PATH:-$(cd "$SCRIPT_DIR/.." && pwd)/restore/manifests/service-catalog.yaml}"
 AUDIT_REPORT_ROOT="${AUDIT_REPORT_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)/state/backup/reports}"
 TS="$(now_ts)"
 TIMESTAMPED_REPORT="$AUDIT_REPORT_ROOT/runtime-state-audit-$TS.md"
@@ -34,9 +35,28 @@ for line in text.splitlines():
 PY
 }
 
+extract_service_names() {
+  local file="$1"
+  python3 - "$file" <<'PY'
+import sys
+from pathlib import Path
+p=Path(sys.argv[1])
+text=p.read_text(encoding='utf-8', errors='ignore')
+for line in text.splitlines():
+    s=line.strip()
+    if not s or s.startswith('#'):
+        continue
+    if s.endswith(':') and not s.startswith('-') and s not in {'services:'}:
+        name=s[:-1].strip()
+        if name:
+            print(name)
+PY
+}
+
 ANON_FOUND=0
 DRIFT_FOUND=0
 MISSING_FOUND=0
+UNMAPPED_FOUND=0
 {
   echo "# Runtime State Audit"
   echo
@@ -80,15 +100,24 @@ MISSING_FOUND=0
     done < <(extract_host_paths "$LIVE_COMPOSE_PATH")
   fi
 
+  if [[ -f "$LIVE_COMPOSE_PATH" && -f "$SERVICE_CATALOG_PATH" ]]; then
+    first_service="$(extract_service_names "$LIVE_COMPOSE_PATH" | head -n 1)"
+    if [[ -n "$first_service" ]] && ! grep -Fqi "$first_service" "$SERVICE_CATALOG_PATH"; then
+      echo "- runtime service missing recovery mapping: $first_service"
+      UNMAPPED_FOUND=1
+    fi
+  fi
+
   echo
   echo "## Summary"
-  if [[ "$ANON_FOUND" -eq 0 && "$DRIFT_FOUND" -eq 0 && "$MISSING_FOUND" -eq 0 ]]; then
+  if [[ "$ANON_FOUND" -eq 0 && "$DRIFT_FOUND" -eq 0 && "$MISSING_FOUND" -eq 0 && "$UNMAPPED_FOUND" -eq 0 ]]; then
     echo "Status: PASS"
   else
     echo "Status: WARN"
     echo "anonymous_volume: $ANON_FOUND"
     echo "compose_drift: $DRIFT_FOUND"
     echo "missing_paths: $MISSING_FOUND"
+    echo "unmapped_runtime: $UNMAPPED_FOUND"
   fi
 } > "$TIMESTAMPED_REPORT"
 
