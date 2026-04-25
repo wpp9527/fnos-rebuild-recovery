@@ -27,3 +27,30 @@ Weekly backup + snapshot:
 - fnOS is treated as the local host where OpenClaw runs
 - PVE is currently collected as connectivity + metadata only; full remote config export is the next upgrade
 - Runtime secrets such as `PVE_SSH_PASSWORD` live in `state/backup/config.env` and are not committed
+
+## fnos-media-stack classification
+
+### must back up
+- `/opt/fnos-media-stack/homarr/config`
+- `/opt/fnos-media-stack/homarr/appdata`
+- `/opt/fnos-media-stack/halo/config`
+- `/opt/fnos-media-stack/halo/content`
+- `/opt/fnos-media-stack/qbittorrent/config`
+- `/opt/fnos-media-stack/jackett/config`
+- `/opt/fnos-media-stack/radarr/config`
+- `/opt/fnos-media-stack/sonarr/config`
+- `/opt/fnos-media-stack/prowlarr/config`
+- `/opt/fnos-media-stack/bazarr/config`
+- `/opt/fnos-media-stack/seerr/config`
+
+### recommended to back up
+- `/opt/fnos-media-stack/jellyfin/config`
+- `/opt/fnos-media-stack/stash/config`
+- `/opt/fnos-media-stack/stash/metadata`
+- `/opt/fnos-media-stack/stash/blobs`
+- `/opt/fnos-media-stack/stash/generated`
+
+### safe to ignore or rebuild
+- `/opt/fnos-media-stack/jellyfin/cache`
+- `/opt/fnos-media-stack/stash/cache`
+- logs and temporary runtime outputs under service-specific log directories

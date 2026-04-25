@@ -46,6 +46,27 @@ services:
     compose_path: /opt/fnos-media-stack/docker-compose.yml
     runtime_detected: true
     note: active standalone media stack outside unified services tree; secrets must stay local/NAS only
+    must_back_up:
+      - /opt/fnos-media-stack/homarr/config
+      - /opt/fnos-media-stack/homarr/appdata
+      - /opt/fnos-media-stack/halo/config
+      - /opt/fnos-media-stack/halo/content
+      - /opt/fnos-media-stack/qbittorrent/config
+      - /opt/fnos-media-stack/jackett/config
+      - /opt/fnos-media-stack/radarr/config
+      - /opt/fnos-media-stack/sonarr/config
+      - /opt/fnos-media-stack/prowlarr/config
+      - /opt/fnos-media-stack/bazarr/config
+      - /opt/fnos-media-stack/seerr/config
+    recommended_to_back_up:
+      - /opt/fnos-media-stack/jellyfin/config
+      - /opt/fnos-media-stack/stash/config
+      - /opt/fnos-media-stack/stash/metadata
+      - /opt/fnos-media-stack/stash/blobs
+      - /opt/fnos-media-stack/stash/generated
+    safe_to_ignore_or_rebuild:
+      - /opt/fnos-media-stack/jellyfin/cache
+      - /opt/fnos-media-stack/stash/cache
 
   - name: media-stack-compose
     layer: 30-services

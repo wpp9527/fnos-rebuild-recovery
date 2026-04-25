@@ -9,6 +9,7 @@ services:
       - /opt/fnos-media-stack/homarr/config:/app/data/config
       - /opt/fnos-media-stack/homarr/icons:/app/public/icons
       - /opt/fnos-media-stack/homarr/custom-css:/app/public/custom-css
+      - /opt/fnos-media-stack/homarr/appdata:/appdata
     environment:
       - TZ=Asia/Shanghai
       - AUTH_ENABLED=true
