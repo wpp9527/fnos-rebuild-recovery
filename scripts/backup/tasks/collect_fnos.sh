@@ -76,6 +76,16 @@ for service in \
   copy_dir_contents_if_exists "services/$service"
 done
 
+# High-value local state that is small enough to keep in config-level backup.
+copy_dir_contents_if_exists "services/hermes-openwebui/data"
+copy_dir_contents_if_exists "services/docker-stack/ai-proxy/cliproxyapi/auths"
+copy_dir_contents_if_exists "fnos-media-stack"
+
+if [[ -n "${HOMARR_APPDATA_SOURCE:-}" ]]; then
+  ensure_dir "$FNOS_STAGE_DIR/docker-volumes/homarr-appdata"
+  rsync -rltD --delete "$HOMARR_APPDATA_SOURCE/" "$FNOS_STAGE_DIR/docker-volumes/homarr-appdata/"
+fi
+
 # OpenClaw service: copy only minimal recovery-critical config, not the whole home tree.
 copy_if_exists "services/openclaw/home/.bash_profile"
 copy_if_exists "services/openclaw/home/.openclaw/openclaw.json"
@@ -96,13 +106,15 @@ Included:
 - bin/
 - reports/
 - selected service config trees: media-stack, docker-stack, easytier, openclaw-governance, openclaw-channels
+- high-value local state: hermes-openwebui/data, cliproxyapi/auths, fnos-media-stack/
+- homarr anonymous appdata volume when HOMARR_APPDATA_SOURCE is provided
 - minimal OpenClaw runtime config files only
 
 Excluded from this backup:
 - backup archives
 - logs
-- large data/service trees (ollama, hermes, clawpanel, edict repos, stage-reset, etc.)
-- caches and temporary files
+- large media/download payloads already stored on NAS
+- caches and temporary files not needed for rebuild
 - OpenClaw workspace trees already backed up separately
 EOF
 

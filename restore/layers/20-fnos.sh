@@ -49,6 +49,10 @@ fnos_apply() {
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/manifests"
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/media-stack"
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/openclaw"
+  restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/hermes-openwebui/data"
+  restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths"
+  restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/fnos-media-stack"
+  restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/docker-volumes/homarr-appdata"
 
   # tier2: create empty dirs only
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/downloads"
@@ -57,6 +61,10 @@ fnos_apply() {
   copy_tree_if_exists "manifests" "opt/fnos-media/manifests"
   copy_tree_if_exists "services/media-stack" "opt/fnos-media/services/media-stack"
   copy_tree_if_exists "services/openclaw" "opt/fnos-media/services/openclaw"
+  copy_tree_if_exists "services/hermes-openwebui/data" "opt/fnos-media/services/hermes-openwebui/data"
+  copy_tree_if_exists "services/docker-stack/ai-proxy/cliproxyapi/auths" "opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths"
+  copy_tree_if_exists "fnos-media-stack" "opt/fnos-media/fnos-media-stack"
+  copy_tree_if_exists "docker-volumes/homarr-appdata" "opt/fnos-media/docker-volumes/homarr-appdata"
 
   echo "fnos apply complete: $TARGET_ROOT"
 }
@@ -68,6 +76,10 @@ fnos_verify() {
   [[ -d "$TARGET_ROOT/opt/fnos-media/manifests" ]] || status="FAIL"
   [[ -d "$TARGET_ROOT/opt/fnos-media/services/media-stack" ]] || status="FAIL"
   [[ -d "$TARGET_ROOT/opt/fnos-media/services/openclaw" ]] || status="FAIL"
+  [[ -d "$TARGET_ROOT/opt/fnos-media/services/hermes-openwebui/data" ]] || status="FAIL"
+  [[ -d "$TARGET_ROOT/opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths" ]] || status="FAIL"
+  [[ -d "$TARGET_ROOT/opt/fnos-media/fnos-media-stack" ]] || status="FAIL"
+  [[ -d "$TARGET_ROOT/opt/fnos-media/docker-volumes/homarr-appdata" ]] || status="FAIL"
   [[ -f "$TARGET_ROOT/opt/fnos-media/services/media-stack/docker-compose.yml" ]] || status="FAIL"
   [[ -f "$TARGET_ROOT/opt/fnos-media/services/openclaw/openclaw.json" ]] || status="FAIL"
 
