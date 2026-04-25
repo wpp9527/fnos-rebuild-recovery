@@ -20,6 +20,12 @@ WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" PVE_ENABLED="${PVE
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" FNOS_ENABLED="${FNOS_ENABLED:-0}" FNOS_SSH_HOST="${FNOS_SSH_HOST:-}" bash "$SCRIPT_DIR/tasks/collect_fnos.sh"
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="${TIMESTAMP:-}" bash "$SCRIPT_DIR/tasks/publish_latest.sh"
 
+# Publish recovery-critical secrets to NAS
+OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-/opt/fnos-media/services/openclaw/home/.openclaw/openclaw.json}" \
+FNOS_MEDIA_ENV="${FNOS_MEDIA_ENV:-/opt/fnos-media-stack/.env}" \
+BACKUP_ROOT="$BACKUP_ROOT" \
+bash "$SCRIPT_DIR/tasks/publish_secrets.sh" || log "publish_secrets: skipped or partial"
+
 RUNTIME_AUDIT_STATUS="not-configured"
 if [[ -x "$SCRIPT_DIR/audit_runtime_state.sh" ]]; then
   AUDIT_REPORT_ROOT="$BACKUP_ROOT/shared/restore-guides/latest" \

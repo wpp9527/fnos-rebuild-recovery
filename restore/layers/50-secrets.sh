@@ -20,15 +20,21 @@ read_real_value() {
   local env_file="$SECRETS_REAL_DIR/openclaw.env"
   if [[ -f "$env_file" ]]; then
     awk -F= -v k="$key" '$1 == k { sub($1"=", ""); print }' "$env_file" | tail -n 1
+  else
+    # Fallback: check channels directory for gateway token
+    local channels_env="$SECRETS_REAL_DIR/channels/feishu.env"
+    if [[ -f "$channels_env" ]]; then
+      awk -F= -v k="$key" '$1 == k { sub($1"=", ""); print }' "$channels_env" | tail -n 1
+    fi
   fi
 }
 
 required_keys() {
-  printf '%s\n' OPENCLAW_BASE_URL OPENCLAW_API_TOKEN PRIMARY_CHANNEL_TOKEN
+  printf '%s\n' OPENCLAW_BASE_URL OPENCLAW_GATEWAY_AUTH_TOKEN PRIMARY_CHANNEL_TOKEN
 }
 
 blocking_keys() {
-  printf '%s\n' OPENCLAW_API_TOKEN
+  printf '%s\n' OPENCLAW_GATEWAY_AUTH_TOKEN
 }
 
 secrets_plan() {
