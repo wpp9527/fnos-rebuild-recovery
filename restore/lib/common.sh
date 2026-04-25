@@ -121,24 +121,27 @@ EOF
 
 restore_write_report() {
   local root="$1"
-  local mode="$2"
+  local source_mode="$2"
   local selected="$3"
   local ts="$4"
+  local run_mode="$5"
+  local status="$6"
   cat > "$root/reports/restore-summary-$ts.md" <<EOF
 # Restore Summary
 
-- mode: plan
-- source_mode: $mode
+- mode: $run_mode
+- source_mode: $source_mode
 - selected_source: $selected
 - timestamp: $ts
+- status: $status
 EOF
   cat > "$root/reports/restore-result-$ts.json" <<EOF
 {
-  "mode": "plan",
-  "source_mode": "$mode",
+  "mode": "$run_mode",
+  "source_mode": "$source_mode",
   "selected_source": "$selected",
   "timestamp": "$ts",
-  "status": "planned"
+  "status": "$status"
 }
 EOF
 }
