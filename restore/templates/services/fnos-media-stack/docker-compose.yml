@@ -1,0 +1,176 @@
+services:
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:v1.59.2
+    container_name: homarr
+    restart: unless-stopped
+    ports:
+      - "7575:7575"
+    volumes:
+      - /opt/fnos-media-stack/homarr/config:/app/data/config
+      - /opt/fnos-media-stack/homarr/icons:/app/public/icons
+      - /opt/fnos-media-stack/homarr/custom-css:/app/public/custom-css
+    environment:
+      - TZ=Asia/Shanghai
+      - AUTH_ENABLED=true
+      - AUTH_USERNAME=bandas
+      - AUTH_PASSWORD=${HOMARR_AUTH_PASSWORD}
+      - AUTH_STRATEGY=basic
+      - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_ENCRYPTION_KEY}
+    user: "0:0"
+
+  halo:
+    image: halohub/halo:latest
+    container_name: halo-blog
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - /opt/fnos-media-stack/halo/config:/root/.halo
+      - /opt/fnos-media-stack/halo/content:/root/.halo/content
+    environment:
+      - TZ=Asia/Shanghai
+      - HALO_SECURITY_INITIALIZER_PASSWORD=${HALO_INITIALIZER_PASSWORD}
+      - HALO_SERVER_PORT=8090
+    user: "0:0"
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    network_mode: host
+    volumes:
+      - /mnt/nas/media:/media
+      - /opt/fnos-media-stack/jellyfin/config:/config
+      - /opt/fnos-media-stack/jellyfin/cache:/cache
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    privileged: true
+    user: "0:0"
+
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: host
+    volumes:
+      - /opt/fnos-media-stack/qbittorrent/config:/config
+      - /mnt/nas/media/downloads:/downloads
+      - /mnt/nas/media/jav:/jav
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+      - WEBUI_PORT=8086
+    restart: unless-stopped
+
+  jackett:
+    image: linuxserver/jackett:latest
+    container_name: jackett
+    network_mode: host
+    volumes:
+      - /opt/fnos-media-stack/jackett/config:/config
+      - /mnt/nas/media/downloads:/downloads
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped
+
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: host
+    volumes:
+      - /opt/fnos-media-stack/radarr/config:/config
+      - /mnt/nas/media/movies:/movies
+      - /mnt/nas/media/downloads:/downloads
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped
+
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: host
+    volumes:
+      - /opt/fnos-media-stack/sonarr/config:/config
+      - /mnt/nas/media/tv:/tv
+      - /mnt/nas/media/downloads:/downloads
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped
+
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: host
+    volumes:
+      - /opt/fnos-media-stack/prowlarr/config:/config
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped
+
+  bazarr:
+    image: linuxserver/bazarr:latest
+    container_name: bazarr
+    network_mode: host
+    volumes:
+      - /opt/fnos-media-stack/bazarr/config:/config
+      - /mnt/nas/media/movies:/movies
+      - /mnt/nas/media/tv:/tv
+      - /mnt/nas/media/jav:/jav
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+      - PORT=6767
+    restart: unless-stopped
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
+    network_mode: host
+    environment:
+      - LOG_LEVEL=info
+      - TZ=Asia/Shanghai
+      - PORT=5055
+    volumes:
+      - /opt/fnos-media-stack/seerr/config:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    user: "0:0"
+    restart: unless-stopped
+
+  stash:
+    image: stashapp/stash:latest
+    container_name: stash
+    network_mode: host
+    volumes:
+      - /opt/fnos-media-stack/stash/config:/root/.stash
+      - /mnt/nas/media/jav:/data
+      - /opt/fnos-media-stack/stash/metadata:/metadata
+      - /opt/fnos-media-stack/stash/cache:/cache
+      - /opt/fnos-media-stack/stash/blobs:/blobs
+      - /opt/fnos-media-stack/stash/generated:/generated
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Asia/Shanghai
+      - UMASK=000
+    restart: unless-stopped
+    user: "0:0"
