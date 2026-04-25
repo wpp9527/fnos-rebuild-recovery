@@ -77,9 +77,11 @@ cat > "$SHARED_ROOT/restore-guides/latest/restore-order.md" <<EOF
 # Restore Order
 
 1. Rebuild PVE host base configuration
-2. Restore fnOS VM structure and service layout
-3. Restore OpenClaw workspace and scripts from services/openclaw/latest
-4. Restore remaining service-level configuration
+2. Restore PVE inventory from pve/latest
+3. Restore fnOS VM structure and service layout
+4. Restore fnOS config set from fnos/latest
+5. Restore OpenClaw workspace and scripts from services/openclaw/latest
+6. Restore remaining service-level configuration
 EOF
 
 cat > "$SHARED_ROOT/network-map/latest/host-service-map.yaml" <<EOF
@@ -92,6 +94,10 @@ hosts:
 services:
   openclaw:
     latest_path: "$OPENCLAW_TARGET_LATEST"
+  pve:
+    latest_path: "$PVE_TARGET_LATEST"
+  fnos:
+    latest_path: "$FNOS_TARGET_LATEST"
 EOF
 
 cat > "$SHARED_ROOT/change-log/latest/change-summary-$TIMESTAMP.md" <<EOF
