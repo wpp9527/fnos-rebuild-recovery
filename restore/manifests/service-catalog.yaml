@@ -81,6 +81,13 @@ services:
     compose_path: services/hermes-openwebui/docker-compose.yml
     must_back_up:
       - /opt/fnos-media/services/hermes-openwebui/data
+  - name: docker-stack-channels
+    layer: 30-services
+    critical: true
+    category: channels
+    must_back_up:
+      - /opt/fnos-media/services/docker-stack/channels/feishu
+      - /opt/fnos-media/services/docker-stack/channels/qq
 
   - name: hermes-agent-app
     layer: 30-services

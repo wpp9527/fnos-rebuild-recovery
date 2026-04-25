@@ -52,6 +52,7 @@ fnos_apply() {
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/hermes-openwebui/data"
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths"
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi"
+  restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/services/docker-stack/channels"
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/fnos-media-stack"
   restore_ensure_dir "$TARGET_ROOT/opt/fnos-media/docker-volumes/homarr-appdata"
 
@@ -65,6 +66,7 @@ fnos_apply() {
   copy_tree_if_exists "services/hermes-openwebui/data" "opt/fnos-media/services/hermes-openwebui/data"
   copy_tree_if_exists "services/docker-stack/ai-proxy/cliproxyapi/auths" "opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths"
   copy_tree_if_exists "services/docker-stack/ai-proxy/cliproxyapi" "opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi"
+  copy_tree_if_exists "services/docker-stack/channels" "opt/fnos-media/services/docker-stack/channels"
   copy_tree_if_exists "fnos-media-stack" "opt/fnos-media/fnos-media-stack"
   copy_tree_if_exists "docker-volumes/homarr-appdata" "opt/fnos-media/docker-volumes/homarr-appdata"
 
@@ -81,6 +83,7 @@ fnos_verify() {
   [[ -d "$TARGET_ROOT/opt/fnos-media/services/hermes-openwebui/data" ]] || status="FAIL"
   [[ -d "$TARGET_ROOT/opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths" ]] || status="FAIL"
   [[ -d "$TARGET_ROOT/opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi" ]] || status="FAIL"
+  [[ -d "$TARGET_ROOT/opt/fnos-media/services/docker-stack/channels" ]] || status="FAIL"
   [[ -d "$TARGET_ROOT/opt/fnos-media/fnos-media-stack" ]] || status="FAIL"
   [[ -d "$TARGET_ROOT/opt/fnos-media/docker-volumes/homarr-appdata" ]] || status="FAIL"
   [[ -f "$TARGET_ROOT/opt/fnos-media/services/media-stack/docker-compose.yml" ]] || status="FAIL"
