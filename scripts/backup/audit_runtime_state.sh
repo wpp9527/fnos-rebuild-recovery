@@ -9,7 +9,8 @@ LIVE_COMPOSE_PATH="${LIVE_COMPOSE_PATH:-/opt/fnos-media-stack/docker-compose.yml
 TEMPLATE_COMPOSE_PATH="${TEMPLATE_COMPOSE_PATH:-$(cd "$SCRIPT_DIR/.." && pwd)/restore/templates/services/fnos-media-stack/docker-compose.yml}"
 AUDIT_REPORT_ROOT="${AUDIT_REPORT_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)/state/backup/reports}"
 TS="$(now_ts)"
-REPORT="$AUDIT_REPORT_ROOT/runtime-state-audit-$TS.md"
+TIMESTAMPED_REPORT="$AUDIT_REPORT_ROOT/runtime-state-audit-$TS.md"
+LATEST_REPORT="$AUDIT_REPORT_ROOT/runtime-state-audit.md"
 
 ensure_dir "$AUDIT_REPORT_ROOT"
 
@@ -89,6 +90,10 @@ MISSING_FOUND=0
     echo "compose_drift: $DRIFT_FOUND"
     echo "missing_paths: $MISSING_FOUND"
   fi
-} > "$REPORT"
+} > "$TIMESTAMPED_REPORT"
 
-echo "audit report: $REPORT"
+if [[ "$AUDIT_REPORT_ROOT" == */shared/restore-guides/latest ]]; then
+  cp "$TIMESTAMPED_REPORT" "$LATEST_REPORT"
+fi
+
+echo "audit report: $TIMESTAMPED_REPORT"

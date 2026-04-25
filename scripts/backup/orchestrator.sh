@@ -20,6 +20,15 @@ WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" PVE_ENABLED="${PVE
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" FNOS_ENABLED="${FNOS_ENABLED:-0}" FNOS_SSH_HOST="${FNOS_SSH_HOST:-}" bash "$SCRIPT_DIR/tasks/collect_fnos.sh"
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="${TIMESTAMP:-}" bash "$SCRIPT_DIR/tasks/publish_latest.sh"
 
+RUNTIME_AUDIT_STATUS="not-configured"
+if [[ -x "$SCRIPT_DIR/audit_runtime_state.sh" ]]; then
+  AUDIT_REPORT_ROOT="$BACKUP_ROOT/shared/restore-guides/latest" \
+  LIVE_COMPOSE_PATH="${LIVE_COMPOSE_PATH:-/opt/fnos-media-stack/docker-compose.yml}" \
+  TEMPLATE_COMPOSE_PATH="${TEMPLATE_COMPOSE_PATH:-$WORKSPACE_ROOT/restore/templates/services/fnos-media-stack/docker-compose.yml}" \
+  bash "$SCRIPT_DIR/audit_runtime_state.sh" || true
+  RUNTIME_AUDIT_STATUS="success"
+fi
+
 if [[ "$RUN_ARCHIVE" == "1" ]]; then
   WORKSPACE_ROOT="$WORKSPACE_ROOT" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="${TIMESTAMP:-}" bash "$SCRIPT_DIR/tasks/archive_snapshot.sh"
 fi
