@@ -8,6 +8,7 @@ source "$SCRIPT_DIR/../lib/common.sh"
 WORKSPACE_ROOT="${WORKSPACE_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 STAGING_ROOT="${STAGING_ROOT:-$WORKSPACE_ROOT/state/backup/staging}"
 REPORT_DIR="$STAGING_ROOT/reports"
+PVE_STAGE_DIR="$STAGING_ROOT/pve"
 PVE_ENABLED="${PVE_ENABLED:-0}"
 PVE_SSH_HOST="${PVE_SSH_HOST:-}"
 PVE_SSH_USER="${PVE_SSH_USER:-root}"
@@ -30,8 +31,48 @@ EOF
   exit 0
 fi
 
-HOSTNAME_OUT="$(sshpass -p "$PVE_SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/tmp/openclaw_known_hosts -o ConnectTimeout=8 "$PVE_SSH_USER@$PVE_SSH_HOST" 'hostname' | tr -d '\r')"
-UNAME_OUT="$(sshpass -p "$PVE_SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/tmp/openclaw_known_hosts -o ConnectTimeout=8 "$PVE_SSH_USER@$PVE_SSH_HOST" 'uname -a' | tr -d '\r')"
+run_remote() {
+  local remote_cmd="$1"
+  sshpass -p "$PVE_SSH_PASSWORD" ssh \
+    -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/tmp/openclaw_known_hosts \
+    -o ConnectTimeout=8 \
+    "$PVE_SSH_USER@$PVE_SSH_HOST" "$remote_cmd"
+}
+
+rm -rf "$PVE_STAGE_DIR"
+ensure_dir "$PVE_STAGE_DIR"
+
+HOSTNAME_OUT="$(run_remote 'hostname' | tr -d '\r')"
+UNAME_OUT="$(run_remote 'uname -a' | tr -d '\r')"
+run_remote 'hostname' > "$PVE_STAGE_DIR/hostname.txt"
+run_remote 'uname -a' > "$PVE_STAGE_DIR/uname.txt"
+run_remote 'ip -br addr || ip addr' > "$PVE_STAGE_DIR/ip-address.txt"
+run_remote 'pveversion -v || pveversion' > "$PVE_STAGE_DIR/pve-version.txt"
+run_remote 'qm list || true' > "$PVE_STAGE_DIR/vm-list.txt"
+run_remote 'pct list || true' > "$PVE_STAGE_DIR/ct-list.txt"
+run_remote 'pvesm status || true' > "$PVE_STAGE_DIR/storage-list.txt"
+run_remote 'cat /etc/network/interfaces' > "$PVE_STAGE_DIR/network-interfaces.txt"
+
+cat > "$PVE_STAGE_DIR/restore-notes.md" <<EOF
+# PVE Restore Notes
+
+Generated: $(date -Is)
+Source host: $PVE_SSH_HOST
+
+Collected in this phase:
+- hostname
+- uname
+- IP addressing
+- pveversion
+- VM list
+- CT list
+- storage status
+- /etc/network/interfaces
+
+Next upgrade target:
+- collect selected /etc/pve configuration exports
+EOF
 
 cat > "$REPORT_DIR/pve-connectivity-ok.md" <<EOF
 # PVE Backup Status
@@ -42,5 +83,6 @@ PVE SSH connectivity verified.
 - user: $PVE_SSH_USER
 - hostname: $HOSTNAME_OUT
 - uname: $UNAME_OUT
+- stage_path: $PVE_STAGE_DIR
 EOF
-log "collect_pve: connectivity verified for $PVE_SSH_HOST"
+log "collect_pve: connectivity and inventory captured for $PVE_SSH_HOST"
