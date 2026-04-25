@@ -79,6 +79,7 @@ done
 # High-value local state that is small enough to keep in config-level backup.
 copy_dir_contents_if_exists "services/hermes-openwebui/data"
 copy_dir_contents_if_exists "services/docker-stack/ai-proxy/cliproxyapi/auths"
+copy_if_exists "services/docker-stack/ai-proxy/cliproxyapi/config.yaml"
 copy_dir_contents_if_exists "fnos-media-stack"
 
 if [[ -n "${HOMARR_APPDATA_SOURCE:-}" ]]; then
@@ -106,7 +107,7 @@ Included:
 - bin/
 - reports/
 - selected service config trees: media-stack, docker-stack, easytier, openclaw-governance, openclaw-channels
-- high-value local state: hermes-openwebui/data, cliproxyapi/auths, fnos-media-stack/
+- high-value local state: hermes-openwebui/data, cliproxyapi/auths, cliproxyapi/config.yaml, fnos-media-stack/
 - homarr anonymous appdata volume when HOMARR_APPDATA_SOURCE is provided
 - minimal OpenClaw runtime config files only
 
