@@ -30,6 +30,11 @@ ensure_dir "$SHARED_ROOT/restore-guides/latest"
 ensure_dir "$SHARED_ROOT/change-log/latest"
 ensure_dir "$SHARED_ROOT/network-map/latest"
 
+PVE_STATUS="not-configured"
+FNOS_STATUS="not-configured"
+[[ -f "$STAGING_ROOT/reports/pve-connectivity-ok.md" ]] && PVE_STATUS="connectivity-ok"
+[[ -f "$STAGING_ROOT/reports/fnos-local-collection-ok.md" ]] && FNOS_STATUS="success"
+
 cat > "$SHARED_ROOT/version-index/latest/backup_target_manifest.yaml" <<EOF
 version: 1
 generated_at: "$TIMESTAMP"
@@ -38,9 +43,9 @@ targets:
     status: success
     latest_path: "$TARGET_LATEST"
   pve:
-    status: not-configured
+    status: $PVE_STATUS
   fnos:
-    status: not-configured
+    status: $FNOS_STATUS
 EOF
 
 cat > "$SHARED_ROOT/restore-guides/latest/restore-order.md" <<EOF

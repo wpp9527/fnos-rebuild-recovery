@@ -16,12 +16,14 @@ Weekly backup + snapshot:
 
 ## What it currently does
 - Collects OpenClaw recovery assets
+- Collects fnOS local recovery assets from `/opt/fnos-media`
+- Verifies PVE SSH connectivity and records host metadata
 - Publishes `services/openclaw/latest`
 - Publishes shared indexes and restore guides
 - Creates weekly OpenClaw snapshots
-- Marks PVE / fnOS as `not configured` until SSH access is set up
 
 ## Important notes
 - Backup target is expected at `/mnt/nas/backup`
-- Current remote collection for PVE / fnOS is placeholder-only
-- SSH integration should be enabled later by editing `state/backup/config.env`
+- fnOS is treated as the local host where OpenClaw runs
+- PVE is currently collected as connectivity + metadata only; full remote config export is the next upgrade
+- Runtime secrets such as `PVE_SSH_PASSWORD` live in `state/backup/config.env` and are not committed
