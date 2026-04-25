@@ -53,10 +53,39 @@ for line in text.splitlines():
 PY
 }
 
+container_has_mapping() {
+  local name="$1"
+  local norm
+  norm="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
+  grep -Fqi "$norm" "$SERVICE_CATALOG_PATH" && return 0
+  case "$norm" in
+    homarr|halo-blog|jellyfin|qbittorrent|jackett|radarr|sonarr|prowlarr|bazarr|seerr|stash)
+      grep -Fqi 'fnos-media-stack' "$SERVICE_CATALOG_PATH" && return 0
+      ;;
+    hermes-open-webui)
+      grep -Fqi 'hermes-openwebui' "$SERVICE_CATALOG_PATH" && return 0
+      ;;
+    cli-proxy-api)
+      grep -Fqi 'cliproxyapi' "$SERVICE_CATALOG_PATH" && return 0
+      ;;
+    cliproxyapi-ui)
+      grep -Fqi 'cliproxyapi-ui' "$SERVICE_CATALOG_PATH" && return 0
+      ;;
+    qq-observe)
+      grep -Fqi 'channels-qq' "$SERVICE_CATALOG_PATH" && return 0
+      ;;
+    feishu-observe)
+      grep -Fqi 'channels-feishu' "$SERVICE_CATALOG_PATH" && return 0
+      ;;
+  esac
+  return 1
+}
+
 ANON_FOUND=0
 DRIFT_FOUND=0
 MISSING_FOUND=0
 UNMAPPED_FOUND=0
+RUNNING_UNMAPPED_FOUND=0
 {
   echo "# Runtime State Audit"
   echo
@@ -108,9 +137,19 @@ UNMAPPED_FOUND=0
     fi
   fi
 
+  if [[ -f "$SERVICE_CATALOG_PATH" ]] && command -v docker >/dev/null 2>&1; then
+    while IFS= read -r container; do
+      [[ -n "$container" ]] || continue
+      if ! container_has_mapping "$container"; then
+        echo "- running container missing recovery mapping: $container"
+        RUNNING_UNMAPPED_FOUND=1
+      fi
+    done < <(docker ps --format '{{.Names}}' 2>/dev/null || true)
+  fi
+
   echo
   echo "## Summary"
-  if [[ "$ANON_FOUND" -eq 0 && "$DRIFT_FOUND" -eq 0 && "$MISSING_FOUND" -eq 0 && "$UNMAPPED_FOUND" -eq 0 ]]; then
+  if [[ "$ANON_FOUND" -eq 0 && "$DRIFT_FOUND" -eq 0 && "$MISSING_FOUND" -eq 0 && "$UNMAPPED_FOUND" -eq 0 && "$RUNNING_UNMAPPED_FOUND" -eq 0 ]]; then
     echo "Status: PASS"
   else
     echo "Status: WARN"
@@ -118,6 +157,7 @@ UNMAPPED_FOUND=0
     echo "compose_drift: $DRIFT_FOUND"
     echo "missing_paths: $MISSING_FOUND"
     echo "unmapped_runtime: $UNMAPPED_FOUND"
+    echo "running_unmapped_runtime: $RUNNING_UNMAPPED_FOUND"
   fi
 } > "$TIMESTAMPED_REPORT"
 
