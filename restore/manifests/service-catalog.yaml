@@ -45,7 +45,7 @@ services:
     category: media
     compose_path: /opt/fnos-media-stack/docker-compose.yml
     runtime_detected: true
-    note: active standalone media stack outside unified services tree; secrets must stay local/NAS only
+    note: active standalone media stack outside unified services tree; secrets must stay local/NAS only; live compose should mirror recovery template mounts including /opt/fnos-media-stack/homarr/appdata
     must_back_up:
       - /opt/fnos-media-stack/homarr/config
       - /opt/fnos-media-stack/homarr/appdata

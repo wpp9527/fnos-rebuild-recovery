@@ -54,3 +54,17 @@ Weekly backup + snapshot:
 - `/opt/fnos-media-stack/jellyfin/cache`
 - `/opt/fnos-media-stack/stash/cache`
 - logs and temporary runtime outputs under service-specific log directories
+
+## live compose drift control
+
+The live standalone stack currently runs from:
+- `/opt/fnos-media-stack/docker-compose.yml`
+
+The recovery-safe template lives in the repo at:
+- `restore/templates/services/fnos-media-stack/docker-compose.yml`
+
+Rule:
+- treat the repo template as the recovery source of truth
+- when the live compose file is changed on-host, mirror any recovery-relevant mount, env, and service-shape changes back into the repo template
+- do not store raw secrets in the repo copy; keep real values in local/NAS env files only
+- prefer explicit bind mounts over anonymous volumes so backup/restore can track state deterministically
