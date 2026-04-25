@@ -1,10 +1,139 @@
 services:
+  # A类：核心服务（应纳入恢复）
+  - name: clawpanel-app
+    layer: 30-services
+    critical: true
+    category: core
+    compose_path: services/clawpanel/app/docker-compose.yml
+    dockerfile_path: services/clawpanel/app/Dockerfile
+
+  - name: clawpanel-app-scripts
+    layer: 30-services
+    critical: true
+    category: core
+    deploy_script: services/clawpanel/app/scripts/docker-deploy.sh
+
+  - name: docker-stack-channels-feishu
+    layer: 30-services
+    critical: true
+    category: channels
+    compose_path: services/docker-stack/channels/feishu/docker-compose.yml
+    dockerfile_path: services/docker-stack/channels/feishu/Dockerfile
+
+  - name: docker-stack-channels-qq
+    layer: 30-services
+    critical: true
+    category: channels
+    compose_path: services/docker-stack/channels/qq/docker-compose.yml
+    dockerfile_path: services/docker-stack/channels/qq/Dockerfile
+
+  - name: docker-stack-ai-proxy-cliproxyapi
+    layer: 30-services
+    critical: true
+    category: ai-proxy
+    compose_path: services/docker-stack/ai-proxy/cliproxyapi/docker-compose.yml
+
+  - name: docker-stack-ai-proxy-cliproxyapi-ui
+    layer: 30-services
+    critical: true
+    category: ai-proxy
+    compose_path: services/docker-stack/ai-proxy/cliproxyapi-ui/docker-compose.yml
+
+  - name: fnos-media-stack
+    layer: 30-services
+    critical: true
+    category: media
+    compose_path: /opt/fnos-media-stack/docker-compose.yml
+    runtime_detected: true
+    note: active standalone media stack outside unified services tree; secrets must stay local/NAS only
+
+  - name: media-stack-compose
+    layer: 30-services
+    critical: false
+    category: media
+    compose_path: services/media-stack/compose/docker-compose.base.yml
+
+  - name: hermes-openwebui
+    layer: 30-services
+    critical: false
+    category: ai
+    compose_path: services/hermes-openwebui/docker-compose.yml
+
+  - name: hermes-agent-app
+    layer: 30-services
+    critical: false
+    category: ai
+    dockerfile_path: services/hermes-agent/app/Dockerfile
+
+  - name: hermes-agent-app-docker
+    layer: 30-services
+    critical: false
+    category: ai
+    deploy_script: services/hermes-agent/app/docker/entrypoint.sh
+
+  # 控制面核心
   - name: openclaw
     layer: 40-openclaw
     critical: true
-  - name: media-stack
+    category: control-plane
+
+  # B类：支撑/辅助服务（可 deferred）
+  - name: edict-localized-repo
     layer: 30-services
     critical: false
-  - name: channels
+    category: deferred
+    compose_path: services/edict-localized/repo/docker-compose.yml
+    dockerfile_path: services/edict-localized/repo/Dockerfile
+
+  - name: edict-localized-repo-edict
     layer: 30-services
     critical: false
+    category: deferred
+    compose_path: services/edict-localized/repo/edict/docker-compose.yml
+    dockerfile_path: services/edict-localized/repo/edict/Dockerfile
+
+  - name: edict-localized-repo-edict-frontend
+    layer: 30-services
+    critical: false
+    category: deferred
+    dockerfile_path: services/edict-localized/repo/edict/frontend/Dockerfile
+
+  - name: edict-rebuild-continuation-repo
+    layer: 30-services
+    critical: false
+    category: deferred
+    compose_path: services/edict-rebuild/continuation/repo/docker-compose.yml
+    dockerfile_path: services/edict-rebuild/continuation/repo/Dockerfile
+
+  - name: edict-rebuild-continuation-repo-edict
+    layer: 30-services
+    critical: false
+    category: deferred
+    compose_path: services/edict-rebuild/continuation/repo/edict/docker-compose.yml
+    dockerfile_path: services/edict-rebuild/continuation/repo/edict/Dockerfile
+
+  - name: edict-rebuild-continuation-repo-edict-frontend
+    layer: 30-services
+    critical: false
+    category: deferred
+    dockerfile_path: services/edict-rebuild/continuation/repo/edict/frontend/Dockerfile
+
+  - name: edict-rebuild-upstream-edict
+    layer: 30-services
+    critical: false
+    category: deferred
+    compose_path: services/edict-rebuild/upstream/edict/docker-compose.yml
+    dockerfile_path: services/edict-rebuild/upstream/edict/Dockerfile
+
+  - name: edict-rebuild-upstream-edict-edict
+    layer: 30-services
+    critical: false
+    category: deferred
+    compose_path: services/edict-rebuild/upstream/edict/edict/docker-compose.yml
+    dockerfile_path: services/edict-rebuild/upstream/edict/edict/Dockerfile
+
+  - name: edict-rebuild-upstream-edict-edict-frontend
+    layer: 30-services
+    critical: false
+    category: deferred
+    dockerfile_path: services/edict-rebuild/upstream/edict/edict/frontend/Dockerfile
