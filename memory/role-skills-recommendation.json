@@ -1,0 +1,193 @@
+{
+  "taizi": {
+    "label": "太子",
+    "role": "太子",
+    "duty": "飞书消息分拣与回奏、任务分拣、协调各省",
+    "rank": "储君",
+    "recommended_skills": [
+      "proactive-agent-skill",
+      "agent-team-orchestration",
+      "task-orchestra",
+      "context-compaction"
+    ],
+    "knowledge_bases": [
+      "andrej-karpathy-skills"
+    ]
+  },
+  "zhongshu": {
+    "label": "中书省",
+    "role": "中书令",
+    "duty": "起草任务令与优先级、方案规划",
+    "rank": "正一品",
+    "recommended_skills": [
+      "workflow",
+      "agentic-workflow-automation",
+      "task-orchestra"
+    ],
+    "knowledge_bases": [
+      "system-design-primer",
+      "andrej-karpathy-skills"
+    ]
+  },
+  "menxia": {
+    "label": "门下省",
+    "role": "侍中",
+    "duty": "审议与封驳、质量把关、风险审查",
+    "rank": "正一品",
+    "recommended_skills": [
+      "healthcheck",
+      "skill-scanner",
+      "task-review-workflow"
+    ],
+    "knowledge_bases": [
+      "system-design-primer",
+      "andrej-karpathy-skills"
+    ]
+  },
+  "shangshu": {
+    "label": "尚书省",
+    "role": "尚书令",
+    "duty": "派发与升级裁决、任务调度、资源分配",
+    "rank": "正一品",
+    "recommended_skills": [
+      "agent-team-orchestration",
+      "task-orchestra",
+      "proactive-tasks"
+    ],
+    "knowledge_bases": [
+      "andrej-karpathy-skills"
+    ]
+  },
+  "gongbu": {
+    "label": "工部",
+    "role": "工部尚书",
+    "duty": "基础设施与部署运维、技术执行",
+    "rank": "正二品",
+    "recommended_skills": [
+      "healthcheck",
+      "video-frames",
+      "weather"
+    ],
+    "knowledge_bases": [
+      "system-design-primer"
+    ]
+  },
+  "hubu": {
+    "label": "户部",
+    "role": "户部尚书",
+    "duty": "资源/预算/成本管理、数据分析",
+    "rank": "正二品",
+    "recommended_skills": [
+      "proactive-tasks"
+    ],
+    "knowledge_bases": []
+  },
+  "libu": {
+    "label": "礼部",
+    "role": "礼部尚书",
+    "duty": "文档/汇报/规范、内容生成",
+    "rank": "正二品",
+    "recommended_skills": [
+      "skill-creator"
+    ],
+    "knowledge_bases": []
+  },
+  "bingbu": {
+    "label": "兵部",
+    "role": "兵部尚书",
+    "duty": "工程实现与架构设计、代码开发",
+    "rank": "正二品",
+    "recommended_skills": [
+      "healthcheck",
+      "andrej-karpathy-skills"
+    ],
+    "knowledge_bases": [
+      "system-design-primer"
+    ]
+  },
+  "xingbu": {
+    "label": "刑部",
+    "role": "刑部尚书",
+    "duty": "合规/审计/红线、安全审查",
+    "rank": "正二品",
+    "recommended_skills": [
+      "healthcheck",
+      "skill-scanner"
+    ],
+    "knowledge_bases": []
+  },
+  "libu_hr": {
+    "label": "吏部",
+    "role": "吏部尚书",
+    "duty": "人事/培训/Agent管理",
+    "rank": "正二品",
+    "recommended_skills": [
+      "skill-creator",
+      "proactive-tasks"
+    ],
+    "knowledge_bases": []
+  },
+  "zaochao": {
+    "label": "钦天监",
+    "role": "朝报官",
+    "duty": "新闻聚合、早报生成",
+    "rank": "正三品",
+    "recommended_skills": [
+      "weather"
+    ],
+    "knowledge_bases": []
+  },
+  "taixuesi": {
+    "label": "太学寺",
+    "role": "太学祭酒",
+    "duty": "教育/培训/知识管理",
+    "rank": "从二品",
+    "recommended_skills": [
+      "skill-creator"
+    ],
+    "knowledge_bases": [
+      "system-design-primer"
+    ]
+  },
+  "qingbaoshi": {
+    "label": "情报使",
+    "role": "情报使",
+    "duty": "情报收集、数据分析、市场研究",
+    "rank": "从三品",
+    "recommended_skills": [
+      "weather"
+    ],
+    "knowledge_bases": []
+  },
+  "jinyiwei": {
+    "label": "锦衣卫",
+    "role": "锦衣卫指挥使",
+    "duty": "安全/供应链审查、风险监控",
+    "rank": "正三品",
+    "recommended_skills": [
+      "healthcheck",
+      "skill-scanner"
+    ],
+    "knowledge_bases": []
+  },
+  "jinengdaoshi": {
+    "label": "技能导师",
+    "role": "技能导师",
+    "duty": "技能培训、最佳实践指导",
+    "rank": "从三品",
+    "recommended_skills": [
+      "skill-creator"
+    ],
+    "knowledge_bases": []
+  },
+  "duzhisi": {
+    "label": "度支司",
+    "role": "度支使",
+    "duty": "预算管理、成本核算",
+    "rank": "从二品",
+    "recommended_skills": [
+      "proactive-tasks"
+    ],
+    "knowledge_bases": []
+  }
+}

@@ -1,0 +1,47 @@
+=== EasyTier 泰国使用完整指南 ===
+
+## 1. 家节点信息（PPOS）
+- 网络名: bandas-home
+- 网络密钥: ETNet_7pQ9xL2mV8rK4sD1nW6cJ3hF5uA0zB
+- 节点名: PPOS
+- 公网 IPv4: 27.12.175.221
+- 监听端口: TCP/UDP 11010, WG/WS 11011, WSS 11012
+- Web 管理界面: http://192.168.1.212:11211
+
+## 2. 泰国设备连接命令
+
+### Linux/macOS/WSL:
+easytier-core -d \
+  --hostname thai-device \
+  --network-name bandas-home \
+  --network-secret ETNet_7pQ9xL2mV8rK4sD1nW6cJ3hF5uA0zB \
+  --peers tcp://public.easytier.top:11010 \
+  --peers tcp://27.12.175.221:11010
+
+### Windows PowerShell:
+easytier-core.exe -d --hostname thai-device --network-name bandas-home --network-secret ETNet_7pQ9xL2mV8rK4sD1nW6cJ3hF5uA0zB --peers tcp://public.easytier.top:11010 --peers tcp://27.12.175.221:11010
+
+## 3. 开启子网代理（让泰国访问整个局域网）
+
+访问 Web 管理界面配置子网代理:
+http://192.168.1.212:11211
+
+在 Web UI 中添加 Proxy CIDRs: 192.168.1.0/24
+
+## 4. 泰国可访问的服务
+- Sonarr: http://PPOS:8989
+- Radarr: http://PPOS:7878
+- Prowlarr: http://PPOS:9696
+- Jackett: http://PPOS:9117
+- qBittorrent: http://PPOS:8086
+- NAS: http://192.168.1.212:5000 (通过子网代理)
+
+## 5. Android/iOS 客户端
+从以下地址下载:
+- GitHub: https://github.com/EasyTier/EasyTier/releases
+- Google Play / App Store: 搜索 EasyTier
+
+配置参数:
+- Network Name: bandas-home
+- Network Secret: ETNet_7pQ9xL2mV8rK4sD1nW6cJ3hF5uA0zB
+- Peer: tcp://public.easytier.top:11010
