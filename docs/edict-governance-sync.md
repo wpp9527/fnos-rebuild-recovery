@@ -1,10 +1,10 @@
-# edict-governance 同步规则
+# fnos-rebuild-recovery 同步规则
 
 ## 目的
 
-把本地工作树 `/opt/fnos-media/services/edict-localized/repo` 持续同步到 GitHub 新仓：
+把本地工作树 `/opt/fnos-media/services/openclaw/home/.openclaw/workspace` 持续同步到 GitHub 恢复仓：
 
-- `git@github.com:wpp9527/edict-governance.git`
+- `git@github.com:wpp9527/fnos-rebuild-recovery.git`
 
 当前采用的是：
 
@@ -35,15 +35,15 @@
 
 源目录：
 
-- `/opt/fnos-media/services/edict-localized/repo`
+- `/opt/fnos-media/services/openclaw/home/.openclaw/workspace`
 
 导出目录：
 
-- `/tmp/edict-governance-export`
+- `/tmp/fnos-rebuild-recovery-export`
 
 远程仓库：
 
-- `git@github.com:wpp9527/edict-governance.git`
+- `git@github.com:wpp9527/fnos-rebuild-recovery.git`
 
 ---
 
@@ -77,7 +77,7 @@
 
 适合：
 
-- 快速备份当前工作树
+- 快速备份当前恢复工作树
 - 持续把本地最新状态推到 GitHub
 - 避免原仓历史问题影响备份仓
 

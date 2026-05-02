@@ -49,6 +49,12 @@ if [[ -d "$STAGING_ROOT/fnos" ]]; then
   FNOS_TARGET_LATEST="$BACKUP_ROOT/fnos/latest"
 fi
 
+LXC_PROXY_TARGET_LATEST=""
+if [[ -d "$STAGING_ROOT/lxc-proxy" ]]; then
+  publish_tree "$STAGING_ROOT/lxc-proxy" "$BACKUP_ROOT/lxc-proxy"
+  LXC_PROXY_TARGET_LATEST="$BACKUP_ROOT/lxc-proxy/latest"
+fi
+
 SHARED_ROOT="$BACKUP_ROOT/shared"
 ensure_dir "$SHARED_ROOT/version-index/latest"
 ensure_dir "$SHARED_ROOT/restore-guides/latest"

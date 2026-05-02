@@ -10,7 +10,7 @@ PVE_SSH_HOST="${PVE_SSH_HOST:-192.168.1.190}"
 PVE_SSH_USER="${PVE_SSH_USER:-root}"
 PVE_SSH_PASSWORD="${PVE_SSH_PASSWORD:-}"
 LXC_VMID="${LXC_VMID:-213}"
-STAGING_ROOT="${STAGING_ROOT:-$BACKUP_ROOT/lxc-proxy/staging}"
+STAGING_ROOT="${STAGING_ROOT:-/tmp/openclaw-lxc-proxy-staging}"
 TS="$(date +%Y-%m-%d-%H%M%S)"
 
 run_remote() {
@@ -79,10 +79,4 @@ contents:
   - systemd/
 EOF
 
-# 7. Publish to latest
-LATEST_ROOT="$BACKUP_ROOT/lxc-proxy/latest"
-ensure_dir "$LATEST_ROOT"
-rm -rf "$LATEST_ROOT/"*
-cp -r "$STAGING_ROOT/"* "$LATEST_ROOT/"
-
-log "collect_lxc_proxy: complete -> $LATEST_ROOT"
+log "collect_lxc_proxy: complete -> $STAGING_ROOT"
