@@ -9,6 +9,7 @@ WORKSPACE_ROOT="${WORKSPACE_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 STAGING_ROOT="${STAGING_ROOT:-$WORKSPACE_ROOT/state/backup/staging}"
 BACKUP_ROOT="${BACKUP_ROOT:-/mnt/nas/backup}"
 TIMESTAMP="${TIMESTAMP:-$(now_ts)}"
+LOCAL_TMP_ROOT="${LOCAL_TMP_ROOT:-/tmp/openclaw-backup-publish}"
 
 require_dir "$STAGING_ROOT/openclaw"
 require_dir "$BACKUP_ROOT"
@@ -18,15 +19,22 @@ publish_tree() {
   local target_base="$2"
   local target_latest="$target_base/latest"
   local tmp_target="$target_base/.tmp-latest-$TIMESTAMP-$$"
+  local backup_latest="$target_base/.prev-latest-$TIMESTAMP-$$"
+  local local_tmp_target="$LOCAL_TMP_ROOT/$(basename "$target_base")-$TIMESTAMP-$$"
 
   ensure_dir "$target_base"
+  ensure_dir "$LOCAL_TMP_ROOT"
   rm -rf "$tmp_target"
+  rm -rf "$local_tmp_target"
+  ensure_dir "$local_tmp_target"
+  rsync -rltD --delete "$source_dir/" "$local_tmp_target/"
   ensure_dir "$tmp_target"
-  rsync -rltD --delete "$source_dir/" "$tmp_target/"
+  cp -r "$local_tmp_target/". "$tmp_target/"
+  rm -rf "$local_tmp_target"
   if [[ -e "$target_latest" && ! -d "$target_latest" ]]; then
     rm -f "$target_latest"
-  else
-    rm -rf "$target_latest"
+  elif [[ -d "$target_latest" ]]; then
+    mv "$target_latest" "$backup_latest"
   fi
   mv "$tmp_target" "$target_latest"
 }
