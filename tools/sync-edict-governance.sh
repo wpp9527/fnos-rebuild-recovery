@@ -8,6 +8,13 @@ BRANCH="main"
 GIT_NAME="wpp9527"
 GIT_EMAIL="wangpengpeng9527@gmail.com"
 
+SRC="${GITHUB_SYNC_SRC:-$SRC}"
+DST="${GITHUB_SYNC_DST:-$DST}"
+REMOTE="${GITHUB_SYNC_REMOTE:-$REMOTE}"
+BRANCH="${GITHUB_SYNC_BRANCH:-$BRANCH}"
+GIT_NAME="${GITHUB_SYNC_GIT_NAME:-$GIT_NAME}"
+GIT_EMAIL="${GITHUB_SYNC_GIT_EMAIL:-$GIT_EMAIL}"
+
 if [ ! -d "$SRC" ]; then
   echo "[ERR] source repo not found: $SRC" >&2
   exit 1

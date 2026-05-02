@@ -31,6 +31,15 @@ if [[ "${PVE_ENABLED:-0}" == "1" && -n "${PVE_SSH_HOST:-}" ]]; then
 fi
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="${TIMESTAMP:-}" bash "$SCRIPT_DIR/tasks/publish_latest.sh"
 
+WORKSPACE_ROOT="$WORKSPACE_ROOT" \
+GITHUB_SYNC_ENABLED="${GITHUB_SYNC_ENABLED:-0}" \
+GITHUB_SYNC_REMOTE="${GITHUB_SYNC_REMOTE:-git@github.com:wpp9527/fnos-rebuild-recovery.git}" \
+GITHUB_SYNC_DST="${GITHUB_SYNC_DST:-/tmp/fnos-rebuild-recovery-export}" \
+GITHUB_SYNC_BRANCH="${GITHUB_SYNC_BRANCH:-main}" \
+GITHUB_SYNC_GIT_NAME="${GITHUB_SYNC_GIT_NAME:-wpp9527}" \
+GITHUB_SYNC_GIT_EMAIL="${GITHUB_SYNC_GIT_EMAIL:-wangpengpeng9527@gmail.com}" \
+bash "$SCRIPT_DIR/tasks/publish_github.sh" || log "publish_github: skipped or failed"
+
 # Publish recovery-critical secrets to NAS
 OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-/opt/fnos-media/services/openclaw/home/.openclaw/openclaw.json}" \
 FNOS_MEDIA_ENV="${FNOS_MEDIA_ENV:-/opt/fnos-media-stack/.env}" \
@@ -45,6 +54,8 @@ if [[ -x "$SCRIPT_DIR/audit_runtime_state.sh" ]]; then
   bash "$SCRIPT_DIR/audit_runtime_state.sh" || true
   RUNTIME_AUDIT_STATUS="success"
 fi
+
+GITHUB_VERIFY_REPORT_ROOT="$BACKUP_ROOT/shared/restore-guides/latest" GITHUB_SYNC_REMOTE="${GITHUB_SYNC_REMOTE:-}" GITHUB_SYNC_BRANCH="${GITHUB_SYNC_BRANCH:-main}" GITHUB_SYNC_ENABLED="${GITHUB_SYNC_ENABLED:-0}" bash "$SCRIPT_DIR/verify_github.sh" || log "verify_github: skipped or failed"
 
 if [[ "$RUN_ARCHIVE" == "1" ]]; then
   WORKSPACE_ROOT="$WORKSPACE_ROOT" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="${TIMESTAMP:-}" bash "$SCRIPT_DIR/tasks/archive_snapshot.sh"
