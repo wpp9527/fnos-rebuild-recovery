@@ -29,7 +29,12 @@ publish_tree() {
   ensure_dir "$local_tmp_target"
   rsync -rltD --delete "$source_dir/" "$local_tmp_target/"
   ensure_dir "$tmp_target"
-  cp -r "$local_tmp_target/". "$tmp_target/"
+  timeout 120 rsync -rltD --quiet "$local_tmp_target/". "$tmp_target/" || {
+    log "rsync to NFS timed out; cleaning up local_tmp"
+    rm -rf "$local_tmp_target"
+    rm -rf "$tmp_target"
+    return 1
+  }
   rm -rf "$local_tmp_target"
   if [[ -e "$target_latest" && ! -d "$target_latest" ]]; then
     rm -f "$target_latest"
@@ -63,6 +68,12 @@ if [[ -d "$STAGING_ROOT/lxc-proxy" ]]; then
   LXC_PROXY_TARGET_LATEST="$BACKUP_ROOT/lxc-proxy/latest"
 fi
 
+CONTAINER_VOLUMES_TARGET_LATEST=""
+if [[ -d "$STAGING_ROOT/container-volumes" ]]; then
+  publish_tree "$STAGING_ROOT/container-volumes" "$BACKUP_ROOT/container-volumes"
+  CONTAINER_VOLUMES_TARGET_LATEST="$BACKUP_ROOT/container-volumes/latest"
+fi
+
 SHARED_ROOT="$BACKUP_ROOT/shared"
 ensure_dir "$SHARED_ROOT/version-index/latest"
 ensure_dir "$SHARED_ROOT/restore-guides/latest"
@@ -85,7 +96,10 @@ targets:
   fnos:
     status: $FNOS_STATUS
     latest_path: "$FNOS_TARGET_LATEST"
-must_back_up_local_state:
+container_volumes:
+    status: collected
+    source: container-volumes/latest
+backed_up_local_state:
   - /opt/fnos-media-stack/homarr/config
   - /opt/fnos-media-stack/homarr/appdata
   - /opt/fnos-media-stack/halo/config

@@ -19,6 +19,8 @@ WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" bash "$SCRIPT_DIR/
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" PVE_ENABLED="${PVE_ENABLED:-0}" PVE_SSH_HOST="${PVE_SSH_HOST:-}" bash "$SCRIPT_DIR/tasks/collect_pve.sh"
 WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" FNOS_ENABLED="${FNOS_ENABLED:-0}" FNOS_SSH_HOST="${FNOS_SSH_HOST:-}" bash "$SCRIPT_DIR/tasks/collect_fnos.sh"
 
+STAGING_ROOT="$STAGING_ROOT" bash "$SCRIPT_DIR/tasks/collect_container_volumes.sh" || log "collect_container_volumes: failed"
+
 # Collect LXC proxy if PVE is enabled
 if [[ "${PVE_ENABLED:-0}" == "1" && -n "${PVE_SSH_HOST:-}" ]]; then
   STAGING_ROOT="$STAGING_ROOT/lxc-proxy" \

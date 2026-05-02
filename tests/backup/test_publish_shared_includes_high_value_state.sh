@@ -20,5 +20,5 @@ MANIFEST="$BACKUP_ROOT/shared/version-index/latest/backup_target_manifest.yaml"
 [[ -f "$GUIDE" ]] || { echo 'restore guide missing' >&2; exit 1; }
 [[ -f "$MANIFEST" ]] || { echo 'backup manifest missing' >&2; exit 1; }
 grep -Fq 'high-value local state' "$GUIDE" || { echo 'restore guide missing high-value local state note' >&2; exit 1; }
-grep -Fq 'must_back_up_local_state' "$MANIFEST" || { echo 'manifest missing must_back_up_local_state' >&2; exit 1; }
+grep -Fq 'backed_up_local_state' "$MANIFEST" || { echo 'manifest missing must_back_up_local_state' >&2; exit 1; }
 echo 'PASS test_publish_shared_includes_high_value_state'

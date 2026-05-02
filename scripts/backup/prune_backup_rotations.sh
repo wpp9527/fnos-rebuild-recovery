@@ -15,7 +15,7 @@ prune_rotations_under() {
   find "$target_base" -mindepth 1 -maxdepth 1 \( -name '.tmp-latest-*' -o -name '.prev-latest-*' \) -print0 |
   while IFS= read -r -d '' path; do
     log "prune rotation: $path"
-    rm -rf "$path"
+    timeout 30 rm -rf "$path" || log "prune timed out for $path (NFS slow)"
   done
 }
 
