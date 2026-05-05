@@ -34,3 +34,8 @@
 - `/memory/integration-final-report.md`
 - `/memory/role-skills-recommendation.json`
 - `/memory/knowledge-bases-and-skills.md`
+
+## Promoted From Short-Term Memory (2026-05-04)
+
+<!-- openclaw-memory-promotion:memory:memory/2026-04-26.md:26:28 -->
+- - 修复方向已确定并完成：将 ClawPanel 从 `nginx:alpine` 的静态模式切换为 `node scripts/serve.js` 的 headless 模式；修复后 `http://127.0.0.1:1420/__api/health` 返回 `HTTP/1.1 200 OK` + `Content-Type: application/json` + `{"ok":true,...}`，`http://127.0.0.1:1420/__api/auth_check` 返回 JSON，`http://127.0.0.1:1420/` 仍正常返回前端页面。 - 另一个已确认的接入问题：ClawPanel 之前误读的是 `/root/.openclaw`，而当前机器真实运行的 OpenClaw home 是 `/opt/fnos-media/services/openclaw/home/.openclaw`；因此面板会错误提示未接入/未安装。已确认 `/root/.openclaw/openclaw.json` 是旧实例配置，`/opt/fnos-media/services/openclaw/home/.openclaw/openclaw.json` 才是当前有效实例配置。 - ClawPanel 当前应绑定的关键路径/二进制：`openclawDir=/opt/fnos-media/services/openclaw/home/.openclaw`、`openclawCliPath=/usr/bin/openclaw`、`gitPath=/usr/bin/git`；用户后续若再遇到“检测不到 OpenClaw”，优先检查是否又回退到 `/root/.openclaw`。 [score=0.896 recalls=0 avg=0.620 source=memory/2026-04-26.md:26-28]
