@@ -1,0 +1,16 @@
+tier1:
+  - /opt/fnos-media/manifests
+  - /opt/fnos-media/services/media-stack
+  - /opt/fnos-media/services/openclaw
+  - /opt/fnos-media/services/hermes-openwebui/data
+  - /opt/fnos-media/services/docker-stack/ai-proxy/cliproxyapi/auths
+  - /opt/fnos-media/fnos-media-stack
+  - /opt/fnos-media/docker-volumes/homarr-appdata
+
+tier2:
+  - /opt/fnos-media/downloads
+  - /opt/fnos-media/cache
+
+tier3:
+  - /opt/fnos-media/media
+  - /opt/fnos-media/firmware

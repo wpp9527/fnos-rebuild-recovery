@@ -1,0 +1,92 @@
+# 恢复目标路径架构
+
+## 统一目标结构
+
+所有恢复内容统一放在目标目录下，不再分散到系统各处。
+
+### 默认目标：`/opt/restore/` 或用户指定
+
+```
+<TARGET_ROOT>/
+├── config/                          # 所有配置文件
+│   ├── openclaw/
+│   │   ├── .env                     # OpenClaw secrets
+│   │   ├── openclaw.json
+│   │   └── clawpanel.json
+│   ├── fnos-media-stack/
+│   │   ├── docker-compose.yml
+│   │   ├── .env                     # 服务 secrets
+│   │   ├── homarr/
+│   │   ├── halo/
+│   │   ├── jellyfin/
+│   │   ├── radarr/
+│   │   ├── sonarr/
+│   │   ├── prowlarr/
+│   │   ├── bazarr/
+│   │   ├── seerr/
+│   │   ├── stash/
+│   │   ├── qbittorrent/
+│   │   └── jackett/
+│   ├── channels/
+│   │   ├── feishu/
+│   │   └── qq/
+│   ├── hermes-openwebui/
+│   └── cliproxyapi/
+│       ├── auths/
+│       └── config.yaml
+│
+├── data/                            # 所有数据文件
+│   ├── homarr-appdata/
+│   ├── halo-content/
+│   ├── jellyfin/
+│   ├── stash/
+│   │   ├── metadata/
+│   │   ├── blobs/
+│   │   └── generated/
+│   └── hermes-openwebui/
+│
+├── pve/                             # PVE 配置备份
+│   ├── hostname.txt
+│   ├── pve-config.tar.gz
+│   ├── vm-list.txt
+│   ├── ct-list.txt
+│   ├── storage-list.txt
+│   └── network-interfaces.txt
+│
+├── workspace/                       # OpenClaw workspace
+│   ├── docs/
+│   ├── scripts/
+│   ├── memory/
+│   ├── restore/
+│   └── manifests/
+│
+└── reports/                         # 恢复报告
+    ├── restore-plan.md
+    └── verification/
+```
+
+## 部署到生产位置
+
+恢复完成后，如果需要部署到实际运行位置：
+
+```bash
+# 示例：部署 fnos-media-stack
+cp -r <TARGET_ROOT>/config/fnos-media-stack /opt/fnos-media-stack/
+cp -r <TARGET_ROOT>/data/homarr-appdata /opt/fnos-media-stack/homarr/appdata/
+
+# 示例：部署 OpenClaw
+cp -r <TARGET_ROOT>/workspace /opt/fnos-media/services/openclaw/home/.openclaw/
+cp <TARGET_ROOT>/config/openclaw/.env /opt/fnos-media/services/openclaw/home/.openclaw/
+```
+
+## 必须在特定位置的服务
+
+某些服务必须运行在特定路径：
+
+| 服务 | 原因 | 处理方式 |
+|------|------|---------|
+| Docker volumes | Docker 要求 | 符号链接或单独恢复 |
+| PVE config | PVE 读取 /etc/pve | 从 tar.gz 手动解压 |
+| Systemd services | 系统路径 | 需要单独安装 |
+
+这些在恢复后提供部署脚本辅助迁移。
