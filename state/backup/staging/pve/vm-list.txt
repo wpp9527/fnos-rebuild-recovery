@@ -1,0 +1,5 @@
+      VMID NAME                 STATUS     MEM(MB)    BOOTDISK(GB) PID       
+       100 TrueNAS              running    16384             32.00 2515      
+       101 FNOS                 running    32768              0.00 882224    
+       102 MACOS                stopped    8192             100.00 0         
+       104 dnf-llnut            running    8192             100.00 4070533   

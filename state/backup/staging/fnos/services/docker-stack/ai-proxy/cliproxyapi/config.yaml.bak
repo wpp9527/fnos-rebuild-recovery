@@ -1,0 +1,35 @@
+host: ''
+port: 8317
+tls:
+  enable: false
+  cert: ''
+  key: ''
+remote-management:
+  allow-remote: true
+  secret-key: $2a$10$rw7b9lDlja75MHxiLCT80.D2AMmdCI1GH96h7YawcNqkekcN3g9IK
+  disable-control-panel: false
+  panel-github-repository: https://github.com/router-for-me/Cli-Proxy-API-Management-Center
+auth-dir: /root/.cli-proxy-api
+api-keys:
+  - FLh4gvKfBrhbrJW9OvKqFPoNEYrbEZaN
+debug: false
+logging-to-file: true
+usage-statistics-enabled: true
+proxy-url: http://192.168.1.213:7890
+routing:
+  strategy: round-robin
+openai-compatibility:
+  - name: NVIDIA 候选
+    base-url: https://integrate.api.nvidia.com/v1
+    api-key-entries:
+      - api-key: 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
+    models:
+      - name: minimaxai/minimax-m2.7
+        alias: ""
+cors:
+  enabled: true
+  allow-origins:
+    - "https://cpi.19930901.xyz:5000"  # 你的完整外网地址
+    - "http://192.168.1.212:8317" # 保留内网地址，方便本地访问
+  allow-methods: ["GET", "POST", "OPTIONS"]
+  allow-headers: ["*"]

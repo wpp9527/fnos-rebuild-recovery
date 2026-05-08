@@ -1,0 +1,9 @@
+# CLIProxyAPI config example
+# Fill locally later according to actual provider/OAuth plan.
+
+server:
+  host: 0.0.0.0
+  port: 8317
+
+providers: []
+routes: []

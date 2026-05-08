@@ -1,0 +1,142 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: rule
+log-level: info
+external-controller: '127.0.0.1:9090'
+unified-delay: true
+tcp-concurrent: true
+geox-url:
+    geoip: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat'
+    geosite: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat'
+    mmdb: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb'
+dns:
+    enable: true
+    ipv6: true
+    enhanced-mode: fake-ip
+    fake-ip-range: 198.18.0.1/16
+    use-hosts: true
+    default-nameserver: [system, 119.29.29.29, 223.5.5.5, 114.114.114.114, '2400:3200::1']
+    nameserver: ['https://223.5.5.5/dns-query#skip-cert-verify=true', 'https://doh.pub/dns-query#skip-cert-verify=true', 'https://dns.alidns.com/dns-query#skip-cert-verify=true', 'tls://223.5.5.5#skip-cert-verify=true', 'tls://dot.pub#skip-cert-verify=true', 'tls://dns.alidns.com#skip-cert-verify=true']
+    proxy-server-nameserver: ['https://223.5.5.5/dns-query#skip-cert-verify=true', 'https://doh.pub/dns-query#skip-cert-verify=true', 'https://dns.alidns.com/dns-query#skip-cert-verify=true', 'tls://223.5.5.5#skip-cert-verify=true', 'tls://dot.pub#skip-cert-verify=true', 'tls://dns.alidns.com#skip-cert-verify=true']
+    fake-ip-filter: ['*.lan', '*.localdomain', '*.example', '*.invalid', '*.localhost', '*.test', '*.local', '*.home.arpa', 'time.*.com', 'time.*.gov', 'time.*.edu.cn', 'time.*.apple.com', 'time1.*.com', 'time2.*.com', 'time3.*.com', 'time4.*.com', 'time5.*.com', 'time6.*.com', 'time7.*.com', 'ntp.*.com', 'ntp1.*.com', 'ntp2.*.com', 'ntp3.*.com', 'ntp4.*.com', 'ntp5.*.com', 'ntp6.*.com', 'ntp7.*.com', '*.time.edu.cn', '*.ntp.org.cn', +.pool.ntp.org, time1.cloud.tencent.com, 'stun.*.*', 'stun.*.*.*', swscan.apple.com, mesu.apple.com, music.163.com, '*.music.163.com', '*.126.net', musicapi.taihe.com, music.taihe.com, songsearch.kugou.com, trackercdn.kugou.com, '*.kuwo.cn', api-jooxtt.sanook.com, api.joox.com, y.qq.com, '*.y.qq.com', streamoc.music.tc.qq.com, mobileoc.music.tc.qq.com, isure.stream.qqmusic.qq.com, dl.stream.qqmusic.qq.com, aqqmusic.tc.qq.com, amobile.music.tc.qq.com, localhost.ptlogin2.qq.com, '*.msftconnecttest.com', '*.msftncsi.com', '*.xiami.com', '*.music.migu.cn', music.migu.cn, +.wotgame.cn, +.wggames.cn, +.wowsgame.cn, +.wargaming.net, '*.*.*.srv.nintendo.net', '*.*.stun.playstation.net', 'xbox.*.*.microsoft.com', '*.*.xboxlive.com', '*.ipv6.microsoft.com', 'teredo.*.*.*', 'teredo.*.*', speedtest.cros.wr.pvp.net, +.jjvip8.com, www.douyu.com, activityapi.huya.com, activityapi.huya.com.w.cdngslb.com, www.bilibili.com, api.bilibili.com, a.w.bilicdn1.com]
+proxies:
+    - { name: '剩余流量：190.34 GB', type: trojan, server: 114514.aikunapp.com, port: 6011, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, skip-cert-verify: true, sni: 127.0.0.1, client-fingerprint: chrome, network: grpc, grpc-opts: { grpc-service-name: smjc-grpc-1 } }
+    - { name: '距离下次重置剩余：13 天', type: trojan, server: 114514.aikunapp.com, port: 6011, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, skip-cert-verify: true, sni: 127.0.0.1, client-fingerprint: chrome, network: grpc, grpc-opts: { grpc-service-name: smjc-grpc-1 } }
+    - { name: 套餐到期：2026-08-10, type: trojan, server: 114514.aikunapp.com, port: 6011, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, skip-cert-verify: true, sni: 127.0.0.1, client-fingerprint: chrome, network: grpc, grpc-opts: { grpc-service-name: smjc-grpc-1 } }
+    - { name: （备用）兼容节点, type: trojan, server: 114514.aikunapp.com, port: 6011, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, skip-cert-verify: true, sni: 127.0.0.1, client-fingerprint: chrome, network: grpc, grpc-opts: { grpc-service-name: smjc-grpc-1 } }
+    - { name: 2x专线-日本-1, type: anytls, server: v4-aws-jp.aikunapp.com, port: 7001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: d1--cn-gotcha204-3.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 2x专线-香港-1, type: anytls, server: v4-aws-hk.aikunapp.com, port: 7001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: d1--cn-gotcha204-3.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 2x专线-新加坡-1, type: anytls, server: v4-aws-sg.aikunapp.com, port: 7001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: d1--cn-gotcha204-3.bilivideo.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 新加坡1|高速下载|移动优化, type: anytls, server: sg-fdc.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: 127.0.0.1, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 新加坡2|高速下载|移动优化, type: anytls, server: sg-fdc2.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: jheigerg.fdcservers.net, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: '2x专线-日本-2 (IPv6)', type: trojan, server: v6-aws-jp.aikunapp.com, port: 7001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, skip-cert-verify: true, sni: d1--cn-gotcha204-3.bilivideo.com, client-fingerprint: chrome, network: tcp }
+    - { name: '2x专线-日本-3 (IPv6)', server: v6-aws-jp.aikunapp.com, port: 7001, skip-cert-verify: true, sni: d1--cn-gotcha204-3.bilivideo.com, type: hysteria2, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce }
+    - { name: '2x专线-香港-2 (IPv6)', type: trojan, server: v6-aws-hk.aikunapp.com, port: 7001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, skip-cert-verify: true, sni: d1--cn-gotcha204-3.bilivideo.com, client-fingerprint: chrome, network: tcp }
+    - { name: '2x专线-香港-3 (IPv6)', server: v6-aws-hk.aikunapp.com, port: 7001, skip-cert-verify: true, sni: d1--cn-gotcha204-3.bilivideo.com, type: hysteria2, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce }
+    - { name: '2x专线-新加坡-2 (IPv6)', type: trojan, server: v6-aws-sg.aikunapp.com, port: 7001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, skip-cert-verify: true, sni: d1--cn-gotcha204-3.bilivideo.com, client-fingerprint: chrome, network: tcp }
+    - { name: '2x专线-新加坡-3 (IPv6)', server: v6-aws-sg.aikunapp.com, port: 7001, skip-cert-verify: true, sni: d1--cn-gotcha204-3.bilivideo.com, type: hysteria2, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce }
+    - { name: 美国洛杉矶-1, type: anytls, server: us-pz.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: 127.0.0.1, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 美国洛杉矶-2, type: anytls, server: tj-us-1.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: bootcdn.xuexi.cn, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 韩国|移动联通优化, type: anytls, server: krgc.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: s0.awsstatic.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 如果很少节点可用，去官网更新软件, type: vmess, server: 127.0.0.1, port: 20003, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, network: tcp }
+    - { name: '新加坡 cdn 1|电信高速', type: vless, server: cdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, flow: null, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: sm-1cl.hoyoverse.online, smux: { enabled: true }, network: ws, ws-opts: { path: '/3021/index?ed=4096', headers: { Host: sg-sm.hoyoverse.online } } }
+    - { name: '新加坡 cdn 2|电信高速', type: vmess, server: cdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: sm-vm1cl.sm-node.com, smux: { enabled: true }, network: ws, ws-opts: { path: '/3011/index?ed=4096', headers: { Host: cdn-sg.sm-node.com } } }
+    - { name: '香港 cdn 1|电信移动高速', type: vless, server: cdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, flow: null, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: sm-1cl.hoyoverse.online, smux: { enabled: true }, network: ws, ws-opts: { path: '/3021/index?ed=4096', headers: { Host: hk-sm.hoyoverse.online } } }
+    - { name: '香港 cdn 2|电信移动高速', type: vmess, server: cdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: sm-vm2cl.hoyoverse.online, smux: { enabled: true }, network: ws, ws-opts: { path: '/3011/index?ed=4096', headers: { Host: hk-sm.hoyoverse.online } } }
+    - { name: '加拿大 IPv6', server: '2607:5300:205:200::7996', port: 5021, skip-cert-verify: true, sni: d1--cn-gotcha204-4.bilivideo.com, type: hysteria2, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce }
+    - { name: '法国 IPv6', server: '2001:41d0:305:2100::3967', port: 5021, skip-cert-verify: true, sni: d1--cn-gotcha204-4.bilivideo.com, type: hysteria2, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce }
+    - { name: '德国 IPv6', server: '2001:41d0:701:1100::64a2', port: 5021, skip-cert-verify: true, sni: d1--cn-gotcha204-4.bilivideo.com, type: hysteria2, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce }
+    - { name: 俄罗斯|国际网站打不开|电信联通优化, type: anytls, server: vl-ru.aikunapp.com, port: 443, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: sm.localhost, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 英国|AI推荐, type: anytls, server: 51.89.216.207, port: 443, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: sm.localhost, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 加拿大|AI推荐, type: anytls, server: 158.69.192.77, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: swcdn.apple.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 德国|AI推荐, type: anytls, server: 51.75.77.164, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: swcdn.apple.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 法国|AI推荐, type: anytls, server: 51.68.227.243, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: swcdn.apple.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: '加拿大 高速 cdn 1', type: vless, server: cdncdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, flow: null, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: sm-1cl.xn--osvr71goa.com, smux: { enabled: true }, network: ws, ws-opts: { path: '/3021/index?ed=4096', headers: { Host: sm-ca1.xn--osvr71goa.com } } }
+    - { name: '美国 高速 cdn 1', type: vless, server: cdncdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, flow: null, tls: true, skip-cert-verify: false, client-fingerprint: chrome, servername: sm-1cl.xn--osvr71goa.com, smux: { enabled: true }, network: ws, ws-opts: { path: '/3021/index?ed=4096', headers: { Host: sm-us1.xn--osvr71goa.com } } }
+    - { name: '加拿大 高速 cdn 2', type: vmess, server: cdncdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, tls: true, skip-cert-verify: true, client-fingerprint: chrome, servername: sm-vm1cl.sm-node.com, smux: { enabled: true }, network: ws, ws-opts: { path: '/vmess_ws/smjc/index?ed=4096', headers: { Host: cdn-ca.sm-node.com } } }
+    - { name: '美国 高速 cdn 2', type: vmess, server: cdncdncdn.aikunapp.com, port: 443, uuid: 47bcba54-1908-4e4c-8f76-e6199603e1ce, alterId: 0, cipher: auto, udp: true, tls: true, skip-cert-verify: true, client-fingerprint: chrome, servername: sm-vm1cl.sm-node.com, smux: { enabled: true }, network: ws, ws-opts: { path: '/vmess_ws/smjc/index?ed=4096', headers: { Host: cdn-us.sm-node.com } } }
+    - { name: 香港原生（樱花中转）, type: anytls, server: tj-hk-1.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: PR7mGZqZYiRfmewQ.apple.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: '香港 原生ip 1|勿跑大流量', type: anytls, server: hktddns1.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: www.apple.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: '香港 原生ip 2|勿跑大流量', type: anytls, server: hktddns2.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: www.apple.com, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 台湾1|AI专用|勿跑大流量, type: anytls, server: hinetddns1.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: bootcdn.xuexi.cn, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: 台湾2|AI专用|勿跑大流量, type: anytls, server: hinetddns2.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: hsgagfahfa.local, skip-cert-verify: true, client-fingerprint: chrome }
+    - { name: '日本 樱花', type: anytls, server: tj-jp-1.aikunapp.com, port: 6001, password: 47bcba54-1908-4e4c-8f76-e6199603e1ce, udp: true, sni: bootcdn.xuexi.cn, skip-cert-verify: true, client-fingerprint: chrome }
+proxy-groups:
+    - { name: 三毛机场, type: select, proxies: ['♻️ 自动选择', '剩余流量：190.34 GB', '距离下次重置剩余：13 天', 套餐到期：2026-08-10, （备用）兼容节点, 2x专线-日本-1, 2x专线-香港-1, 2x专线-新加坡-1, 新加坡1|高速下载|移动优化, 新加坡2|高速下载|移动优化, '2x专线-日本-2 (IPv6)', '2x专线-日本-3 (IPv6)', '2x专线-香港-2 (IPv6)', '2x专线-香港-3 (IPv6)', '2x专线-新加坡-2 (IPv6)', '2x专线-新加坡-3 (IPv6)', 美国洛杉矶-1, 美国洛杉矶-2, 韩国|移动联通优化, 如果很少节点可用，去官网更新软件, '新加坡 cdn 1|电信高速', '新加坡 cdn 2|电信高速', '香港 cdn 1|电信移动高速', '香港 cdn 2|电信移动高速', '加拿大 IPv6', '法国 IPv6', '德国 IPv6', 俄罗斯|国际网站打不开|电信联通优化, 英国|AI推荐, 加拿大|AI推荐, 德国|AI推荐, 法国|AI推荐, '加拿大 高速 cdn 1', '美国 高速 cdn 1', '加拿大 高速 cdn 2', '美国 高速 cdn 2', 香港原生（樱花中转）, '香港 原生ip 1|勿跑大流量', '香港 原生ip 2|勿跑大流量', 台湾1|AI专用|勿跑大流量, 台湾2|AI专用|勿跑大流量, '日本 樱花'], url: 'http://www.apple.com/library/test/success.html', interval: 1800 }
+    - { name: '♻️ 自动选择', type: url-test, proxies: ['剩余流量：190.34 GB', '距离下次重置剩余：13 天', 套餐到期：2026-08-10, （备用）兼容节点, 2x专线-日本-1, 2x专线-香港-1, 2x专线-新加坡-1, 新加坡1|高速下载|移动优化, 新加坡2|高速下载|移动优化, '2x专线-日本-2 (IPv6)', '2x专线-日本-3 (IPv6)', '2x专线-香港-2 (IPv6)', '2x专线-香港-3 (IPv6)', '2x专线-新加坡-2 (IPv6)', '2x专线-新加坡-3 (IPv6)', 美国洛杉矶-1, 美国洛杉矶-2, 韩国|移动联通优化, 如果很少节点可用，去官网更新软件, '新加坡 cdn 1|电信高速', '新加坡 cdn 2|电信高速', '香港 cdn 1|电信移动高速', '香港 cdn 2|电信移动高速', '加拿大 IPv6', '法国 IPv6', '德国 IPv6', 俄罗斯|国际网站打不开|电信联通优化, 英国|AI推荐, 加拿大|AI推荐, 德国|AI推荐, 法国|AI推荐, '加拿大 高速 cdn 1', '美国 高速 cdn 1', '加拿大 高速 cdn 2', '美国 高速 cdn 2', 香港原生（樱花中转）, '香港 原生ip 1|勿跑大流量', '香港 原生ip 2|勿跑大流量', 台湾1|AI专用|勿跑大流量, 台湾2|AI专用|勿跑大流量, '日本 樱花'], url: 'http://www.apple.com/library/test/success.html', interval: 1800 }
+rules:
+    - 'DOMAIN,api.ip.sb,REJECT'
+    - 'DOMAIN,ipapi.co,REJECT'
+    - 'DOMAIN,api.ipapi.is,REJECT'
+    - 'DOMAIN,ipwho.is,REJECT'
+    - 'DOMAIN,injections.adguard.org,DIRECT'
+    - 'DOMAIN,local.adguard.org,DIRECT'
+    - 'IP-CIDR,0.0.0.0/8,DIRECT,no-resolve'
+    - 'IP-CIDR,10.0.0.0/8,DIRECT,no-resolve'
+    - 'IP-CIDR,100.64.0.0/10,DIRECT,no-resolve'
+    - 'IP-CIDR,127.0.0.0/8,DIRECT,no-resolve'
+    - 'IP-CIDR,169.254.0.0/16,DIRECT,no-resolve'
+    - 'IP-CIDR,172.16.0.0/12,DIRECT,no-resolve'
+    - 'IP-CIDR,192.0.0.0/24,DIRECT,no-resolve'
+    - 'IP-CIDR,192.0.2.0/24,DIRECT,no-resolve'
+    - 'IP-CIDR,192.88.99.0/24,DIRECT,no-resolve'
+    - 'IP-CIDR,192.168.0.0/16,DIRECT,no-resolve'
+    - 'IP-CIDR,198.18.0.0/15,DIRECT,no-resolve'
+    - 'IP-CIDR,198.51.100.0/24,DIRECT,no-resolve'
+    - 'IP-CIDR,203.0.113.0/24,DIRECT,no-resolve'
+    - 'IP-CIDR,224.0.0.0/3,DIRECT,no-resolve'
+    - 'IP-CIDR,::/127,DIRECT,no-resolve'
+    - 'IP-CIDR,fc00::/7,DIRECT,no-resolve'
+    - 'IP-CIDR,fe80::/10,DIRECT,no-resolve'
+    - 'IP-CIDR,ff00::/8,DIRECT,no-resolve'
+    - 'RULE-SET,private_domain,DIRECT,no-resolve'
+    - 'IP-CIDR,5.28.195.0/24,REJECT,no-resolve'
+    - 'DOMAIN,safebrowsing.urlsec.qq.com,DIRECT'
+    - 'DOMAIN,safebrowsing.googleapis.com,DIRECT'
+    - 'DOMAIN,developer.apple.com,三毛机场'
+    - 'DOMAIN-SUFFIX,digicert.com,三毛机场'
+    - 'DOMAIN,ocsp.apple.com,三毛机场'
+    - 'DOMAIN,ocsp.comodoca.com,三毛机场'
+    - 'DOMAIN,ocsp.usertrust.com,三毛机场'
+    - 'DOMAIN,ocsp.sectigo.com,三毛机场'
+    - 'DOMAIN,ocsp.verisign.net,三毛机场'
+    - 'DOMAIN-SUFFIX,apple-dns.net,三毛机场'
+    - 'DOMAIN,testflight.apple.com,三毛机场'
+    - 'DOMAIN,sandbox.itunes.apple.com,三毛机场'
+    - 'DOMAIN,itunes.apple.com,三毛机场'
+    - 'DOMAIN-SUFFIX,apps.apple.com,三毛机场'
+    - 'DOMAIN-SUFFIX,blobstore.apple.com,三毛机场'
+    - 'DOMAIN,cvws.icloud-content.com,三毛机场'
+    - 'DOMAIN-SUFFIX,mzstatic.com,DIRECT'
+    - 'DOMAIN-SUFFIX,itunes.apple.com,DIRECT'
+    - 'DOMAIN-SUFFIX,icloud.com,DIRECT'
+    - 'DOMAIN-SUFFIX,icloud-content.com,DIRECT'
+    - 'DOMAIN-SUFFIX,me.com,DIRECT'
+    - 'DOMAIN-SUFFIX,aaplimg.com,DIRECT'
+    - 'DOMAIN-SUFFIX,cdn20.com,DIRECT'
+    - 'DOMAIN-SUFFIX,cdn-apple.com,DIRECT'
+    - 'DOMAIN-SUFFIX,akadns.net,DIRECT'
+    - 'DOMAIN-SUFFIX,akamaiedge.net,DIRECT'
+    - 'DOMAIN-SUFFIX,edgekey.net,DIRECT'
+    - 'DOMAIN-SUFFIX,mwcloudcdn.com,DIRECT'
+    - 'DOMAIN-SUFFIX,mwcname.com,DIRECT'
+    - 'DOMAIN-SUFFIX,apple.com,DIRECT'
+    - 'DOMAIN-SUFFIX,apple-cloudkit.com,DIRECT'
+    - 'DOMAIN-SUFFIX,apple-mapkit.com,DIRECT'
+    - 'AND,((DST-PORT,443),(NETWORK,UDP)),REJECT'
+    - 'DOMAIN-SUFFIX,services.googleapis.cn,三毛机场'
+    - 'DOMAIN-SUFFIX,xn--ngstr-lra8j.com,三毛机场'
+    - 'RULE-SET,geolocation-!cn,三毛机场,no-resolve'
+    - 'RULE-SET,cn_domain,DIRECT,no-resolve'
+    - 'IP-CIDR,221.228.32.13/32,三毛机场'
+    - 'RULE-SET,cn_ip,DIRECT'
+    - 'MATCH,三毛机场'
+rule-anchor:
+    ip: { type: http, interval: 86400, behavior: ipcidr, format: mrs }
+    domain: { type: http, interval: 86400, behavior: domain, format: mrs }
+rule-providers:
+    private_domain: { type: http, interval: 86400, behavior: domain, format: mrs, url: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs' }
+    cn_domain: { type: http, interval: 86400, behavior: domain, format: mrs, url: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs' }
+    geolocation-!cn: { type: http, interval: 86400, behavior: domain, format: mrs, url: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-!cn.mrs' }
+    cn_ip: { type: http, interval: 86400, behavior: ipcidr, format: mrs, url: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cn.mrs' }

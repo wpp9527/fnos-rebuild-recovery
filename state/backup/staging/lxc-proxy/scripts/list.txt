@@ -1,0 +1,4 @@
+total 12
+drwxr-xr-x  2 root root 4096 Mar 28 18:14 .
+drwxr-xr-x 10 root root 4096 Mar 30 16:26 ..
+-rwxr-xr-x  1 root root  290 Mar 28 18:14 healthcheck.sh

@@ -1,0 +1,212 @@
+from __future__ import annotations
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from typing import Any
+
+TRUTH_FASTPATH = os.getenv("TRUTH_FASTPATH", "1") == "1"
+TRUTH_REPLY_SCRIPT = os.getenv("TRUTH_REPLY_SCRIPT", "/governance_scripts/runtime_truth_reply.py")
+TRUTH_FASTPATH_TIMEOUT = float(os.getenv("TRUTH_FASTPATH_TIMEOUT", "5"))
+KEYWORDS = re.compile(r"(模型|主模型|fallback|provider|分配|配备|备用链|角色|太子|中书省|门下省|尚书省|户部|工部|度支司)", re.I)
+
+
+def _log(msg: str) -> None:
+    print(f"[truth-fastpath] {msg}", flush=True)
+
+
+def _is_chat_url(url: str) -> bool:
+    u = (url or "").lower()
+    return "/chat/completions" in u or u.endswith("/completions")
+
+
+def _normalize_content(content: Any) -> str:
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                if item.get("type") == "text" and item.get("text"):
+                    parts.append(str(item["text"]))
+                elif "content" in item:
+                    parts.append(_normalize_content(item["content"]))
+        return " ".join([p.strip() for p in parts if str(p).strip()]).strip()
+    if isinstance(content, dict):
+        if "text" in content:
+            return str(content["text"]).strip()
+        if "content" in content:
+            return _normalize_content(content["content"])
+    return ""
+
+
+def _extract_user_text(payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return ""
+
+    if isinstance(payload.get("input"), str):
+        return str(payload["input"]).strip()
+
+    messages = payload.get("messages")
+    if isinstance(messages, list):
+        for message in reversed(messages):
+            if not isinstance(message, dict):
+                continue
+            role = str(message.get("role", "")).lower()
+            if role == "user":
+                text = _normalize_content(message.get("content"))
+                if text:
+                    return text
+        for message in reversed(messages):
+            if not isinstance(message, dict):
+                continue
+            text = _normalize_content(message.get("content"))
+            if text:
+                return text
+
+    prompt = payload.get("prompt")
+    if isinstance(prompt, str):
+        return prompt.strip()
+    return ""
+
+
+def _should_fastpath(text: str) -> bool:
+    return bool(text and KEYWORDS.search(text))
+
+
+def _run_truth_reply(text: str) -> tuple[bool, str]:
+    try:
+        proc = subprocess.run(
+            [sys.executable, TRUTH_REPLY_SCRIPT, text],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=TRUTH_FASTPATH_TIMEOUT,
+            check=False,
+        )
+        out = (proc.stdout or "").strip()
+        if out:
+            return True, out
+        return False, "当前真相索引读取失败，请稍后重试。"
+    except Exception:
+        return False, "当前真相索引读取失败，请稍后重试。"
+
+
+def _chat_payload(text: str) -> dict[str, Any]:
+    return {
+        "id": f"chatcmpl-truth-fastpath-{int(time.time())}",
+        "object": "chat.completion",
+        "created": int(time.time()),
+        "model": "truth-fastpath/local-runtime",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": text},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+        },
+    }
+
+
+def _patch_requests() -> None:
+    try:
+        import requests
+        from requests.structures import CaseInsensitiveDict
+    except Exception:
+        return
+
+    original = requests.sessions.Session.request
+
+    def patched(self, method, url, *args, **kwargs):
+        if TRUTH_FASTPATH and str(method).upper() == "POST" and _is_chat_url(str(url)):
+            payload = kwargs.get("json")
+            if payload is None and isinstance(kwargs.get("data"), (str, bytes)):
+                try:
+                    raw = kwargs["data"].decode() if isinstance(kwargs["data"], bytes) else kwargs["data"]
+                    payload = json.loads(raw)
+                except Exception:
+                    payload = None
+            user_text = _extract_user_text(payload)
+            if _should_fastpath(user_text):
+                ok, reply_text = _run_truth_reply(user_text)
+                tag = "FASTPATH_HIT" if ok else "FASTPATH_FAIL_CLOSED"
+                _log(f"{tag} requests url={url} user_text={user_text}")
+                resp = requests.Response()
+                resp.status_code = 200
+                resp.url = str(url)
+                resp.headers = CaseInsensitiveDict({"Content-Type": "application/json; charset=utf-8"})
+                resp.encoding = "utf-8"
+                resp._content = json.dumps(_chat_payload(reply_text), ensure_ascii=False).encode("utf-8")
+                return resp
+            _log(f"FASTPATH_MISS requests url={url} user_text={user_text}")
+        return original(self, method, url, *args, **kwargs)
+
+    requests.sessions.Session.request = patched
+
+
+def _patch_httpx() -> None:
+    try:
+        import httpx
+    except Exception:
+        return
+
+    original_client_request = httpx.Client.request
+    original_async_request = httpx.AsyncClient.request
+
+    def patched_client(self, method, url, *args, **kwargs):
+        if TRUTH_FASTPATH and str(method).upper() == "POST" and _is_chat_url(str(url)):
+            payload = kwargs.get("json")
+            if payload is None and isinstance(kwargs.get("content"), (str, bytes)):
+                try:
+                    raw = kwargs["content"].decode() if isinstance(kwargs["content"], bytes) else kwargs["content"]
+                    payload = json.loads(raw)
+                except Exception:
+                    payload = None
+            user_text = _extract_user_text(payload)
+            if _should_fastpath(user_text):
+                ok, reply_text = _run_truth_reply(user_text)
+                tag = "FASTPATH_HIT" if ok else "FASTPATH_FAIL_CLOSED"
+                _log(f"{tag} httpx url={url} user_text={user_text}")
+                request = httpx.Request(method, str(url))
+                return httpx.Response(200, json=_chat_payload(reply_text), request=request)
+            _log(f"FASTPATH_MISS httpx url={url} user_text={user_text}")
+        return original_client_request(self, method, url, *args, **kwargs)
+
+    async def patched_async(self, method, url, *args, **kwargs):
+        if TRUTH_FASTPATH and str(method).upper() == "POST" and _is_chat_url(str(url)):
+            payload = kwargs.get("json")
+            if payload is None and isinstance(kwargs.get("content"), (str, bytes)):
+                try:
+                    raw = kwargs["content"].decode() if isinstance(kwargs["content"], bytes) else kwargs["content"]
+                    payload = json.loads(raw)
+                except Exception:
+                    payload = None
+            user_text = _extract_user_text(payload)
+            if _should_fastpath(user_text):
+                ok, reply_text = _run_truth_reply(user_text)
+                tag = "FASTPATH_HIT" if ok else "FASTPATH_FAIL_CLOSED"
+                _log(f"{tag} httpx-async url={url} user_text={user_text}")
+                request = httpx.Request(method, str(url))
+                return httpx.Response(200, json=_chat_payload(reply_text), request=request)
+            _log(f"FASTPATH_MISS httpx-async url={url} user_text={user_text}")
+        return await original_async_request(self, method, url, *args, **kwargs)
+
+    httpx.Client.request = patched_client
+    httpx.AsyncClient.request = patched_async
+
+
+try:
+    _patch_requests()
+    _patch_httpx()
+    _log(f"sitecustomize active reply_script={TRUTH_REPLY_SCRIPT} timeout={TRUTH_FASTPATH_TIMEOUT}")
+except Exception as exc:
+    _log(f"sitecustomize init failed: {exc}")

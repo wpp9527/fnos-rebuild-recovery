@@ -1,0 +1,2 @@
+VMID       Status     Lock         Name                
+213        running                 fnos-proxy          

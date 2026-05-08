@@ -1,0 +1,20 @@
+2026-05-02 00:28:22|INFO    |root                            |BAZARR Finished searching for Subtitles to upgrade. Check History for more information.|
+2026-05-02 00:33:07|ERROR   |root                            |Error trying to get releases from Github. Http error.|'Traceback (most recent call last):\n  File "/app/bazarr/bin/bazarr/../bazarr/app/check_update.py", line 35, in check_releases\n    r.raise_for_status()\n  File "/app/bazarr/bin/bazarr/../libs/requests/models.py", line 1024, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/morpheus65535/Bazarr/releases?per_page=100'|
+2026-05-02 01:20:22|INFO    |root                            |Scheduler will use this timezone: Asia/Shanghai|
+2026-05-02 01:20:31|INFO    |root                            |Interactive jobs queue started and waiting for tasks|
+2026-05-02 01:20:31|INFO    |waitress                        |BAZARR is started and waiting for requests on: http://***.***.***.***:6767|
+2026-05-02 01:20:31|INFO    |waitress                        |BAZARR is started and waiting for requests on: http://[::]:6767|
+2026-05-02 01:20:31|INFO    |root                            |BAZARR trying to connect to Radarr SignalR feed...|
+2026-05-02 01:20:31|INFO    |root                            |BAZARR trying to connect to Sonarr SignalR feed...|
+2026-05-02 01:20:32|INFO    |root                            |BAZARR SignalR client for Radarr is connected and waiting for events.|
+2026-05-02 01:20:32|INFO    |root                            |BAZARR SignalR client for Sonarr is connected and waiting for events.|
+2026-05-02 04:00:02|INFO    |root                            |BAZARR All existing movie subtitles indexed from disk.|
+2026-05-02 04:00:05|INFO    |root                            |BAZARR All existing episode subtitles indexed from disk.|
+2026-05-02 06:00:28|INFO    |root                            |BAZARR Finished searching for missing Series Subtitles. Check History for more information.|
+2026-05-02 06:28:26|INFO    |root                            |BAZARR Finished searching for missing Movies Subtitles. Check History for more information.|
+2026-05-02 12:00:27|INFO    |root                            |BAZARR Finished searching for missing Series Subtitles. Check History for more information.|
+2026-05-02 12:28:27|INFO    |root                            |BAZARR Finished searching for missing Movies Subtitles. Check History for more information.|
+2026-05-02 12:48:33|INFO    |root                            |BAZARR Finished searching for Subtitles to upgrade. Check History for more information.|
+2026-05-02 18:00:28|INFO    |root                            |BAZARR Finished searching for missing Series Subtitles. Check History for more information.|
+2026-05-02 18:28:27|INFO    |root                            |BAZARR Finished searching for missing Movies Subtitles. Check History for more information.|
+2026-05-02 19:14:52|ERROR   |root                            |Error trying to get releases from Github. Http error.|'Traceback (most recent call last):\n  File "/app/bazarr/bin/bazarr/../bazarr/app/check_update.py", line 35, in check_releases\n    r.raise_for_status()\n  File "/app/bazarr/bin/bazarr/../libs/requests/models.py", line 1024, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/morpheus65535/Bazarr/releases?per_page=100'|

@@ -1,0 +1,8 @@
+services:
+  feishu-observe:
+    environment:
+      OPENCLAW_TRUTH_FASTPATH: "1"
+      OPENCLAW_TRUTH_FASTPATH_DEBUG: "1"
+    volumes:
+      - /opt/fnos-media/services/openclaw-governance/runtime:/truth-fastpath/runtime:ro
+      - /opt/fnos-media/services/openclaw-governance/scripts:/truth-fastpath/scripts:ro

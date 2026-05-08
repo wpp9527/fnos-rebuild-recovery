@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "skills": {
+    "skill-vetter": {
+      "version": "1.0.0",
+      "installedAt": 1778243106166
+    },
+    "baidu-search": {
+      "version": "1.1.4",
+      "installedAt": 1778243106280
+    },
+    "multi-search-engine": {
+      "version": "2.1.3",
+      "installedAt": 1778243106516
+    },
+    "self-improving-agent": {
+      "version": "3.0.21",
+      "installedAt": 1778243107233
+    },
+    "nano-banana-pro": {
+      "version": "1.0.1",
+      "installedAt": 1778243113934
+    },
+    "nano-pdf": {
+      "version": "1.0.0",
+      "installedAt": 1778243113973
+    },
+    "humanizer": {
+      "version": "1.0.0",
+      "installedAt": 1778243113984
+    },
+    "ontology": {
+      "version": "1.0.4",
+      "installedAt": 1778243114254
+    },
+    "proactive-agent": {
+      "version": "3.1.0",
+      "installedAt": 1778243114923
+    },
+    "openclaw-find-skills": {
+      "version": "1.0.0",
+      "installedAt": 1778243504042
+    },
+    "find-skills-skill": {
+      "version": "1.0.0",
+      "installedAt": 1778243511575
+    },
+    "docker": {
+      "version": "1.0.4",
+      "installedAt": 1778243674782
+    },
+    "smart-cron": {
+      "version": "1.0.0",
+      "installedAt": 1778243674917
+    },
+    "ssh-essentials": {
+      "version": "1.0.0",
+      "installedAt": 1778243674960
+    },
+    "system-resource-monitor": {
+      "version": "1.0.0",
+      "installedAt": 1778243674985
+    },
+    "nginx": {
+      "version": "1.0.1",
+      "installedAt": 1778243676166
+    },
+    "cron-mastery": {
+      "version": "1.0.3",
+      "installedAt": 1778243702252
+    },
+    "git-workflows": {
+      "version": "1.0.0",
+      "installedAt": 1778243702273
+    },
+    "site-monitor": {
+      "version": "1.0.0",
+      "installedAt": 1778243702313
+    },
+    "git": {
+      "version": "1.0.8",
+      "installedAt": 1778243702810
+    }
+  }
+}

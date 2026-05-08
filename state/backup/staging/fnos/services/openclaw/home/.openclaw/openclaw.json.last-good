@@ -1,0 +1,200 @@
+{
+  "gateway": {
+    "auth": {
+      "mode": "token",
+      "token": "8c96c8284dff43ca5c1b95fcfff2914a5e8a95838a5e7ba6"
+    },
+    "mode": "local",
+    "controlUi": {
+      "allowedOrigins": [
+        "tauri://localhost",
+        "https://tauri.localhost",
+        "http://tauri.localhost",
+        "http://localhost",
+        "http://localhost:1420",
+        "http://127.0.0.1:1420",
+        "http://localhost:18777",
+        "http://127.0.0.1:18777",
+        "http://192.168.1.212:1420",
+        "http://192.168.1.212:18777",
+        "http://172.23.0.1:1420",
+        "http://172.23.0.1:18777",
+        "http://172.18.0.1:1420",
+        "http://172.18.0.1:18777",
+        "http://172.21.0.1:1420",
+        "http://172.21.0.1:18777",
+        "https://openclaw.19930901.xyz:5000"
+      ]
+    },
+    "port": 18789,
+    "bind": "lan",
+    "trustedProxies": [
+      "127.0.0.1",
+      "::1",
+      "192.168.1.0/24",
+      "172.16.0.0/12"
+    ]
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.5.6",
+    "lastTouchedAt": "2026-05-08T11:49:02.453Z"
+  },
+  "tools": {
+    "profile": "full",
+    "sessions": {
+      "visibility": "all"
+    }
+  },
+  "models": {
+    "mode": "replace",
+    "providers": {
+      "cpa": {
+        "baseUrl": "https://cpi.19930901.xyz:5000/v1",
+        "apiKey": "FLh4gvKfBrhbrJW9OvKqFPoNEYrbEZaN",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-ai/deepseek-v4-pro",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-ai/deepseek-v4-pro"
+          },
+          {
+            "id": "gpt-5.4",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "gpt-5.4"
+          },
+          {
+            "id": "gpt-5.5",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "gpt-5.5"
+          },
+          {
+            "id": "minimaxai/minimax-m2.7",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "minimaxai/minimax-m2.7"
+          }
+        ]
+      },
+      "ollama": {
+        "baseUrl": "http://127.0.0.1:11434/v1",
+        "apiKey": "1111111",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "qwen3-embedding:0.6b",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "qwen3-embedding:0.6b",
+            "contextWindow": 4096,
+            "maxTokens": 512
+          },
+          {
+            "id": "qwen3:4b",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "qwen3:4b",
+            "contextWindow": 8192,
+            "maxTokens": 4096
+          }
+        ]
+      },
+      "baidu": {
+        "baseUrl": "https://qianfan.baidubce.com/v2/coding",
+        "apiKey": "bce-v3/ALTAKSP-x7Vh8VId41Q9nbVNuHXNG/8d8e940a564633891efd490b45f02c840521ab5c",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "glm-5.1",
+            "name": "glm-5.1",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ]
+          }
+        ]
+      },
+      "qtcool": {
+        "baseUrl": "https://gpt.qt.cool/v1",
+        "apiKey": "sk-checkin-5GmRv2UkhjDNOErblzqqYOIAXC1gE8u6",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-v4-flash",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-v4-flash"
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "fallbacks": [
+          "baidu/glm-5.1",
+          "cpa/deepseek-ai/deepseek-v4-pro"
+        ],
+        "primary": "cpa/gpt-5.5"
+      },
+      "models": {
+        "cpa/gpt-5.5": {},
+        "cpa/deepseek-ai/deepseek-v4-pro": {},
+        "cpa/gpt-5.4": {},
+        "cpa/minimaxai/minimax-m2.7": {},
+        "ollama/qwen3-embedding:0.6b": {},
+        "ollama/qwen3:4b": {},
+        "baidu/glm-5.1": {},
+        "qtcool/deepseek-v4-flash": {}
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "ollama": {
+        "enabled": true
+      }
+    }
+  },
+  "skills": {
+    "entries": {
+      "coding-agent": {
+        "enabled": true
+      },
+      "clawhub": {
+        "enabled": true
+      },
+      "nano-pdf": {
+        "enabled": true
+      },
+      "himalaya": {
+        "enabled": true
+      },
+      "tmux": {
+        "enabled": true
+      },
+      "summarize": {
+        "enabled": true
+      }
+    }
+  }
+}

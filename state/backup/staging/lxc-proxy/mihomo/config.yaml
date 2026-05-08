@@ -1,0 +1,70 @@
+mixed-port: 7890
+allow-lan: true
+mode: rule
+log-level: warning
+
+external-controller: 0.0.0.0:9090
+
+dns:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+    - 1.1.1.1
+    - 8.8.8.8
+
+proxy-providers:
+  sub1:
+    type: http
+    url: "https://sub-1.smjcdh.top/smjc/api/v1/client/subscribe?token=a0d6b60df9012bb3a80bb18a4abd2e33"
+    interval: 3600
+    path: ./sub1.yaml
+    health-check:
+      enable: true
+      interval: 300
+      url: http://www.gstatic.com/generate_204
+
+  sub2:
+    type: http
+    url: "https://dy11.baipiaoyes.com/api/v1/client/subscribe?token=c54c2516482ba6820a51a1cc57c0e1bb"
+    interval: 3600
+    path: ./sub2.yaml
+    health-check:
+      enable: true
+      interval: 300
+      url: http://www.gstatic.com/generate_204
+
+proxy-groups:
+  - name: AUTO
+    type: url-test
+    use:
+      - sub1
+      - sub2
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 150
+
+  - name: FALLBACK
+    type: fallback
+    use:
+      - sub1
+      - sub2
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: PROXY
+    type: select
+    proxies:
+      - AUTO
+      - FALLBACK
+    use:
+      - sub1
+      - sub2
+
+rules:
+  - MATCH,PROXY

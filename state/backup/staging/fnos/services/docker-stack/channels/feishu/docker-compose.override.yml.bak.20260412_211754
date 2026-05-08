@@ -1,0 +1,9 @@
+services:
+  feishu-observe:
+    environment:
+      TRUTH_FASTPATH: "1"
+      TRUTH_REPLY_SCRIPT: /governance_scripts/runtime_truth_reply.py
+      TRUTH_FASTPATH_TIMEOUT: "5"
+    volumes:
+      - /opt/fnos-media/services/openclaw-governance/runtime:/runtime_truth:ro
+      - /opt/fnos-media/services/openclaw-governance/scripts:/governance_scripts:ro

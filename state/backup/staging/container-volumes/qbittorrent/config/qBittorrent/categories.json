@@ -1,0 +1,14 @@
+{
+    "jav": {
+        "save_path": "/jav"
+    },
+    "radarr": {
+        "save_path": ""
+    },
+    "tv-manual-import": {
+        "save_path": ""
+    },
+    "tv-sonarr": {
+        "save_path": ""
+    }
+}

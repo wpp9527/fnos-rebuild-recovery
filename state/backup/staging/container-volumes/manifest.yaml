@@ -1,0 +1,5 @@
+# Container Volumes Backup Manifest
+generated: 2026-05-08T20:46:23+08:00
+source_root: /opt/fnos-media-stack
+volumes_backed_up: 12
+volumes_skipped: 0

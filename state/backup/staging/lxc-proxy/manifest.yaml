@@ -1,0 +1,11 @@
+# LXC Proxy Backup Manifest
+vmid: 213
+hostname: fnos-proxy
+timestamp: 2026-05-08-204623
+source_host: 192.168.1.190
+contents:
+  - lxc-213-config.conf
+  - mihomo/
+  - subscriptions/
+  - scripts/
+  - systemd/

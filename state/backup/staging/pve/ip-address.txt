@@ -1,0 +1,17 @@
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+nic0             UP             
+wlo1             DOWN           
+vmbr0            UP             192.168.1.190/24 fe80::5a11:22ff:fec0:10c9/64 
+tap100i0         UNKNOWN        
+fwbr100i0        UP             
+fwpr100p0@fwln100i0 UP             
+fwln100i0@fwpr100p0 UP             
+veth213i0@if2    UP             
+tap104i0         UNKNOWN        
+fwbr104i0        UP             
+fwpr104p0@fwln104i0 UP             
+fwln104i0@fwpr104p0 UP             
+tap101i0         UNKNOWN        
+fwbr101i0        UP             
+fwpr101p0@fwln101i0 UP             
+fwln101i0@fwpr101p0 UP             
