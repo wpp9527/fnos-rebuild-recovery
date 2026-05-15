@@ -23,7 +23,16 @@
         "http://172.18.0.1:18777",
         "http://172.21.0.1:1420",
         "http://172.21.0.1:18777",
-        "https://openclaw.19930901.xyz:5000"
+        "https://openclaw.19930901.xyz:5000",
+        "http://100.90.163.108:1420",
+        "http://100.90.163.108:18777",
+        "https://clawpanel.19930901.xyz:5000",
+        "http://172.25.0.1:1420",
+        "http://172.25.0.1:18777",
+        "https://openclaw.19930901.xyz",
+        "https://clawpanel.19930901.xyz",
+        "http://172.24.0.1:1420",
+        "http://172.24.0.1:18777"
       ]
     },
     "port": 18789,
@@ -32,12 +41,22 @@
       "127.0.0.1",
       "::1",
       "192.168.1.0/24",
-      "172.16.0.0/12"
-    ]
+      "172.16.0.0/12",
+      "10.0.0.0/8",
+      "100.64.0.0/10",
+      "fc00::/7"
+    ],
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        }
+      }
+    }
   },
   "meta": {
-    "lastTouchedVersion": "2026.5.6",
-    "lastTouchedAt": "2026-05-08T11:49:02.453Z"
+    "lastTouchedVersion": "2026.5.7",
+    "lastTouchedAt": "2026-05-09T10:28:07.306Z"
   },
   "tools": {
     "profile": "full",
@@ -75,7 +94,8 @@
               "text",
               "image"
             ],
-            "name": "gpt-5.5"
+            "name": "gpt-5.5",
+            "reasoning": true
           },
           {
             "id": "minimaxai/minimax-m2.7",
@@ -92,16 +112,6 @@
         "apiKey": "1111111",
         "api": "openai-completions",
         "models": [
-          {
-            "id": "qwen3-embedding:0.6b",
-            "input": [
-              "text",
-              "image"
-            ],
-            "name": "qwen3-embedding:0.6b",
-            "contextWindow": 4096,
-            "maxTokens": 512
-          },
           {
             "id": "qwen3:4b",
             "input": [
@@ -161,7 +171,6 @@
         "cpa/deepseek-ai/deepseek-v4-pro": {},
         "cpa/gpt-5.4": {},
         "cpa/minimaxai/minimax-m2.7": {},
-        "ollama/qwen3-embedding:0.6b": {},
         "ollama/qwen3:4b": {},
         "baidu/glm-5.1": {},
         "qtcool/deepseek-v4-flash": {}

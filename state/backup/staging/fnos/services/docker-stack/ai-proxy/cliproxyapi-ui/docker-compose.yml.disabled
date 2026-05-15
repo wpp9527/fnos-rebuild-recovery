@@ -1,9 +1,0 @@
-services:
-  cliproxyapi-ui:
-    image: nginx:alpine
-    container_name: cliproxyapi-ui
-    ports:
-      - "192.168.1.212:8318:80"
-    volumes:
-      - ./site:/usr/share/nginx/html:ro
-    restart: unless-stopped

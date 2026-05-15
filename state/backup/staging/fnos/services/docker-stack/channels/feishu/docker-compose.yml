@@ -1,9 +1,0 @@
-services:
-  feishu-observe:
-    build: .
-    container_name: feishu-observe
-    env_file:
-      - .env
-    volumes:
-      - ./logs:/app/logs
-    restart: unless-stopped
