@@ -24,4 +24,5 @@
 | 账号凭证 | [memory/credentials.md](memory/credentials.md) |
 | GitHub | [memory/github.md](memory/github.md) |
 | 踩坑记录 | [memory/lessons.md](memory/lessons.md) |
+| 工程控制论 | [memory/engineering-cybernetics-qian-xuesen.md](memory/engineering-cybernetics-qian-xuesen.md) |
 | 每日日志 | [memory/daily/](memory/daily/) |
