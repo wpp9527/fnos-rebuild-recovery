@@ -150,3 +150,16 @@ Use `bash -lc 'set -o pipefail; ...'` when pipefail is needed, or omit pipefail 
 - **Context**: User provided GitHub repo `NousResearch/hermes-agent`; assistant tried to read `~/skills/github/SKILL.md` from available skills list.
 - **Error**: File path did not exist in this runtime.
 - **Fix**: Fall back to direct local `git`/filesystem inspection and `web_fetch`/GitHub API if available; do not block on missing skill file.
+
+## 2026-05-17 — Shell printf gotcha with leading dashes
+
+- **Context:** While verifying MDC auto-scrape results, ran a shell snippet with `printf '--- auto-mdc.sh ---\n'` under `/usr/bin/sh`.
+- **Error:** `/usr/bin/sh: printf: Illegal option --`
+- **Cause:** Some shell `printf` builtins interpret a format string beginning with `-` as an option unless guarded.
+- **Fix:** Use `printf '%s\n' '--- label ---'` or `printf -- '--- label ---\n'` in portable snippets.
+
+## 2026-05-17 - exec shell pipefail gotcha
+
+- **Context:** While checking MDC logs after a cron run, used `set -o pipefail` in `exec` without forcing bash.
+- **Error:** `/usr/bin/sh: 1: set: Illegal option -o pipefail` because the tool command ran under `/bin/sh`.
+- **Fix:** Use `bash -lc 'set -o pipefail; ...'` when relying on bash options, or avoid pipefail for simple log inspection.
