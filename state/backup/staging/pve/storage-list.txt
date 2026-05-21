@@ -1,3 +1,3 @@
 Name             Type     Status     Total (KiB)      Used (KiB) Available (KiB)        %
-local             dir     active        98497780        37743408        55704824   38.32%
-local-lvm     lvmthin     active       354275328        95052070       259223257   26.83%
+local             dir     active        98497780        37743488        55704744   38.32%
+local-lvm     lvmthin     active       354275328        95370918       258904409   26.92%

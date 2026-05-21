@@ -163,3 +163,39 @@ Use `bash -lc 'set -o pipefail; ...'` when pipefail is needed, or omit pipefail 
 - **Context:** While checking MDC logs after a cron run, used `set -o pipefail` in `exec` without forcing bash.
 - **Error:** `/usr/bin/sh: 1: set: Illegal option -o pipefail` because the tool command ran under `/bin/sh`.
 - **Fix:** Use `bash -lc 'set -o pipefail; ...'` when relying on bash options, or avoid pipefail for simple log inspection.
+## [ERR-20260521-001] exec_shell_pipefail
+
+**Logged**: 2026-05-21T16:01:00+08:00
+**Priority**: low
+**Status**: pending
+**Area**: infra
+
+### Summary
+OpenClaw exec default shell may be `/usr/bin/sh`, where `set -o pipefail` is invalid.
+
+### Details
+A cron task wrapper used `set -o pipefail` without invoking bash and failed before running the target script.
+
+### Suggested Action
+When pipefail or PIPESTATUS is needed, execute the command through `bash -lc`.
+
+### Metadata
+- Source: error
+- Tags: openclaw, shell, cron
+
+---
+## [ERR-20260522-001] shell_pipefail_in_sh
+
+**Logged**: 2026-05-22T01:29:00+08:00
+**Priority**: low
+**Status**: pending
+**Area**: infra
+
+### Summary
+Used `set -o pipefail` under `/usr/bin/sh`, which failed because this shell does not support that option.
+
+### Details
+For shell commands needing `pipefail`, wrap with `bash -lc` instead of relying on `/bin/sh`.
+
+### Suggested Action
+Use `bash -lc set
