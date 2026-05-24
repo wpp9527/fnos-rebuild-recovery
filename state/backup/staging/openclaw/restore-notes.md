@@ -1,6 +1,6 @@
 # OpenClaw Restore Notes
 
-Generated: 2026-05-24T03:00:04+08:00
+Generated: 2026-05-25T02:00:05+08:00
 Source workspace: /root/.openclaw/.openclaw/workspace
 
 Contents in this directory are intended for configuration-level recovery.
