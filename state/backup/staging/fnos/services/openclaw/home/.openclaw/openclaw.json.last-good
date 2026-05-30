@@ -32,7 +32,9 @@
         "https://openclaw.19930901.xyz",
         "https://clawpanel.19930901.xyz",
         "http://172.24.0.1:1420",
-        "http://172.24.0.1:18777"
+        "http://172.24.0.1:18777",
+        "http://172.26.0.1:1420",
+        "http://172.26.0.1:18777"
       ]
     },
     "port": 18789,
@@ -56,7 +58,7 @@
   },
   "meta": {
     "lastTouchedVersion": "2026.5.7",
-    "lastTouchedAt": "2026-05-09T10:28:07.306Z"
+    "lastTouchedAt": "2026-05-30T16:03:11.090Z"
   },
   "tools": {
     "profile": "full",
@@ -73,6 +75,14 @@
         "api": "openai-completions",
         "models": [
           {
+            "id": "deepseek-ai/deepseek-v4-flash",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-ai/deepseek-v4-flash"
+          },
+          {
             "id": "deepseek-ai/deepseek-v4-pro",
             "input": [
               "text",
@@ -81,29 +91,12 @@
             "name": "deepseek-ai/deepseek-v4-pro"
           },
           {
-            "id": "gpt-5.4",
+            "id": "minimax/minimax-m2.5:free",
             "input": [
               "text",
               "image"
             ],
-            "name": "gpt-5.4"
-          },
-          {
-            "id": "gpt-5.5",
-            "input": [
-              "text",
-              "image"
-            ],
-            "name": "gpt-5.5",
-            "reasoning": true
-          },
-          {
-            "id": "minimaxai/minimax-m2.7",
-            "input": [
-              "text",
-              "image"
-            ],
-            "name": "minimaxai/minimax-m2.7"
+            "name": "minimax/minimax-m2.5:free"
           }
         ]
       },
@@ -154,6 +147,29 @@
             "name": "deepseek-v4-flash"
           }
         ]
+      },
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com",
+        "apiKey": "sk-ceb82494a12a49158109dbc72de7e5ac",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-v4-flash",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-v4-flash"
+          },
+          {
+            "id": "deepseek-v4-pro",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-v4-pro"
+          }
+        ]
       }
     }
   },
@@ -161,10 +177,11 @@
     "defaults": {
       "model": {
         "fallbacks": [
-          "baidu/glm-5.1",
-          "cpa/deepseek-ai/deepseek-v4-pro"
+          "cpa/gpt-5.5",
+          "qtcool/deepseek-v4-flash",
+          "deepseek/deepseek-v4-flash"
         ],
-        "primary": "cpa/gpt-5.5"
+        "primary": "deepseek/deepseek-v4-pro"
       },
       "models": {
         "cpa/gpt-5.5": {},
@@ -183,6 +200,9 @@
   "plugins": {
     "entries": {
       "ollama": {
+        "enabled": true
+      },
+      "deepseek": {
         "enabled": true
       }
     }
