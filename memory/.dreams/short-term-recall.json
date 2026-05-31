@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-31T15:17:01.444Z",
+  "updatedAt": "2026-05-31T15:35:49.089Z",
   "entries": {
     "memory:memory/daily/2026-05-08.md:1:27": {
       "key": "memory:memory/daily/2026-05-08.md:1:27",
@@ -182,17 +182,18 @@
       "endLine": 22,
       "source": "memory",
       "snippet": "# 2026-05-08 日志 ## 备份系统修复 - 仓库 `wpp9527/fnos-rebuild-recovery` 路径全部从旧 `/opt/fnos-media/services/openclaw/home/.openclaw/` 更新到新 `/root/.openclaw/` - 修改文件：config.env.example, orchestrator.sh, collect_openclaw.sh, collect_fnos.sh, publish_github.sh, publish_secrets.sh, bootstrap_fnos_stack.sh, sync-edict-governance.sh - GitHub remote 从 SSH 改为 HTTPS+token - 首次完整备份成功：OpenClaw workspace + PVE + FNOS + 12 容器卷 + LXC 代理 + Secrets + GitHub 同步 - OpenClaw cron 配置：每日 02:00 增量备份 + 每周日 03:00 全量快照 ## README 编写 - 为 fnos-rebuild-recovery 仓库写了完整 README：架构图、备份内容、三种恢复方式、配置说明、仓库结构、离线恢复、故障排除 ## NAS 备份架构确认 - `/mnt/nas/backup/` 下 6 层：container-volumes/fnos/pve/services/openclaw/lxc-proxy + shared/secrets - 每层有 la",
-      "recallCount": 3,
+      "recallCount": 4,
       "dailyCount": 0,
       "groundedCount": 0,
-      "totalScore": 3,
+      "totalScore": 4,
       "maxScore": 1,
       "firstRecalledAt": "2026-05-12T17:30:36.725Z",
-      "lastRecalledAt": "2026-05-31T15:17:01.444Z",
+      "lastRecalledAt": "2026-05-31T15:35:49.089Z",
       "queryHashes": [
         "f49f8535ce48",
         "868c66f0abf0",
-        "2b79c9321dba"
+        "2b79c9321dba",
+        "e5d66e6fbf6b"
       ],
       "recallDays": [
         "2026-05-13",
@@ -217,20 +218,22 @@
       "endLine": 51,
       "source": "memory",
       "snippet": "- cron: 每 2 小时（偶数整点）自动运行 - 逻辑: 检测 MDC 已在跑则跳过 - 日志: `/vol1/1000/docker/mdc/config/.mlogs/auto-mdc.log` - 流程: qBittorrent RSS 下载 → 新视频落盘 → cron 触发 MDC → Jellyfin 读取 ## DNF 服务器远程连接 - 皇上在墨西哥想连上家里的 DNF 服务器 - 当前问题: 客户端无法连接，可能需要改为域名连接 - DNF 私有部署仓库: wpp9527/dnf-private-deploy (Shell) - DNF 公开后台: wpp9527/dnf-public-admin (Go) - 需要查看 DNF 服务器配置和网络暴露情况 ## OpenClaw 升级与修复 - 已确认 `/root/.openclaw-bin/node_modules/@qingchencloud/openclaw-zh` 为 `2026.5.7-zh.1`，CLI 显示 `OpenClaw 2026.5.7 (eeef486)` - 备份: `/root/backups/openclaw/openclaw-config-workspace-20260509-200843.tar.gz` - 修复 workspace 路径兼容: `/root/.openclaw/workspace -> /root/.openclaw/.openclaw/workspace` - 修正 `/root/.openclaw-bin/VERSION` 的版本记录为 `202",
-      "recallCount": 2,
+      "recallCount": 3,
       "dailyCount": 0,
       "groundedCount": 0,
-      "totalScore": 2,
+      "totalScore": 3,
       "maxScore": 1,
       "firstRecalledAt": "2026-05-15T10:14:10.441Z",
-      "lastRecalledAt": "2026-05-18T17:13:50.125Z",
+      "lastRecalledAt": "2026-05-31T15:35:49.089Z",
       "queryHashes": [
         "868c66f0abf0",
-        "1b17d59fac96"
+        "1b17d59fac96",
+        "e5d66e6fbf6b"
       ],
       "recallDays": [
         "2026-05-15",
-        "2026-05-19"
+        "2026-05-19",
+        "2026-05-31"
       ],
       "conceptTags": [
         "backup",
