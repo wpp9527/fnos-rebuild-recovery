@@ -21,6 +21,9 @@ WORKSPACE_ROOT="$WORKSPACE_ROOT" STAGING_ROOT="$STAGING_ROOT" FNOS_ENABLED="${FN
 
 STAGING_ROOT="$STAGING_ROOT" bash "$SCRIPT_DIR/tasks/collect_container_volumes.sh" || log "collect_container_volumes: failed"
 
+# 收集所有容器的 docker-compose.yml 和配置文件
+STAGING_ROOT="$STAGING_ROOT" bash "$SCRIPT_DIR/tasks/collect_compose_files.sh" || log "collect_compose_files: failed"
+
 # Collect LXC proxy if PVE is enabled
 if [[ "${PVE_ENABLED:-0}" == "1" && -n "${PVE_SSH_HOST:-}" ]]; then
   STAGING_ROOT="$STAGING_ROOT/lxc-proxy" \

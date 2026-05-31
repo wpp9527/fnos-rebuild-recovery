@@ -22,7 +22,7 @@ fi
 
 bootstrap_repo() {
   rm -rf "$DST"
-  git clone --branch "$BRANCH" "$REMOTE" "$DST"
+  git clone --depth 1 --branch "$BRANCH" "$REMOTE" "$DST"
 }
 
 if [ ! -d "$DST/.git" ]; then
@@ -47,6 +47,7 @@ rsync -a --delete \
   --exclude='__pycache__' \
   --exclude='.pytest_cache' \
   --exclude='1panel-v*-linux-*' \
+  --exclude='state/backup/staging' \
   --exclude='*.tar.gz' \
   --exclude='*.tgz' \
   --exclude='*.zip' \
