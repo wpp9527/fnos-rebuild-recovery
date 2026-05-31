@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-19T14:53:08.213Z",
+  "updatedAt": "2026-05-31T15:17:01.444Z",
   "entries": {
     "memory:memory/daily/2026-05-08.md:1:27": {
       "key": "memory:memory/daily/2026-05-08.md:1:27",
@@ -182,20 +182,22 @@
       "endLine": 22,
       "source": "memory",
       "snippet": "# 2026-05-08 日志 ## 备份系统修复 - 仓库 `wpp9527/fnos-rebuild-recovery` 路径全部从旧 `/opt/fnos-media/services/openclaw/home/.openclaw/` 更新到新 `/root/.openclaw/` - 修改文件：config.env.example, orchestrator.sh, collect_openclaw.sh, collect_fnos.sh, publish_github.sh, publish_secrets.sh, bootstrap_fnos_stack.sh, sync-edict-governance.sh - GitHub remote 从 SSH 改为 HTTPS+token - 首次完整备份成功：OpenClaw workspace + PVE + FNOS + 12 容器卷 + LXC 代理 + Secrets + GitHub 同步 - OpenClaw cron 配置：每日 02:00 增量备份 + 每周日 03:00 全量快照 ## README 编写 - 为 fnos-rebuild-recovery 仓库写了完整 README：架构图、备份内容、三种恢复方式、配置说明、仓库结构、离线恢复、故障排除 ## NAS 备份架构确认 - `/mnt/nas/backup/` 下 6 层：container-volumes/fnos/pve/services/openclaw/lxc-proxy + shared/secrets - 每层有 la",
-      "recallCount": 2,
+      "recallCount": 3,
       "dailyCount": 0,
       "groundedCount": 0,
-      "totalScore": 2,
+      "totalScore": 3,
       "maxScore": 1,
       "firstRecalledAt": "2026-05-12T17:30:36.725Z",
-      "lastRecalledAt": "2026-05-15T10:14:10.441Z",
+      "lastRecalledAt": "2026-05-31T15:17:01.444Z",
       "queryHashes": [
         "f49f8535ce48",
-        "868c66f0abf0"
+        "868c66f0abf0",
+        "2b79c9321dba"
       ],
       "recallDays": [
         "2026-05-13",
-        "2026-05-15"
+        "2026-05-15",
+        "2026-05-31"
       ],
       "conceptTags": [
         "backup",
