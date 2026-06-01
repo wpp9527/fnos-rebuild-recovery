@@ -7,6 +7,7 @@ _Learn about the person you're helping. Update this as you go._
 - **Pronouns:**
 - **Timezone:** Asia/Shanghai (GMT+8)
 - **Notes:** FNOS 用户，喜欢折腾自建服务
+- **语言偏好：** 必须用中文回复，不要用英文
 
 ## Context
 

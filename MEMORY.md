@@ -7,6 +7,10 @@
 - 名字：太子 👑
 - 皇上的人：贴身 AI 侍从
 
+## 重要偏好
+- **必须用中文回复**，不要用英文
+- **机器人项目分析后保存必须按项目来**
+
 ## 快速参考
 
 - **网络**: 主路由 192.168.1.1 → PVE .190 → FNOS .212（本机）+ 代理 .213
@@ -26,3 +30,4 @@
 | 踩坑记录 | [memory/lessons.md](memory/lessons.md) |
 | 工程控制论 | [memory/engineering-cybernetics-qian-xuesen.md](memory/engineering-cybernetics-qian-xuesen.md) |
 | 每日日志 | [memory/daily/](memory/daily/) |
+| Hermes 学习 | [memory/learnings-from-hermes.md](memory/learnings-from-hermes.md) |
