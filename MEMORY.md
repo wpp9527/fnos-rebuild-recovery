@@ -31,3 +31,10 @@
 | 工程控制论 | [memory/engineering-cybernetics-qian-xuesen.md](memory/engineering-cybernetics-qian-xuesen.md) |
 | 每日日志 | [memory/daily/](memory/daily/) |
 | Hermes 学习 | [memory/learnings-from-hermes.md](memory/learnings-from-hermes.md) |
+| 系统优化 | [memory/2026-06-02-system-optimization.md](memory/2026-06-02-system-optimization.md) |
+
+## 快速参考
+
+- **qBittorrent**: 端口 52000 (IPv6 可达)，代理 192.168.1.213:7890
+- **JAVSP**: 每30分钟自动刮削，广告文件自动清理
+- **视频文件**: 已修复特殊字符文件名
