@@ -32,7 +32,7 @@ func main() {
 	characterSvc := character.NewService()
 	auditSvc := audit.NewService()
 	gmSvc := gm.NewService(auditSvc)
-	activitySvc := activity.NewService(auditSvc)
+	activitySvc := activity.NewService()
 	pvfSvc := pvf.NewService(cfg.PVFService)
 	pveSvc := pve.NewService(auditSvc)
 

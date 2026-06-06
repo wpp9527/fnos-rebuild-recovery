@@ -29,7 +29,7 @@ publish_tree() {
   ensure_dir "$local_tmp_target"
   rsync -rltD --delete "$source_dir/" "$local_tmp_target/"
   ensure_dir "$tmp_target"
-  timeout 120 rsync -rltD --quiet "$local_tmp_target/". "$tmp_target/" || {
+  timeout 600 rsync -rltD --quiet "$local_tmp_target/". "$tmp_target/" || {
     log "rsync to NFS timed out; cleaning up local_tmp"
     rm -rf "$local_tmp_target"
     rm -rf "$tmp_target"

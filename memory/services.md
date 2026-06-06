@@ -1,34 +1,42 @@
-# 🔧 服务清单
+# 服务清单
 
-## OpenClaw
+## DNF Admin Pro (192.168.1.204)
 
-- 配置文件: `/root/.openclaw/openclaw.json`
-- Gateway 端口: 18789 (bind: lan)
-- systemd 服务: user 级别，enabled
-- 日志: `/tmp/openclaw/openclaw-YYYY-MM-DD.log`
-- 外网访问: https://openclaw.19930901.xyz:5000
+| 服务 | 容器名 | 端口 | 状态 |
+|------|--------|------|------|
+| 后端 API | dnf-public-admin-backend | 18882→8080 | ✅ 运行中 |
+| 前端 | dnf-public-admin-frontend | 18883→80 | ✅ 运行中 |
+| DNF 游戏服务器 | dnf-llnut_dnf-1_1 | 5505,7001,7300,30011 | ✅ 运行中 |
 
-## Nginx (TRIM 系统)
+### 数据源
 
-- 主配置: `/usr/trim/nginx/conf/nginx.conf`
-- 监听端口: 80→5666, 443→5667 (HTTPS)
-- OpenClaw 反代: `/usr/trim/nginx/conf/conf.d/trim_openclaw.conf`
-  - 通过 unix socket: `/var/apps/trim.openclaw/target/trim.openclaw.sock`
+- **MySQL**: 运行在 `dnf-llnut_dnf-1_1` 容器内，端口 3306
+  - 用户: `dnf_readonly` / `dnf_readonly_2024`
+  - 账号库: `d_taiwan`
+- **PVF 物品数据**: `/opt/dnf-llnut/data/conf.d/dnf-console/source/gold.txt`
+  - 格式: `[ID ] name:Name`
+  - 数量: 83977 个物品
+  - 已实现分类: 武器/防具/首饰/称号/宠物/材料/任务/消耗品/装扮/其他
 
-## Ollama
+### API 端点
 
-- 地址: http://127.0.0.1:11434
-- Docker 容器运行
-- 模型:
-  - qwen3:4b — 8k ctx, 4k max output
-  - qwen3-embedding:0.6b — 4k ctx, 仅嵌入
-- ⚠️ 默认 contextWindow=200k 过大，需手动限制
+- `POST /api/v1/auth/login` - 登录
+- `GET /api/v1/accounts` - 账号列表
+- `GET /api/v1/characters` - 角色列表
+- `GET /api/v1/pvf/items?page=1&page_size=20&category=weapon&q=xxx` - PVF 物品（分页+分类+搜索）
+- `GET /api/v1/pvf/categories` - PVF 分类列表
+- `GET /api/v1/pvf/stats` - PVF 统计
 
-## Docker
+### 前端功能
 
-- 多个 compose 项目: cliproxyapi, ollama, feishu, media-stack, qq, rsshub
-- 关键容器:
-  - cli-proxy-api: 192.168.1.212:8317
-  - halo-blog: 0.0.0.0:8090
-  - homarr: 0.0.0.0:7575
-  - jellyfin: 无端口映射 (通过 TRIM nginx)
+- ✅ 分页控件（上一页/下一页/页码跳转）
+- ✅ 分类筛选（全部/武器/防具/首饰/称号/宠物/材料/任务/消耗品/装扮/其他）
+- ✅ 搜索功能
+- ✅ 物品详情预览
+- ✅ GM 操作联动（发放/邮件）
+
+---
+
+## FNOS 媒体栈 (192.168.1.212)
+
+全部 19 个容器运行中，详见 memory/2026-06-05.md。
