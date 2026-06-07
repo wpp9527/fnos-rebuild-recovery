@@ -1,141 +1,207 @@
 <template>
-  <el-container class="layout-container">
-    <el-aside width="220px" class="layout-aside">
-      <div class="logo">
-        <h3>DNF Admin</h3>
-      </div>
-      <el-menu
-        :default-active="activeMenu"
-        router
-        background-color="#001529"
-        text-color="#ffffffa6"
-        active-text-color="#ffffff"
-      >
-        <el-menu-item index="/">
-          <el-icon><DataBoard /></el-icon>
-          <span>仪表盘</span>
-        </el-menu-item>
-        <el-menu-item index="/accounts">
-          <el-icon><User /></el-icon>
-          <span>账号管理</span>
-        </el-menu-item>
-        <el-menu-item index="/characters">
-          <el-icon><Avatar /></el-icon>
-          <span>角色管理</span>
-        </el-menu-item>
-        <el-menu-item index="/gm">
-          <el-icon><Setting /></el-icon>
-          <span>GM 操作</span>
-        </el-menu-item>
-        <el-menu-item index="/pvf">
-          <el-icon><Search /></el-icon>
-          <span>PVF 搜索</span>
-        </el-menu-item>
-        <el-menu-item index="/activities">
-          <el-icon><Calendar /></el-icon>
-          <span>活动管理</span>
-        </el-menu-item>
-        <el-menu-item index="/pve">
-          <el-icon><Monitor /></el-icon>
-          <span>PVE 管理</span>
-        </el-menu-item>
-        <el-menu-item index="/audit">
-          <el-icon><Document /></el-icon>
-          <span>审计日志</span>
-        </el-menu-item>
-      </el-menu>
-    </el-aside>
-    <el-container>
-      <el-header class="layout-header">
-        <div class="header-left">
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item v-if="currentRoute">{{ currentRoute }}</el-breadcrumb-item>
-          </el-breadcrumb>
+  <div class="layout-page">
+    <a-layout class="layout-container">
+      <a-layout-sider :collapsed="collapsed" collapsible :trigger="null" theme="dark" class="layout-sider">
+        <div class="logo">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23165DFF'/%3E%3Ctext x='16' y='22' font-size='16' fill='white' text-anchor='middle' font-weight='bold'%3ED%3C/text%3E%3C/svg%3E" alt="Logo" />
+          <span v-if="!collapsed" class="logo-text">DNF Admin</span>
         </div>
-        <div class="header-right">
-          <span class="username">{{ authStore.username }}</span>
-          <el-button type="danger" link @click="handleLogout">退出</el-button>
-        </div>
-      </el-header>
-      <el-main class="layout-main">
-        <router-view />
-      </el-main>
-    </el-container>
-  </el-container>
+        <a-menu
+          :selected-keys="selectedKeys"
+          theme="dark"
+          @menu-item-click="handleMenuClick"
+        >
+          <a-menu-item key="/">
+            <template #icon><icon-dashboard /></template>
+            仪表盘
+          </a-menu-item>
+          <a-sub-menu key="player">
+            <template #icon><icon-user /></template>
+            <template #title>玩家管理</template>
+            <a-menu-item key="/accounts">账号管理</a-menu-item>
+            <a-menu-item key="/characters">角色管理</a-menu-item>
+          </a-sub-menu>
+          <a-menu-item key="/gm">
+            <template #icon><icon-settings /></template>
+            GM 工具
+          </a-menu-item>
+          <a-menu-item key="/pvf">
+            <template #icon><icon-search /></template>
+            PVF 搜索
+          </a-menu-item>
+          <a-menu-item key="/activities">
+            <template #icon><icon-calendar /></template>
+            活动管理
+          </a-menu-item>
+          <a-menu-item key="/pve">
+            <template #icon><icon-monitor /></template>
+            PVE 管理
+          </a-menu-item>
+          <a-menu-item key="/audit">
+            <template #icon><icon-file /></template>
+            审计日志
+          </a-menu-item>
+        </a-menu>
+      </a-layout-sider>
+      <a-layout class="layout-right">
+        <a-layout-header class="layout-header">
+          <div class="header-left">
+            <div class="toggle-button" @click="collapsed = !collapsed">
+              <icon-menu-fold v-if="collapsed" />
+              <icon-menu-unfold v-else />
+            </div>
+            <a-breadcrumb style="margin-left: 16px">
+              <a-breadcrumb-item>首页</a-breadcrumb-item>
+              <a-breadcrumb-item v-if="currentRouteName">{{ currentRouteName }}</a-breadcrumb-item>
+            </a-breadcrumb>
+          </div>
+          <div class="header-right">
+            <a-select
+              v-model="serverStore.currentServerId"
+              placeholder="选择区服"
+              style="width: 180px"
+              @change="handleServerChange"
+            >
+              <a-option v-for="s in serverStore.servers" :key="s.id" :label="s.name" :value="s.id" />
+            </a-select>
+            <a-dropdown trigger="hover">
+              <div class="user-info">
+                <a-avatar :size="32" style="background-color: #165DFF">
+                  {{ authStore.username?.[0]?.toUpperCase() || 'A' }}
+                </a-avatar>
+                <span class="username">{{ authStore.username || 'Admin' }}</span>
+              </div>
+              <template #content>
+                <a-doption @click="handleLogout">
+                  <icon-poweroff style="margin-right: 8px" />退出登录
+                </a-doption>
+              </template>
+            </a-dropdown>
+          </div>
+        </a-layout-header>
+        <a-layout-content class="layout-content">
+          <a-scrollbar style="height: 100%">
+            <router-view />
+          </a-scrollbar>
+        </a-layout-content>
+      </a-layout>
+    </a-layout>
+  </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { DataBoard, User, Avatar, Setting, Search, Calendar, Monitor, Document } from '@element-plus/icons-vue'
+import { useServerStore } from '../stores/server'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const serverStore = useServerStore()
+const collapsed = ref(false)
 
-const activeMenu = computed(() => route.path)
+const selectedKeys = computed(() => [route.path])
 
 const routeNames = {
   '/': '仪表盘',
   '/accounts': '账号管理',
   '/characters': '角色管理',
-  '/gm': 'GM 操作',
+  '/gm': 'GM 工具',
   '/pvf': 'PVF 搜索',
   '/activities': '活动管理',
   '/pve': 'PVE 管理',
   '/audit': '审计日志'
 }
+const currentRouteName = computed(() => routeNames[route.path] || '')
 
-const currentRoute = computed(() => routeNames[route.path] || '')
+const handleMenuClick = (key) => {
+  if (key.startsWith('/')) {
+    router.push(key)
+  }
+}
 
 const handleLogout = () => {
   authStore.logout()
   router.push('/login')
 }
+
+const handleServerChange = (id) => {
+  serverStore.setCurrentServer(id)
+}
+
+onMounted(() => {
+  serverStore.fetchServers()
+})
 </script>
 
 <style scoped>
-.layout-container {
+.layout-page {
   height: 100vh;
 }
-
-.layout-aside {
-  background: #001529;
+.layout-container {
+  height: 100%;
 }
-
+.layout-sider {
+  background: #1d2129;
+}
 .logo {
-  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 64px;
+  gap: 8px;
 }
-
-.logo h3 {
-  color: #ffffff;
-  margin: 0;
+.logo img {
+  width: 32px;
+  height: 32px;
 }
-
+.logo-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.layout-right {
+  height: 100%;
+}
 .layout-header {
-  background: #fff;
+  background: #1d2129;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  height: 55px;
 }
-
+.header-left {
+  display: flex;
+  align-items: center;
+}
+.toggle-button {
+  font-size: 20px;
+  cursor: pointer;
+  color: #fff;
+}
+.toggle-button:hover {
+  color: #165DFF;
+}
 .header-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
-
-.username {
-  color: #606266;
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
-
-.layout-main {
-  background: #f0f2f5;
+.username {
+  color: #fff;
+  font-size: 14px;
+}
+.layout-content {
+  background: #f2f3f5;
+  padding: 16px;
 }
 </style>

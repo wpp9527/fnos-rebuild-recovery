@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useServerStore } from '../stores/server'
 
 const api = axios.create({
   baseURL: '/api/v1',
@@ -15,6 +16,17 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // 自动附带 server_id
+    try {
+      const serverStore = useServerStore()
+      if (serverStore.currentServerId) {
+        if (config.method === 'get' || config.method === 'delete') {
+          config.params = { ...config.params, server_id: serverStore.currentServerId }
+        } else if (config.data && typeof config.data === 'object') {
+          config.data = { ...config.data, server_id: serverStore.currentServerId }
+        }
+      }
+    } catch (_) { /* store 未就绪时忽略 */ }
     return config
   },
   (error) => Promise.reject(error)

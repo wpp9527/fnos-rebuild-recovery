@@ -1,0 +1,29 @@
+services:
+  dnf:
+    image: ${DNF_IMAGE}
+    container_name: ${PROJECT_NAME}
+    restart: always
+    shm_size: 8g
+    mem_limit: 1g
+    memswap_limit: -1
+    cpus: 1.0
+    env_file:
+      - ../env/.env.example
+    volumes:
+      - ../data:/data
+      - ../mysql:/var/lib/mysql
+      - ../log:/home/neople/game/log
+    ports:
+      - "${PORT_SUPERVISOR}:180"
+      - "${PORT_GAME_LOGIN}:4000"
+      - "${PORT_GAME_GATE}:5505"
+      - "${PORT_ADMIN}:8088"
+      - "${PORT_WORLD_TCP}:7001/tcp"
+      - "${PORT_WORLD_UDP}:7001/udp"
+      - "${PORT_CHANNEL_TCP}:7300/tcp"
+      - "${PORT_CHANNEL_UDP}:7300/udp"
+      - "${PORT_CAIN_TCP}:30011/tcp"
+      - "${PORT_CAIN_UDP}:31011/udp"
+      - "${PORT_CAIN2_TCP}:30052/tcp"
+      - "${PORT_CAIN2_UDP}:31052/udp"
+      - "2311-2313:2311-2313/udp"

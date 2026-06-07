@@ -29,7 +29,12 @@ func NewService() *Service {
 
 // Log records an audit log entry
 func (s *Service) Log(entry LogEntry) error {
-	_, err := database.DB.Exec(
+	sdb := database.GetDefaultServerDB()
+	if sdb == nil || sdb.DB == nil {
+		log.Printf("Audit log skipped (no DB): %s %s", entry.Action, entry.Target)
+		return nil
+	}
+	_, err := sdb.DB.Exec(
 		`INSERT INTO audit_logs (operator_id, action, target, detail, ip_address, created_at)
 		 VALUES (?, ?, ?, ?, ?, NOW())`,
 		entry.OperatorID, entry.Action, entry.Target, entry.Detail, entry.IPAddress,
@@ -63,7 +68,12 @@ func (s *Service) GetLogs(operatorID int, action string, limit int) ([]LogEntry,
 	query += " ORDER BY id DESC LIMIT ?"
 	args = append(args, limit)
 
-	rows, err := database.DB.Query(query, args...)
+	sdb := database.GetDefaultServerDB()
+	if sdb == nil || sdb.DB == nil {
+		return nil, fmt.Errorf("database not available")
+	}
+
+	rows, err := sdb.DB.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("query audit logs: %w", err)
 	}

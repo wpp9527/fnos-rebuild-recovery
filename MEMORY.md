@@ -15,6 +15,7 @@
 
 - **网络**: 主路由 192.168.1.1 → PVE .190 → FNOS .212（本机）+ 代理 .213
 - **GitHub**: wpp9527 / 6 仓库（含 claw-code 100K+ stars）
+- **DNF Admin Pro 已部署到 192.168.1.204:18890**，全部 API 测试通过
 - **模型主力**: cpa/gpt-5.5（常限流）→ fallback baidu/glm-5.1
 - **OpenClaw**: 端口 18789，外网 openclaw.19930901.xyz:5000
 

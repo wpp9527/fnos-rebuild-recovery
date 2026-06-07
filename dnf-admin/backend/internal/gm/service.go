@@ -20,6 +20,11 @@ func NewService(auditSvc *audit.Service) *Service {
 	}
 }
 
+// ListServers returns all connected servers
+func (s *Service) ListServers() []map[string]interface{} {
+	return database.ListServers()
+}
+
 // MailRequest represents a mail send request
 type MailRequest struct {
 	CharacterName string `json:"character_name" binding:"required"`
@@ -55,39 +60,46 @@ type BanRequest struct {
 }
 
 // SendMail sends a mail to a character
-func (s *Service) SendMail(operatorID int, req *MailRequest) error {
-	// Get character ID
+func (s *Service) SendMail(operatorID int, serverID string, req *MailRequest) error {
+	if req == nil {
+		return fmt.Errorf("mail request is nil")
+	}
+
+	// Get character ID from the specified server
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
 	var cNo int
-	err := database.DB.QueryRow(
-		"SELECT c_no FROM characters WHERE c_name = ? LIMIT 1",
+	err = sdb.DB.QueryRow(
+		"SELECT charac_no FROM taiwan_cain.charac_info WHERE charac_name = ? LIMIT 1",
 		req.CharacterName,
 	).Scan(&cNo)
 	if err != nil {
 		return fmt.Errorf("character not found: %s", req.CharacterName)
 	}
 
-	// Insert mail
-	result, err := database.DB.Exec(
-		`INSERT INTO mail (c_no, mail_title, mail_content, gold, sender_name, mail_date, is_read, is_has_item)
-		 VALUES (?, ?, ?, ?, 'GM', NOW(), 0, 0)`,
-		cNo, req.Title, req.Content, req.Gold,
+	// Insert mail into taiwan_cain_2nd.postal
+	var itemID, itemCount int
+	if len(req.Items) > 0 {
+		itemID = req.Items[0].ItemID
+		itemCount = req.Items[0].Count
+	}
+	result, err := sdb.DB.Exec(
+		`INSERT INTO taiwan_cain_2nd.postal 
+			(occ_time, send_charac_name, receive_charac_no, item_id, add_info, upgrade, gold, letter_id)
+		 VALUES (NOW(), 'GM', ?, ?, ?, 0, ?, 0)`,
+		cNo, itemID, itemCount, req.Gold,
 	)
 	if err != nil {
 		return fmt.Errorf("insert mail: %w", err)
 	}
 
-	mailID, _ := result.LastInsertId()
-
-	// Insert mail items
-	for _, item := range req.Items {
-		_, err := database.DB.Exec(
-			`INSERT INTO mail_items (mail_id, item_id, count) VALUES (?, ?, ?)`,
-			mailID, item.ItemID, item.Count,
-		)
-		if err != nil {
-			return fmt.Errorf("insert mail item: %w", err)
-		}
-	}
+	_, _ = result.LastInsertId()
 
 	// Log the operation
 	s.auditService.Log(audit.LogEntry{
@@ -102,21 +114,33 @@ func (s *Service) SendMail(operatorID int, req *MailRequest) error {
 }
 
 // SendGold adds gold to a character
-func (s *Service) SendGold(operatorID int, req *GoldRequest) error {
+func (s *Service) SendGold(operatorID int, serverID string, req *GoldRequest) error {
+	if req == nil {
+		return fmt.Errorf("gold request is nil")
+	}
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
 	// Get character and account
-	var uid int
-	err := database.DB.QueryRow(
-		"SELECT uid FROM characters WHERE c_name = ? LIMIT 1",
+	var mID int
+	err = sdb.DB.QueryRow(
+		"SELECT m_id FROM taiwan_cain.charac_info WHERE charac_name = ? LIMIT 1",
 		req.CharacterName,
-	).Scan(&uid)
+	).Scan(&mID)
 	if err != nil {
 		return fmt.Errorf("character not found: %s", req.CharacterName)
 	}
 
-	// Update gold
-	_, err = database.DB.Exec(
-		"UPDATE accounts SET coin = coin + ? WHERE uid = ?",
-		req.Amount, uid,
+	// Update gold in taiwan_billing.cash_cera
+	_, err = sdb.DB.Exec(
+		"UPDATE taiwan_billing.cash_cera SET cera = cera + ? WHERE account = ?",
+		req.Amount, mID,
 	)
 	if err != nil {
 		return fmt.Errorf("update gold: %w", err)
@@ -134,19 +158,31 @@ func (s *Service) SendGold(operatorID int, req *GoldRequest) error {
 }
 
 // SendCera adds cera (cash currency) to an account
-func (s *Service) SendCera(operatorID int, req *GoldRequest) error {
-	var uid int
-	err := database.DB.QueryRow(
-		"SELECT uid FROM characters WHERE c_name = ? LIMIT 1",
+func (s *Service) SendCera(operatorID int, serverID string, req *GoldRequest) error {
+	if req == nil {
+		return fmt.Errorf("cera request is nil")
+	}
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
+	var mID int
+	err = sdb.DB.QueryRow(
+		"SELECT m_id FROM taiwan_cain.charac_info WHERE charac_name = ? LIMIT 1",
 		req.CharacterName,
-	).Scan(&uid)
+	).Scan(&mID)
 	if err != nil {
 		return fmt.Errorf("character not found: %s", req.CharacterName)
 	}
 
-	_, err = database.DB.Exec(
-		"UPDATE accounts SET cera = cera + ? WHERE uid = ?",
-		req.Amount, uid,
+	_, err = sdb.DB.Exec(
+		"UPDATE taiwan_billing.cash_cera SET cera = cera + ? WHERE account = ?",
+		req.Amount, mID,
 	)
 	if err != nil {
 		return fmt.Errorf("update cera: %w", err)
@@ -164,9 +200,21 @@ func (s *Service) SendCera(operatorID int, req *GoldRequest) error {
 }
 
 // SetLevel sets a character's level
-func (s *Service) SetLevel(operatorID int, req *LevelRequest) error {
-	_, err := database.DB.Exec(
-		"UPDATE characters SET c_level = ? WHERE c_name = ?",
+func (s *Service) SetLevel(operatorID int, serverID string, req *LevelRequest) error {
+	if req == nil {
+		return fmt.Errorf("level request is nil")
+	}
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
+	_, err = sdb.DB.Exec(
+		"UPDATE taiwan_cain.charac_info SET lev = ? WHERE charac_name = ?",
 		req.Level, req.CharacterName,
 	)
 	if err != nil {
@@ -185,9 +233,21 @@ func (s *Service) SetLevel(operatorID int, req *LevelRequest) error {
 }
 
 // ResetFatigue resets a character's fatigue
-func (s *Service) ResetFatigue(operatorID int, characterName string) error {
-	_, err := database.DB.Exec(
-		"UPDATE characters SET c_fatigue = 0 WHERE c_name = ?",
+func (s *Service) ResetFatigue(operatorID int, serverID string, characterName string) error {
+	if characterName == "" {
+		return fmt.Errorf("character name is empty")
+	}
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
+	_, err = sdb.DB.Exec(
+		"UPDATE taiwan_cain.charac_info SET fatigue = 0 WHERE charac_name = ?",
 		characterName,
 	)
 	if err != nil {
@@ -206,21 +266,26 @@ func (s *Service) ResetFatigue(operatorID int, characterName string) error {
 }
 
 // BanAccount bans a game account
-func (s *Service) BanAccount(operatorID int, req *BanRequest) error {
-	_, err := database.DB.Exec(
-		"UPDATE accounts SET status = 2 WHERE uid = ?",
-		req.UID,
+func (s *Service) BanAccount(operatorID int, serverID string, req *BanRequest) error {
+	if req == nil {
+		return fmt.Errorf("ban request is nil")
+	}
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
+	_, err = sdb.DB.Exec(
+		"INSERT INTO d_taiwan.member_punish_info (m_id, punish_type, occ_time, punish_value, apply_flag, start_time, end_time, reason) VALUES (?, 1, NOW(), 101, 2, NOW(), DATE_ADD(NOW(), INTERVAL ? DAY), ?)",
+		req.UID, req.Days, req.Reason,
 	)
 	if err != nil {
 		return fmt.Errorf("ban account: %w", err)
 	}
-
-	// Record ban
-	database.DB.Exec(
-		`INSERT INTO ban_logs (uid, reason, operator_id, ban_time, expire_time)
-		 VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? DAY))`,
-		req.UID, req.Reason, operatorID, req.Days,
-	)
 
 	s.auditService.Log(audit.LogEntry{
 		OperatorID: operatorID,
@@ -234,9 +299,17 @@ func (s *Service) BanAccount(operatorID int, req *BanRequest) error {
 }
 
 // UnbanAccount unbans a game account
-func (s *Service) UnbanAccount(operatorID int, uid int) error {
-	_, err := database.DB.Exec(
-		"UPDATE accounts SET status = 1 WHERE uid = ?",
+func (s *Service) UnbanAccount(operatorID int, serverID string, uid int) error {
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
+	_, err = sdb.DB.Exec(
+		"DELETE FROM d_taiwan.member_punish_info WHERE m_id = ?",
 		uid,
 	)
 	if err != nil {
@@ -255,27 +328,40 @@ func (s *Service) UnbanAccount(operatorID int, uid int) error {
 }
 
 // SendItem sends an item directly to a character
-func (s *Service) SendItem(operatorID int, characterName string, itemID int, count int) error {
+func (s *Service) SendItem(operatorID int, serverID string, characterName string, itemID int, count int) error {
+	if characterName == "" {
+		return fmt.Errorf("character name is empty")
+	}
+	if itemID <= 0 {
+		return fmt.Errorf("invalid item ID: %d", itemID)
+	}
+	if count <= 0 {
+		return fmt.Errorf("invalid item count: %d", count)
+	}
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return fmt.Errorf("server not found: %s", serverID)
+	}
+	if sdb == nil || sdb.DB == nil {
+		return fmt.Errorf("server %s database not available", serverID)
+	}
+
 	var cNo int
-	err := database.DB.QueryRow(
-		"SELECT c_no FROM characters WHERE c_name = ? LIMIT 1",
+	err = sdb.DB.QueryRow(
+		"SELECT charac_no FROM taiwan_cain.charac_info WHERE charac_name = ? LIMIT 1",
 		characterName,
 	).Scan(&cNo)
 	if err != nil {
 		return fmt.Errorf("character not found: %s", characterName)
 	}
 
-	// Find empty slot
-	var maxSlot int
-	database.DB.QueryRow(
-		"SELECT COALESCE(MAX(slot_no), 0) FROM character_items WHERE c_no = ?",
-		cNo,
-	).Scan(&maxSlot)
-
-	_, err = database.DB.Exec(
-		`INSERT INTO character_items (c_no, slot_no, item_id, item_name, count, enhance, rarity)
-		 VALUES (?, ?, ?, '', ?, 0, 0)`,
-		cNo, maxSlot+1, itemID, count,
+	// Send via postal system
+	_, err = sdb.DB.Exec(
+		`INSERT INTO taiwan_cain_2nd.postal 
+			(occ_time, send_charac_name, receive_charac_no, item_id, add_info, upgrade, gold, letter_id)
+		 VALUES (NOW(), 'GM', ?, ?, ?, 0, 0, 0)`,
+		cNo, itemID, count,
 	)
 	if err != nil {
 		return fmt.Errorf("insert item: %w", err)

@@ -14,6 +14,7 @@ import (
 	"dnf-admin/internal/gm"
 	"dnf-admin/internal/pvf"
 	"dnf-admin/internal/pve"
+	"dnf-admin/internal/database"
 )
 
 // Router holds all service dependencies
@@ -51,6 +52,18 @@ func NewRouter(
 	}
 }
 
+// getServerID extracts server_id from query parameter or uses default
+func (r *Router) getServerID(c *gin.Context) string {
+	serverID := c.Query("server_id")
+	if serverID == "" {
+		sdb := database.GetDefaultServerDB()
+		if sdb != nil {
+			serverID = sdb.ID
+		}
+	}
+	return serverID
+}
+
 // Setup sets up all routes
 func (r *Router) Setup() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
@@ -69,6 +82,18 @@ func (r *Router) Setup() *gin.Engine {
 		c.Next()
 	})
 
+	// 静态文件服务（前端）
+	engine.StaticFile("/", "./frontend/dist/index.html")
+	engine.Static("/assets", "./frontend/dist/assets")
+	// SPA fallback：非 /api 路径返回 index.html
+	engine.NoRoute(func(c *gin.Context) {
+		if len(c.Request.URL.Path) < 4 || c.Request.URL.Path[:4] != "/api" {
+			c.File("./frontend/dist/index.html")
+		} else {
+			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		}
+	})
+
 	v1 := engine.Group("/api/v1")
 	{
 		// Auth routes (no auth required)
@@ -76,6 +101,9 @@ func (r *Router) Setup() *gin.Engine {
 		{
 			auth.POST("/login", r.login)
 		}
+
+		// Servers (no auth required for listing)
+		v1.GET("/servers", r.listServers)
 
 		// Protected routes
 		protected := v1.Group("")
@@ -95,9 +123,33 @@ func (r *Router) Setup() *gin.Engine {
 			// Characters
 			characters := protected.Group("/characters")
 			{
+				characters.GET("/search", r.searchCharacters)
+				characters.GET("/online", r.getOnlineCharacters)
 				characters.GET("/:cNo", r.getCharacter)
 				characters.GET("/:cNo/items", r.getCharacterItems)
-				characters.GET("/online", r.getOnlineCharacters)
+			}
+
+			// Dashboard stats
+			dashboard := protected.Group("/dashboard")
+			{
+				dashboard.GET("/stats", r.getDashboardStats)
+			}
+
+			// dnf-server-public compatible API endpoints
+			charac := protected.Group("/charac")
+			{
+				charac.GET("", r.listCharactersCompat)
+				charac.PUT("", r.updateCharacterCompat)
+				charac.POST(":characId/overTasks", r.overTasksCompat)
+			}
+			account := protected.Group("/account")
+			{
+				account.GET("", r.listAccountsCompat)
+				account.GET("/:uid", r.getAccountCompat)
+			}
+			postal := protected.Group("/postal")
+			{
+				postal.POST("", r.sendMailCompat)
 			}
 
 			// GM operations
@@ -203,14 +255,22 @@ func (r *Router) me(c *gin.Context) {
 	})
 }
 
+// --- Server handlers ---
+
+func (r *Router) listServers(c *gin.Context) {
+	servers := database.ListServers()
+	c.JSON(http.StatusOK, servers)
+}
+
 // --- Account handlers ---
 
 func (r *Router) searchAccounts(c *gin.Context) {
+	serverID := r.getServerID(c)
 	q := c.DefaultQuery("q", "")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
-	accounts, total, err := r.accountService.Search(q, page, pageSize)
+	accounts, total, err := r.accountService.Search(serverID, q, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -225,8 +285,9 @@ func (r *Router) searchAccounts(c *gin.Context) {
 }
 
 func (r *Router) getAccount(c *gin.Context) {
+	serverID := r.getServerID(c)
 	uid, _ := strconv.Atoi(c.Param("uid"))
-	account, err := r.accountService.GetByUID(uid)
+	account, err := r.accountService.GetByUID(serverID, uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -239,8 +300,9 @@ func (r *Router) getAccount(c *gin.Context) {
 }
 
 func (r *Router) getAccountCharacters(c *gin.Context) {
+	serverID := r.getServerID(c)
 	uid, _ := strconv.Atoi(c.Param("uid"))
-	characters, err := r.accountService.GetCharacters(uid)
+	characters, err := r.accountService.GetCharacters(serverID, uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -251,8 +313,9 @@ func (r *Router) getAccountCharacters(c *gin.Context) {
 // --- Character handlers ---
 
 func (r *Router) getCharacter(c *gin.Context) {
+	serverID := r.getServerID(c)
 	cNo, _ := strconv.Atoi(c.Param("cNo"))
-	character, err := r.characterService.GetByCNo(cNo)
+	character, err := r.characterService.GetByCNo(serverID, cNo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -265,8 +328,9 @@ func (r *Router) getCharacter(c *gin.Context) {
 }
 
 func (r *Router) getCharacterItems(c *gin.Context) {
+	serverID := r.getServerID(c)
 	cNo, _ := strconv.Atoi(c.Param("cNo"))
-	items, err := r.characterService.GetItems(cNo)
+	items, err := r.characterService.GetItems(serverID, cNo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -275,7 +339,8 @@ func (r *Router) getCharacterItems(c *gin.Context) {
 }
 
 func (r *Router) getOnlineCharacters(c *gin.Context) {
-	characters, err := r.characterService.GetOnline()
+	serverID := r.getServerID(c)
+	characters, err := r.characterService.GetOnline(serverID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -283,16 +348,51 @@ func (r *Router) getOnlineCharacters(c *gin.Context) {
 	c.JSON(http.StatusOK, characters)
 }
 
+func (r *Router) searchCharacters(c *gin.Context) {
+	sID := r.getServerID(c)
+	q := c.DefaultQuery("q", "")
+	account := c.DefaultQuery("account", "")
+	name := c.DefaultQuery("name", "")
+	job := c.DefaultQuery("job", "")
+	minLev := c.DefaultQuery("minLev", "")
+	maxLev := c.DefaultQuery("maxLevel", "")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	// Build query from multiple params
+	searchQuery := q
+	if name != "" {
+		searchQuery = name
+	}
+	if account != "" {
+		searchQuery = account
+	}
+
+	characters, total, err := r.characterService.SearchWithFilters(sID, searchQuery, account, job, minLev, maxLev, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": characters, "total": total, "page": page, "size": pageSize})
+}
+
 // --- GM handlers ---
 
 func (r *Router) sendMail(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req gm.MailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.SendMail(userID.(int), &req); err != nil {
+	if err := r.gmService.SendMail(userID.(int), serverID, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -300,6 +400,7 @@ func (r *Router) sendMail(c *gin.Context) {
 }
 
 func (r *Router) sendItem(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req struct {
 		CharacterName string `json:"character_name" binding:"required"`
 		ItemID        int    `json:"item_id" binding:"required"`
@@ -310,7 +411,7 @@ func (r *Router) sendItem(c *gin.Context) {
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.SendItem(userID.(int), req.CharacterName, req.ItemID, req.Count); err != nil {
+	if err := r.gmService.SendItem(userID.(int), serverID, req.CharacterName, req.ItemID, req.Count); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -318,13 +419,14 @@ func (r *Router) sendItem(c *gin.Context) {
 }
 
 func (r *Router) sendGold(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req gm.GoldRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.SendGold(userID.(int), &req); err != nil {
+	if err := r.gmService.SendGold(userID.(int), serverID, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -332,13 +434,14 @@ func (r *Router) sendGold(c *gin.Context) {
 }
 
 func (r *Router) sendCera(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req gm.GoldRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.SendCera(userID.(int), &req); err != nil {
+	if err := r.gmService.SendCera(userID.(int), serverID, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -346,13 +449,14 @@ func (r *Router) sendCera(c *gin.Context) {
 }
 
 func (r *Router) setLevel(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req gm.LevelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.SetLevel(userID.(int), &req); err != nil {
+	if err := r.gmService.SetLevel(userID.(int), serverID, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -360,6 +464,7 @@ func (r *Router) setLevel(c *gin.Context) {
 }
 
 func (r *Router) resetFatigue(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req struct {
 		CharacterName string `json:"character_name" binding:"required"`
 	}
@@ -368,7 +473,7 @@ func (r *Router) resetFatigue(c *gin.Context) {
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.ResetFatigue(userID.(int), req.CharacterName); err != nil {
+	if err := r.gmService.ResetFatigue(userID.(int), serverID, req.CharacterName); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -376,13 +481,14 @@ func (r *Router) resetFatigue(c *gin.Context) {
 }
 
 func (r *Router) banAccount(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req gm.BanRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.BanAccount(userID.(int), &req); err != nil {
+	if err := r.gmService.BanAccount(userID.(int), serverID, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -390,6 +496,7 @@ func (r *Router) banAccount(c *gin.Context) {
 }
 
 func (r *Router) unbanAccount(c *gin.Context) {
+	serverID := r.getServerID(c)
 	var req struct {
 		UID int `json:"uid" binding:"required"`
 	}
@@ -398,7 +505,7 @@ func (r *Router) unbanAccount(c *gin.Context) {
 		return
 	}
 	userID, _ := c.Get("user_id")
-	if err := r.gmService.UnbanAccount(userID.(int), req.UID); err != nil {
+	if err := r.gmService.UnbanAccount(userID.(int), serverID, req.UID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -450,16 +557,27 @@ func (r *Router) getActivityLogs(c *gin.Context) {
 
 func (r *Router) searchPVFItems(c *gin.Context) {
 	q := c.DefaultQuery("q", "")
-	items, err := r.pvfService.SearchItems(q)
+	category := c.DefaultQuery("category", "")
+	rarity := c.DefaultQuery("rarity", "")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	items, total, err := r.pvfService.SearchItems(q, category, rarity, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	c.JSON(http.StatusOK, gin.H{"data": items, "total": total, "page": page, "size": pageSize})
 }
 
 func (r *Router) getPVFItem(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id := c.Param("id")
 	item, err := r.pvfService.GetItem(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -508,7 +626,8 @@ func (r *Router) reloadPVF(c *gin.Context) {
 // --- PVE handlers ---
 
 func (r *Router) getPVEStatus(c *gin.Context) {
-	status, err := r.pveService.GetStatus()
+	serverID := r.getServerID(c)
+	status, err := r.pveService.GetStatus(serverID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -576,4 +695,208 @@ func (r *Router) getAuditLogs(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, logs)
+}
+
+func (r *Router) getDashboardStats(c *gin.Context) {
+	serverID := r.getServerID(c)
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Total accounts
+	var totalAccounts int
+	sdb.DB.QueryRow("SELECT COUNT(*) FROM d_taiwan.accounts").Scan(&totalAccounts)
+
+	// Total characters
+	var totalCharacters int
+	sdb.DB.QueryRow("SELECT COUNT(*) FROM taiwan_cain.charac_info").Scan(&totalCharacters)
+
+	// Total guilds
+	var totalGuilds int
+	sdb.DB.QueryRow("SELECT COUNT(*) FROM d_guild.guild_info").Scan(&totalGuilds)
+
+	// Total gold
+	var totalGold int
+	sdb.DB.QueryRow("SELECT COALESCE(SUM(cera), 0) FROM taiwan_billing.cash_cera").Scan(&totalGold)
+
+	// Recent logins
+	var recentLogins []map[string]interface{}
+	rows, err := sdb.DB.Query("SELECT m_id FROM taiwan_login.member_login ORDER BY m_id DESC LIMIT 10")
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var mID int
+			rows.Scan(&mID)
+			recentLogins = append(recentLogins, map[string]interface{}{"m_id": mID})
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_accounts":  totalAccounts,
+		"total_characters": totalCharacters,
+		"total_guilds":    totalGuilds,
+		"total_gold":      totalGold,
+		"recent_logins":   recentLogins,
+	})
+}
+
+// --- dnf-server-public compatible API handlers ---
+
+func (r *Router) listCharactersCompat(c *gin.Context) {
+	serverID := r.getServerID(c)
+	name := c.DefaultQuery("name", "")
+	account := c.DefaultQuery("account", "")
+	minLev, _ := strconv.Atoi(c.DefaultQuery("minLev", "0"))
+	maxLevel, _ := strconv.Atoi(c.DefaultQuery("maxLevel", "0"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	_ = minLev
+	_ = maxLevel
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+
+	if page < 1 { page = 1 }
+	if pageSize < 1 || pageSize > 100 { pageSize = 10 }
+
+	query := name
+	if query == "" && account != "" {
+		query = account
+	}
+
+	characters, total, err := r.characterService.Search(serverID, query, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": characters, "total": total, "page": page, "pageSize": pageSize, "list": characters})
+}
+
+func (r *Router) updateCharacterCompat(c *gin.Context) {
+	sID := r.getServerID(c)
+	var req struct {
+		CharacNo    int `json:"c_no"`
+		CharacName  string `json:"c_name"`
+		Lev         int `json:"c_level"`
+		MaxHp       int `json:"max_hp"`
+		MaxMp       int `json:"max_mp"`
+		PhyAttack   int `json:"phy_attack"`
+		PhyDefense  int `json:"phy_defense"`
+		MagAttack   int `json:"mag_attack"`
+		MagDefense  int `json:"mag_defense"`
+		Jump        int `json:"jump"`
+		HitRecovery int `json:"hit_recovery"`
+		MoveSpeed   int `json:"move_speed"`
+		AttackSpeed int `json:"attack_speed"`
+		CastSpeed   int `json:"cast_speed"`
+		Fatigue     int `json:"c_fatigue"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sdb, err := database.GetServerDB(sID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err = sdb.DB.Exec(
+		"UPDATE taiwan_cain.charac_info SET lev=?, maxHP=?, maxMP=?, phy_attack=?, phy_defense=?, mag_attack=?, mag_defense=?, jump=?, hit_recovery=?, move_speed=?, attack_speed=?, cast_speed=?, fatigue=? WHERE charac_no=?",
+		req.Lev, req.MaxHp, req.MaxMp, req.PhyAttack, req.PhyDefense, req.MagAttack, req.MagDefense, req.Jump, req.HitRecovery, req.MoveSpeed, req.AttackSpeed, req.CastSpeed, req.Fatigue, req.CharacNo,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "updated"})
+}
+
+func (r *Router) overTasksCompat(c *gin.Context) {
+	serverID := r.getServerID(c)
+	characId := c.Param("characId")
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err = sdb.DB.Exec("UPDATE taiwan_cain.quest_status SET clear_flag=1 WHERE charac_no=?", characId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "tasks completed"})
+}
+
+func (r *Router) listAccountsCompat(c *gin.Context) {
+	serverID := r.getServerID(c)
+	account := c.DefaultQuery("account", "")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+
+	if page < 1 { page = 1 }
+	if pageSize < 1 || pageSize > 100 { pageSize = 10 }
+
+	accounts, total, err := r.accountService.Search(serverID, account, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": accounts, "total": total, "page": page, "pageSize": pageSize, "list": accounts})
+}
+
+func (r *Router) getAccountCompat(c *gin.Context) {
+	serverID := r.getServerID(c)
+	uid, _ := strconv.Atoi(c.Param("uid"))
+
+	account, err := r.accountService.GetByUID(serverID, uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if account == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "account not found"})
+		return
+	}
+	c.JSON(http.StatusOK, account)
+}
+
+func (r *Router) sendMailCompat(c *gin.Context) {
+	serverID := r.getServerID(c)
+	var req struct {
+		SendCharacName  string `json:"sendCharacName"`
+		ReceiveCharacNo int    `json:"receiveCharacNo"`
+		ItemId          int    `json:"itemId"`
+		AddInfo         int    `json:"addInfo"`
+		Upgrade         int    `json:"upgrade"`
+		Gold            int    `json:"gold"`
+		Message         string `json:"message"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	senderName := req.SendCharacName
+	if senderName == "" { senderName = "GM" }
+
+	_, err = sdb.DB.Exec(
+		`INSERT INTO taiwan_cain_2nd.postal
+			(occ_time, send_charac_name, receive_charac_no, item_id, add_info, upgrade, gold, letter_id)
+		 VALUES (NOW(), ?, ?, ?, ?, 0, ?, 0)`,
+		senderName, req.ReceiveCharacNo, req.ItemId, req.AddInfo, req.Gold,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "mail sent"})
 }

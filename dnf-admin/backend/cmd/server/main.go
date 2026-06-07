@@ -20,11 +20,13 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Initialize database
+	// Initialize database (allow failure for graceful startup)
 	if err := database.Init(cfg); err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		log.Printf("Warning: Database initialization failed: %v", err)
+		log.Println("Server will start but database operations will fail")
+	} else {
+		defer database.Close()
 	}
-	defer database.Close()
 
 	// Initialize services
 	authSvc := auth.NewService(cfg.JWTSecret)
@@ -32,8 +34,13 @@ func main() {
 	characterSvc := character.NewService()
 	auditSvc := audit.NewService()
 	gmSvc := gm.NewService(auditSvc)
-	activitySvc := activity.NewService()
-	pvfSvc := pvf.NewService(cfg.PVFService)
+	activitySvc := activity.NewService("local")
+	var pvfSvc *pvf.Service
+	if cfg.PVFFile != "" {
+		pvfSvc = pvf.NewService(cfg.PVFFile)
+	} else {
+		pvfSvc = pvf.NewService("/opt/dnf-admin/items_10000.json")
+	}
 	pveSvc := pve.NewService(auditSvc)
 
 	// Setup router

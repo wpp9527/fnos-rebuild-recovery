@@ -1,0 +1,36 @@
+{
+  "servers": [
+    {
+      "id": "local",
+      "name": "本地区",
+      "description": "DNF 本地服务器 - 默认配置",
+      "db_host": "127.0.0.1",
+      "db_port": 3306,
+      "db_user": "root",
+      "db_password": "${DNF_DB_ROOT_PASSWORD}",
+      "databases": {
+        "accounts": "d_taiwan",
+        "cain": "taiwan_cain",
+        "cain_2nd": "taiwan_cain_2nd",
+        "billing": "taiwan_billing",
+        "login": "taiwan_login"
+      }
+    },
+    {
+      "id": "local-readonly",
+      "name": "本地区-只读",
+      "description": "DNF 本地服务器 - 只读账号",
+      "db_host": "127.0.0.1",
+      "db_port": 3306,
+      "db_user": "dnf_readonly",
+      "db_password": "${LLNUT_MYSQL_READONLY_PASSWORD}",
+      "databases": {
+        "accounts": "d_taiwan",
+        "cain": "taiwan_cain",
+        "cain_2nd": "taiwan_cain_2nd",
+        "billing": "taiwan_billing",
+        "login": "taiwan_login"
+      }
+    }
+  ]
+}

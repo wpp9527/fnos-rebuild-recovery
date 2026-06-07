@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    environment:
+      APP_NAME: dnf-public-admin
+      HTTP_ADDR: :8080
+      LLNUT_MODE: ${LLNUT_MODE:-demo}
+      LLNUT_MYSQL_HOST: ${LLNUT_MYSQL_HOST:-127.0.0.1}
+      LLNUT_MYSQL_PORT: ${LLNUT_MYSQL_PORT:-3306}
+      LLNUT_MYSQL_READONLY_USER: ${LLNUT_MYSQL_READONLY_USER:-dnf_readonly}
+      LLNUT_MYSQL_READONLY_PASSWORD: ${LLNUT_MYSQL_READONLY_PASSWORD:-REDACTED}
+    ports:
+      - "${DNF_PUBLIC_ADMIN_BACKEND_PORT:-18882}:8080"
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "${DNF_PUBLIC_ADMIN_FRONTEND_PORT:-18883}:80"
+    depends_on:
+      - backend

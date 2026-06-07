@@ -1,0 +1,11 @@
+{
+  "name": "dnf-public-admin-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "check": "node scripts/check-structure.mjs && node scripts/check-content.mjs",
+    "check:content": "node scripts/check-content.mjs"
+  }
+}

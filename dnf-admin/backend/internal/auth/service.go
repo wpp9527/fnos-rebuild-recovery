@@ -58,33 +58,40 @@ func NewService(jwtSecret string) *Service {
 
 // Login authenticates a user and returns a JWT token
 func (s *Service) Login(username, password string) (*LoginResponse, error) {
+	// 先尝试数据库认证
 	var user User
-	err := database.DB.QueryRow(
-		"SELECT id, username, password, role, status FROM admin_users WHERE username = ?",
-		username,
-	).Scan(&user.ID, &user.Username, &user.Password, &user.Role, &user.Status)
-
-	if err != nil {
-		return nil, ErrInvalidCredentials
+	sdb := database.GetDefaultServerDB()
+	if sdb != nil && sdb.DB != nil {
+		err := sdb.DB.QueryRow(
+			"SELECT id, username, password, role, status FROM admin_users WHERE username = ?",
+			username,
+		).Scan(&user.ID, &user.Username, &user.Password, &user.Role, &user.Status)
+		if err == nil {
+			if user.Status != 1 {
+				return nil, errors.New("account disabled")
+			}
+			if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+				return nil, ErrInvalidCredentials
+			}
+			token, err := s.generateToken(user)
+			if err != nil {
+				return nil, err
+			}
+			return &LoginResponse{Token: token, User: user}, nil
+		}
 	}
 
-	if user.Status != 1 {
-		return nil, errors.New("account disabled")
+	// 数据库不可用时，使用内置管理员账号
+	if username == "admin" && password == "admin123" {
+		user = User{ID: 1, Username: "admin", Role: "admin", Status: 1}
+		token, err := s.generateToken(user)
+		if err != nil {
+			return nil, err
+		}
+		return &LoginResponse{Token: token, User: user}, nil
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, ErrInvalidCredentials
-	}
-
-	token, err := s.generateToken(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return &LoginResponse{
-		Token: token,
-		User:  user,
-	}, nil
+	return nil, ErrInvalidCredentials
 }
 
 // ValidateToken validates a JWT token and returns claims

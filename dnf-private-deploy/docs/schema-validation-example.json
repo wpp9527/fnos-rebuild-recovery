@@ -1,0 +1,5 @@
+{
+  "tables": {
+    "d_taiwan.accounts": ["UID", "accountname", "admin", "parent_uid"]
+  }
+}

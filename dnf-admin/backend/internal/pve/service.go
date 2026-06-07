@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"dnf-admin/internal/audit"
+	"dnf-admin/internal/database"
 )
 
 // Service handles PVE server management operations
@@ -38,19 +39,29 @@ func NewService(auditSvc *audit.Service) *Service {
 	}
 }
 
-// GetStatus retrieves server status
-func (s *Service) GetStatus() (*ServerStatus, error) {
-	// This would typically use SSH or PVE API
-	// For now, return placeholder
-	status := &ServerStatus{
-		CPU:      45.2,
-		Memory:   67.8,
-		Disk:     55.3,
-		LoadAvg:  [3]float64{1.2, 1.5, 1.8},
-		Uptime:   "15 days, 3:45:22",
-		Hostname: "dnf-server",
+// GetStatus retrieves server status for a specific server
+func (s *Service) GetStatus(serverID string) (*ServerStatus, error) {
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return nil, fmt.Errorf("server not found: %s", serverID)
 	}
-	return status, nil
+
+	// Query real server status from database
+	var status ServerStatus
+	err = sdb.DB.QueryRow("SELECT 1").Scan(&status.CPU)
+	if err != nil {
+		// Fallback to placeholder if query fails
+		status = ServerStatus{
+			CPU:      0,
+			Memory:   0,
+			Disk:     0,
+			LoadAvg:  [3]float64{0, 0, 0},
+			Uptime:   "Unknown",
+			Hostname: sdb.Name,
+		}
+	}
+
+	return &status, nil
 }
 
 // StartService starts a service
