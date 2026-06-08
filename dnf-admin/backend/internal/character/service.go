@@ -1,8 +1,14 @@
 package character
 
 import (
+	"bytes"
+	"compress/zlib"
 	"database/sql"
 	"fmt"
+	"io"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"dnf-admin/internal/database"
@@ -37,14 +43,42 @@ type Character struct {
 	ServerName  string    `json:"server_name"`
 }
 
-// CharacterItem represents an item in character's inventory
+// Equipment represents an equipped item
+type Equipment struct {
+	SlotNo     int    `json:"slot"`
+	SlotName   string `json:"slot_name"`
+	ItemId     int    `json:"it_id"`
+	ItemName   string `json:"item_name"`
+	Rarity     int    `json:"rarity"`
+	Level      int    `json:"level"`
+	Enhance    int    `json:"enhance"`
+	PhyAtk     int    `json:"phy_attack"`
+	MagAtk     int    `json:"mag_attack"`
+	PhyDef     int    `json:"phy_defense"`
+	MagDef     int    `json:"mag_defense"`
+	Str        int    `json:"str"`
+	Int        int    `json:"int"`
+	Vit        int    `json:"vit"`
+	Spr        int    `json:"spr"`
+	PhyCrit    int    `json:"phy_crit"`
+	MagCrit    int    `json:"mag_crit"`
+	AtkSpeed   int    `json:"atk_speed"`
+	MoveSpeed  int    `json:"move_speed"`
+	CastSpeed  int    `json:"cast_speed"`
+	HP         int    `json:"hp"`
+	MP         int    `json:"mp"`
+	Stuck      int    `json:"stuck"`
+}
+
+// CharacterItem represents an item in character's backpack
 type CharacterItem struct {
-	SlotNo   int    `json:"slot"`
-	ItemId   int    `json:"it_id"`
-	ItemName string `json:"item_name"`
-	Count    int    `json:"count"`
-	Enhance  int    `json:"enhance"`
-	Rarity   int    `json:"rarity"`
+	SlotNo     int    `json:"slot"`
+	ItemId     int    `json:"it_id"`
+	ItemName   string `json:"item_name"`
+	Count      int    `json:"count"`
+	Rarity     int    `json:"rarity"`
+	Level      int    `json:"level"`
+	Category   string `json:"category"`
 }
 
 // Service handles character operations
@@ -64,11 +98,9 @@ func (s *Service) Search(serverID string, query string, page, pageSize int) ([]C
 
 	offset := (page - 1) * pageSize
 
-	// Build WHERE clause based on query
 	where := "1=1"
 	args := []interface{}{}
 	if query != "" {
-		// Try to parse as UID first
 		var uid int
 		_, err := fmt.Sscanf(query, "%d", &uid)
 		if err == nil && uid > 0 {
@@ -80,7 +112,6 @@ func (s *Service) Search(serverID string, query string, page, pageSize int) ([]C
 		}
 	}
 
-	// Count total
 	var total int
 	countSQL := fmt.Sprintf("SELECT COUNT(*) FROM taiwan_cain.charac_info WHERE %s", where)
 	err = sdb.DB.QueryRow(countSQL, args...).Scan(&total)
@@ -88,7 +119,6 @@ func (s *Service) Search(serverID string, query string, page, pageSize int) ([]C
 		return nil, 0, fmt.Errorf("count characters: %w", err)
 	}
 
-	// Query with pagination
 	querySQL := fmt.Sprintf(
 		`SELECT charac_no, charac_name, lev, job, fatigue, 0, m_id, grow_type, sex,
 			maxHP, maxMP, phy_attack, phy_defense, mag_attack, mag_defense,
@@ -127,11 +157,9 @@ func (s *Service) SearchWithFilters(serverID string, query string, account strin
 
 	offset := (page - 1) * pageSize
 
-	// Build WHERE clause
 	where := "1=1"
 	args := []interface{}{}
 
-	// Name or UID search
 	if query != "" {
 		var uid int
 		_, err := fmt.Sscanf(query, "%d", &uid)
@@ -144,7 +172,6 @@ func (s *Service) SearchWithFilters(serverID string, query string, account strin
 		}
 	}
 
-	// Account filter
 	if account != "" {
 		var uid int
 		_, err := fmt.Sscanf(account, "%d", &uid)
@@ -154,7 +181,6 @@ func (s *Service) SearchWithFilters(serverID string, query string, account strin
 		}
 	}
 
-	// Job filter
 	if job != "" {
 		var jobID int
 		_, err := fmt.Sscanf(job, "%d", &jobID)
@@ -164,7 +190,6 @@ func (s *Service) SearchWithFilters(serverID string, query string, account strin
 		}
 	}
 
-	// Level range
 	if minLev != "" {
 		var minL int
 		_, err := fmt.Sscanf(minLev, "%d", &minL)
@@ -182,7 +207,6 @@ func (s *Service) SearchWithFilters(serverID string, query string, account strin
 		}
 	}
 
-	// Count total
 	var total int
 	countSQL := fmt.Sprintf("SELECT COUNT(*) FROM taiwan_cain.charac_info WHERE %s", where)
 	err = sdb.DB.QueryRow(countSQL, args...).Scan(&total)
@@ -190,7 +214,6 @@ func (s *Service) SearchWithFilters(serverID string, query string, account strin
 		return nil, 0, fmt.Errorf("count characters: %w", err)
 	}
 
-	// Query with pagination
 	querySQL := fmt.Sprintf(
 		`SELECT charac_no, charac_name, lev, job, fatigue, 0, m_id, grow_type, sex,
 			maxHP, maxMP, phy_attack, phy_defense, mag_attack, mag_defense,
@@ -249,33 +272,176 @@ func (s *Service) GetByCNo(serverID string, cNo int) (*Character, error) {
 	return &c, nil
 }
 
-// GetItems retrieves items for a character
+// GetEquipment retrieves equipped items from equipslot blob
+func (s *Service) GetEquipment(serverID string, cNo int) ([]Equipment, error) {
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return nil, fmt.Errorf("server not found: %s", serverID)
+	}
+
+	// Query equipslot blob
+	var equipslotBlob []byte
+	err = sdb.DB.QueryRow(
+		`SELECT equipslot FROM taiwan_cain_2nd.inventory WHERE charac_no = ?`, cNo,
+	).Scan(&equipslotBlob)
+	if err != nil {
+		return nil, fmt.Errorf("query equipslot: %w", err)
+	}
+
+	// Parse equipslot blob (zlib compressed, 4-byte header)
+	decompressed, err := decompressZlib(equipslotBlob[4:])
+	if err != nil {
+		return nil, fmt.Errorf("decompress equipslot: %w", err)
+	}
+
+	// Each equipment slot is 61 bytes
+	// item_no is at local offset 2-3 (16-bit LE)
+	slotSize := 61
+	slotNames := []string{"武器", "上衣", "下裝", "頭肩", "腰帶", "鞋子", "項鏈", "手鐲", "戒指", "輔助裝備", "魔法石", "耳環"}
+
+	var equipment []Equipment
+	for slot := 0; slot < 12; slot++ {
+		start := slot * slotSize
+		if start+slotSize > len(decompressed) {
+			break
+		}
+
+		block := decompressed[start : start+slotSize]
+		itemNo := int(block[2]) | int(block[3])<<8  // Little-endian
+		enhance := int(block[6])
+
+		eq := Equipment{
+			SlotNo:   slot,
+			SlotName: slotNames[slot],
+			ItemId:   itemNo,
+			Enhance:  enhance,
+		}
+		equipment = append(equipment, eq)
+	}
+
+	// Get item names from dnf_item_info
+	if len(equipment) > 0 {
+		itIDs := make([]int, 0, len(equipment))
+		for _, eq := range equipment {
+			if eq.ItemId > 0 {
+				itIDs = append(itIDs, eq.ItemId)
+			}
+		}
+		if len(itIDs) > 0 {
+			inClause := buildInClause(itIDs)
+			nameRows, err := sdb.DB.Query(
+				fmt.Sprintf("SELECT it_no, it_name, rarity FROM taiwan_cain_web.dnf_item_info WHERE it_no IN (%s)", inClause),
+			)
+			if err == nil {
+				defer nameRows.Close()
+				nameMap := make(map[int]struct {
+					Name   string
+					Rarity int
+				})
+				for nameRows.Next() {
+					var itID int
+					var name string
+					var rarity int
+					if err := nameRows.Scan(&itID, &name, &rarity); err == nil {
+						nameMap[itID] = struct {
+							Name   string
+							Rarity int
+						}{Name: decodeUnicode(name), Rarity: rarity}
+					}
+				}
+				for i := range equipment {
+					if info, ok := nameMap[equipment[i].ItemId]; ok {
+						equipment[i].ItemName = info.Name
+						equipment[i].Rarity = info.Rarity
+					}
+				}
+			}
+		}
+	}
+
+	return equipment, nil
+}
+
+// GetItems retrieves items from inventory blob (backpack)
 func (s *Service) GetItems(serverID string, cNo int) ([]CharacterItem, error) {
 	sdb, err := database.GetServerDB(serverID)
 	if err != nil {
 		return nil, fmt.Errorf("server not found: %s", serverID)
 	}
 
-	rows, err := sdb.DB.Query(
-		`SELECT u.slot, u.it_id, 1, COALESCE(g.name, '')
-		 FROM taiwan_cain_2nd.user_items u
-		 LEFT JOIN taiwan_cain_2nd.gold g ON FLOOR(u.it_id/100000) = g.code
-		 WHERE u.charac_no = ? ORDER BY u.slot`,
-		cNo,
-	)
+	// Query inventory blob
+	var inventoryBlob []byte
+	err = sdb.DB.QueryRow(
+		`SELECT inventory FROM taiwan_cain_2nd.inventory WHERE charac_no = ?`, cNo,
+	).Scan(&inventoryBlob)
 	if err != nil {
-		return nil, fmt.Errorf("query items: %w", err)
+		return nil, fmt.Errorf("query inventory: %w", err)
 	}
-	defer rows.Close()
 
-	var items []CharacterItem
-	for rows.Next() {
-		var item CharacterItem
-		if err := rows.Scan(&item.SlotNo, &item.ItemId, &item.Count, &item.ItemName); err != nil {
-			return nil, fmt.Errorf("scan item: %w", err)
-		}
-		items = append(items, item)
+	// Parse inventory blob (zlib compressed, 4-byte header)
+	decompressed, err := decompressZlib(inventoryBlob[4:])
+	if err != nil {
+		return nil, fmt.Errorf("decompress inventory: %w", err)
 	}
+
+	// Parse items: each item is 8 bytes
+	// Format: flag(1) + item_no(2 LE) + padding(3) + count(1) + padding(1)
+	var items []CharacterItem
+	seen := make(map[int]bool)
+	for offset := 0; offset < len(decompressed)-7; offset++ {
+		itemNo := int(decompressed[offset+1]) | int(decompressed[offset+2])<<8
+		count := int(decompressed[offset+6])
+
+		// Validate item
+		if itemNo >= 1000 && itemNo <= 99999 && count > 0 && count < 1000 {
+			if decompressed[offset+3] == 0 && decompressed[offset+4] == 0 && decompressed[offset+5] == 0 {
+				if !seen[itemNo] {
+					seen[itemNo] = true
+					items = append(items, CharacterItem{
+						SlotNo:   offset,
+						ItemId:   itemNo,
+						Count:    count,
+						Category: categorizeItem(itemNo),
+					})
+				}
+			}
+		}
+	}
+
+	// Get item names from dnf_item_info
+	if len(items) > 0 {
+		itemNos := make([]int, 0, len(items))
+		for _, item := range items {
+			itemNos = append(itemNos, item.ItemId)
+		}
+		inClause := buildInClause(itemNos)
+		nameRows, err := sdb.DB.Query(
+			fmt.Sprintf("SELECT it_no, it_name, rarity FROM taiwan_cain_web.dnf_item_info WHERE it_no IN (%s)", inClause),
+		)
+		if err == nil {
+			defer nameRows.Close()
+			type itemMeta struct {
+				Name   string
+				Rarity int
+			}
+			metaMap := make(map[int]itemMeta)
+			for nameRows.Next() {
+				var itNo int
+				var name string
+				var rarity int
+				if err := nameRows.Scan(&itNo, &name, &rarity); err == nil {
+					metaMap[itNo] = itemMeta{Name: decodeUnicode(name), Rarity: rarity}
+				}
+			}
+			for i := range items {
+				if m, ok := metaMap[items[i].ItemId]; ok {
+					items[i].ItemName = m.Name
+					items[i].Rarity = m.Rarity
+				}
+			}
+		}
+	}
+
 	return items, nil
 }
 
@@ -310,4 +476,77 @@ func (s *Service) GetOnline(serverID string) ([]Character, error) {
 		characters = append(characters, c)
 	}
 	return characters, nil
+}
+
+// --- Internal helpers ---
+
+// decompressZlib decompresses zlib data
+func decompressZlib(data []byte) ([]byte, error) {
+	reader, err := zlib.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	return io.ReadAll(reader)
+}
+
+// buildInClause builds a SQL IN clause from a list of ints
+func buildInClause(ids []int) string {
+	result := ""
+	for i, id := range ids {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf("%d", id)
+	}
+	return result
+}
+
+// decodeUnicode decodes \uXXXX escape sequences and handles latin1-encoded UTF-8
+func decodeUnicode(s string) string {
+	// First, try to decode \uXXXX escape sequences
+	re := regexp.MustCompile(`\\u([0-9a-fA-F]{4})`)
+	result := re.ReplaceAllStringFunc(s, func(match string) string {
+		hexStr := match[2:]
+		r, err := strconv.ParseInt(hexStr, 16, 32)
+		if err != nil {
+			return match
+		}
+		return string(rune(r))
+	})
+	
+	// If still has \u escapes, try hex decoding
+	if strings.Contains(result, "\\u") {
+		re2 := regexp.MustCompile(`\\u([0-9a-fA-F]{4})`)
+		result = re2.ReplaceAllStringFunc(result, func(match string) string {
+			hexStr := match[2:]
+			r, err := strconv.ParseInt(hexStr, 16, 32)
+			if err != nil {
+				return match
+			}
+			return string(rune(r))
+		})
+	}
+	
+	return result
+}
+
+// categorizeItem categorizes an item by its it_no range
+func categorizeItem(itNo int) string {
+	switch {
+	case itNo >= 1000 && itNo < 2000:
+		return "材料"
+	case itNo >= 2000 && itNo < 3000:
+		return "任務"
+	case itNo >= 3000 && itNo < 4000:
+		return "副職業"
+	case itNo >= 4000 && itNo < 5000:
+		return "消耗品"
+	case itNo >= 5000 && itNo < 10000:
+		return "裝備"
+	case itNo >= 10000:
+		return "裝備"
+	default:
+		return "其他"
+	}
 }

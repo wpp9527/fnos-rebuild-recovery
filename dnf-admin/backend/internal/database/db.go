@@ -52,7 +52,7 @@ type MultiServerConfig struct {
 
 func Init(cfg *config.Config) error {
 	// 数据库字符集是latin1但数据实际是UTF-8，使用latin1避免双重编码
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=latin1&parseTime=True&loc=Local",
 		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
 
 	var err error
@@ -145,7 +145,7 @@ func InitServerDB(serverID, serverName, host, port, user, password, dbName strin
 	}
 
 	// 数据库字符集是latin1但数据实际是UTF-8，使用latin1避免双重编码
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=latin1&parseTime=True&loc=Local",
 		user, password, host, port, dbName)
 
 	db, err := sql.Open("mysql", dsn)

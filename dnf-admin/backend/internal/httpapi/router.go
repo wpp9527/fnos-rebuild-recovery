@@ -127,6 +127,7 @@ func (r *Router) Setup() *gin.Engine {
 				characters.GET("/online", r.getOnlineCharacters)
 				characters.GET("/:cNo", r.getCharacter)
 				characters.GET("/:cNo/items", r.getCharacterItems)
+				characters.GET("/:cNo/equipment", r.getCharacterEquipment)
 			}
 
 			// Dashboard stats
@@ -336,6 +337,17 @@ func (r *Router) getCharacterItems(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, items)
+}
+
+func (r *Router) getCharacterEquipment(c *gin.Context) {
+	serverID := r.getServerID(c)
+	cNo, _ := strconv.Atoi(c.Param("cNo"))
+	equipment, err := r.characterService.GetEquipment(serverID, cNo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, equipment)
 }
 
 func (r *Router) getOnlineCharacters(c *gin.Context) {
