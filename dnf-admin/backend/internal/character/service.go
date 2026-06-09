@@ -5,11 +5,13 @@ import (
 	"compress/zlib"
 	"database/sql"
 	"fmt"
+	"golang.org/x/text/encoding/traditionalchinese"
+	"golang.org/x/text/transform"
 	"io"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
+	"unicode/utf8"
 
 	"dnf-admin/internal/database"
 )
@@ -294,9 +296,9 @@ func (s *Service) GetEquipment(serverID string, cNo int) ([]Equipment, error) {
 		return nil, fmt.Errorf("decompress equipslot: %w", err)
 	}
 
-	// Each equipment slot is 61 bytes
-	// item_no is at local offset 2-3 (16-bit LE)
-	slotSize := 61
+	// Each equipment slot is 122 bytes
+	// item_no is at local offset 2-4 (3-byte LE)
+	slotSize := 122
 	slotNames := []string{"武器", "上衣", "下裝", "頭肩", "腰帶", "鞋子", "項鏈", "手鐲", "戒指", "輔助裝備", "魔法石", "耳環"}
 
 	var equipment []Equipment
@@ -307,7 +309,7 @@ func (s *Service) GetEquipment(serverID string, cNo int) ([]Equipment, error) {
 		}
 
 		block := decompressed[start : start+slotSize]
-		itemNo := int(block[2]) | int(block[3])<<8  // Little-endian
+		itemNo := int(block[2]) | int(block[3])<<8 | int(block[4])<<16  // 3-byte LE
 		enhance := int(block[6])
 
 		eq := Equipment{
@@ -502,9 +504,124 @@ func buildInClause(ids []int) string {
 	return result
 }
 
+// fixEncoding repairs strings from dnf_item_info where UTF-8 bytes were
+// stored in latin1 columns. The MySQL driver with charset=utf8 partially
+// decodes high bytes into Latin Extended Unicode chars via cp1252.
+func fixEncoding(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	// 把每个 rune 转回 byte
+	var b []byte
+	for _, r := range s {
+		if r > 255 {
+			orig, ok := unicodeToByte(r)
+			if ok {
+				b = append(b, orig)
+			} else {
+				b = append(b, byte(r&0xFF))
+			}
+		} else {
+			b = append(b, byte(r))
+		}
+	}
+
+	// 如果原始字符串和转换后的字节不同，尝试解码
+	if string(b) != s {
+		// 尝试 UTF-8 解码
+		if utf8.Valid(b) {
+			return string(b)
+		}
+		// 尝试 Big5 解码
+		decoder := traditionalchinese.Big5.NewDecoder()
+		decoded, _, err := transform.Bytes(decoder, b)
+		if err == nil && utf8.Valid(decoded) {
+			return string(decoded)
+		}
+	}
+
+	// 即使字符串相同，也尝试 Big5 解码（可能是纯 ASCII 或 latin1）
+	decoder := traditionalchinese.Big5.NewDecoder()
+	decoded, _, err := transform.Bytes(decoder, b)
+	if err == nil && utf8.Valid(decoded) && string(decoded) != s {
+		return string(decoded)
+	}
+
+	return s
+}
+
+// unicodeToByte maps Unicode chars back to their original byte values.
+// The MySQL driver converts 0x80-0xFF bytes using cp1252 encoding.
+// Undefined cp1252 positions (0x81,0x8D,0x8F,0x90,0x9D) are passed through.
+func unicodeToByte(r rune) (byte, bool) {
+	if r <= 0xFF {
+		return byte(r), true
+	}
+	switch r {
+	case 0x20AC:
+		return 0x80, true
+	case 0x201A:
+		return 0x82, true
+	case 0x0192:
+		return 0x83, true
+	case 0x201E:
+		return 0x84, true
+	case 0x2026:
+		return 0x85, true
+	case 0x2020:
+		return 0x86, true
+	case 0x2021:
+		return 0x87, true
+	case 0x02C6:
+		return 0x88, true
+	case 0x2030:
+		return 0x89, true
+	case 0x0160:
+		return 0x8A, true
+	case 0x2039:
+		return 0x8B, true
+	case 0x0152:
+		return 0x8C, true
+	case 0x017D:
+		return 0x8E, true
+	case 0x2018:
+		return 0x91, true
+	case 0x2019:
+		return 0x92, true
+	case 0x201C:
+		return 0x93, true
+	case 0x201D:
+		return 0x94, true
+	case 0x2022:
+		return 0x95, true
+	case 0x2013:
+		return 0x96, true
+	case 0x2014:
+		return 0x97, true
+	case 0x02DC:
+		return 0x98, true
+	case 0x2122:
+		return 0x99, true
+	case 0x0161:
+		return 0x9A, true
+	case 0x203A:
+		return 0x9B, true
+	case 0x0153:
+		return 0x9C, true
+	case 0x017E:
+		return 0x9E, true
+	case 0x0178:
+		return 0x9F, true
+	}
+	return 0, false
+}
+
 // decodeUnicode decodes \uXXXX escape sequences and handles latin1-encoded UTF-8
 func decodeUnicode(s string) string {
-	// First, try to decode \uXXXX escape sequences
+	// First fix encoding
+	s = fixEncoding(s)
+	// Then decode \uXXXX escape sequences
 	re := regexp.MustCompile(`\\u([0-9a-fA-F]{4})`)
 	result := re.ReplaceAllStringFunc(s, func(match string) string {
 		hexStr := match[2:]
@@ -514,21 +631,247 @@ func decodeUnicode(s string) string {
 		}
 		return string(rune(r))
 	})
-	
-	// If still has \u escapes, try hex decoding
-	if strings.Contains(result, "\\u") {
-		re2 := regexp.MustCompile(`\\u([0-9a-fA-F]{4})`)
-		result = re2.ReplaceAllStringFunc(result, func(match string) string {
-			hexStr := match[2:]
-			r, err := strconv.ParseInt(hexStr, 16, 32)
-			if err != nil {
-				return match
-			}
-			return string(rune(r))
-		})
-	}
-	
 	return result
+}
+
+// CharacterDetail represents detailed character info with stats
+// swagger:model CharacterDetail
+type CharacterDetail struct {
+	Character
+	MaxFatigue        int    `json:"max_fatigue" example:"70"`
+	UsedFatigue       int    `json:"used_fatigue" example:"45"`
+	PremiumFatigue    int    `json:"premium_fatigue" example:"0"`
+	DungeonClearPoint int    `json:"dungeon_clear_point" example:"150"`
+	TradeGoldTotal    int    `json:"trade_gold_total" example:"50000"`
+	DungeonPlayCount  int    `json:"dungeon_play_count" example:"320"`
+	TotalPlayTime     int    `json:"total_play_time" example:"7200"`
+	LuckPoint         int    `json:"luck_point" example:"5000"`
+	GuildID           int    `json:"guild_id" example:"1"`
+	GuildName         string `json:"guild_name" example:"測試公會"`
+	GuildLevel        int    `json:"guild_level" example:"5"`
+	Money             int    `json:"money" example:"1000000"`
+	Coin              int    `json:"coin" example:"500"`
+}
+
+// EquipmentDetail represents a equipped item with full stats
+// swagger:model EquipmentDetail
+type EquipmentDetail struct {
+	Equipment
+	PhyAtt        int     `json:"phy_att"`
+	MagAtt        int     `json:"mag_att"`
+	PhyDef        int     `json:"phy_def"`
+	MagDef        int     `json:"mag_def"`
+	HPMax         int     `json:"hp_max"`
+	MPMax         int     `json:"mp_max"`
+	MovSpeed      int     `json:"mov_speed"`
+	AtkSpeed      int     `json:"att_speed"`
+	CastSpd       int     `json:"cast_speed"`
+	JumpBonus     int     `json:"jump_bonus"`
+	HitRecBonus   int     `json:"hit_recovery_bonus"`
+	CritRate      float64 `json:"criticalhit_rate"`
+	StuckRate     float64 `json:"stuck_rate"`
+	RefFire       int     `json:"ref_fire"`
+	RefWater      int     `json:"ref_water"`
+	RefDark       int     `json:"ref_dark"`
+	RefLight      int     `json:"ref_light"`
+	RefAll        int     `json:"ref_all"`
+	Explain       string  `json:"explain"`
+	DetailExplain string  `json:"detail_explain"`
+	FlavorText    string  `json:"flavor_text"`
+	SetName       string  `json:"set_name"`
+	SetItem       string  `json:"set_item"`
+	SkillLevelUp  string  `json:"skill_levelup"`
+	AmplifyOption int     `json:"amplify_option"`
+	AmplifyValue  int     `json:"amplify_value"`
+}
+
+// GetDetail retrieves detailed character info with stats, guild, money
+func (s *Service) GetDetail(serverID string, cNo int) (*CharacterDetail, error) {
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return nil, fmt.Errorf("server not found: %s", serverID)
+	}
+
+	var d CharacterDetail
+	err = sdb.DB.QueryRow(`
+		SELECT c.charac_no, c.charac_name, c.lev, c.job, c.grow_type, c.sex,
+		  c.maxHP, c.maxMP, c.phy_attack, c.phy_defense, c.mag_attack, c.mag_defense,
+		  c.move_speed, c.attack_speed, c.cast_speed, c.jump, c.hit_recovery, c.exp,
+		  c.fatigue, c.max_fatigue, c.create_time, c.last_play_time, c.guild_id,
+		  COALESCE(s.used_fatigue,0), COALESCE(s.premium_fatigue,0), COALESCE(s.dungeon_clear_point,0),
+		  COALESCE(s.trade_gold_total,0), COALESCE(s.dungeon_play_count,0), COALESCE(s.total_play_time,0), COALESCE(s.luck_point,0),
+		  COALESCE(i.money,0), COALESCE(i.coin,0)
+		FROM taiwan_cain.charac_info c
+		LEFT JOIN taiwan_cain.charac_stat s ON c.charac_no = s.charac_no
+		LEFT JOIN taiwan_cain_2nd.inventory i ON c.charac_no = i.charac_no
+		WHERE c.charac_no = ?
+	`, cNo).Scan(
+		&d.CNo, &d.CName, &d.CLevel, &d.CJob, &d.GrowType, &d.Sex,
+		&d.MaxHP, &d.MaxMP, &d.PhyAttack, &d.PhyDefense, &d.MagAttack, &d.MagDefense,
+		&d.MoveSpeed, &d.AttackSpeed, &d.CastSpeed, &d.Jump, &d.HitRecovery, &d.Exp,
+		&d.CFatigue, &d.MaxFatigue, &d.CreateTime, &d.CLastLogin, &d.GuildID,
+		&d.UsedFatigue, &d.PremiumFatigue, &d.DungeonClearPoint,
+		&d.TradeGoldTotal, &d.DungeonPlayCount, &d.TotalPlayTime, &d.LuckPoint,
+		&d.Money, &d.Coin,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get character detail: %w", err)
+	}
+
+	d.ServerID = serverID
+	d.ServerName = sdb.Name
+
+	// 获取公会名
+	if d.GuildID > 0 {
+		var guildName string
+		sdb.DB.QueryRow(`SELECT guild_name FROM d_guild.guild_info WHERE guild_id = ?`, d.GuildID).Scan(&guildName)
+		d.GuildName = fixEncoding(guildName)
+		sdb.DB.QueryRow(`SELECT lev FROM d_guild.guild_info WHERE guild_id = ?`, d.GuildID).Scan(&d.GuildLevel)
+	}
+
+	return &d, nil
+}
+
+// GetEquipmentDetail retrieves equipped items with full stats from dnf_item_info
+func (s *Service) GetEquipmentDetail(serverID string, cNo int) ([]EquipmentDetail, error) {
+	sdb, err := database.GetServerDB(serverID)
+	if err != nil {
+		return nil, fmt.Errorf("server not found: %s", serverID)
+	}
+
+	// Query equipslot blob
+	var equipslotBlob []byte
+	err = sdb.DB.QueryRow(
+		`SELECT equipslot FROM taiwan_cain_2nd.inventory WHERE charac_no = ?`, cNo,
+	).Scan(&equipslotBlob)
+	if err != nil {
+		return nil, fmt.Errorf("query equipslot: %w", err)
+	}
+
+	decompressed, err := decompressZlib(equipslotBlob[4:])
+	if err != nil {
+		return nil, fmt.Errorf("decompress equipslot: %w", err)
+	}
+
+	slotSize := 122
+	slotNames := []string{"武器", "上衣", "下裝", "頭肩", "腰帶", "鞋子", "項鏈", "手鐲", "戒指", "輔助裝備", "魔法石", "耳環"}
+
+	var equipment []EquipmentDetail
+	for slot := 0; slot < 12; slot++ {
+		start := slot * slotSize
+		if start+slotSize > len(decompressed) {
+			break
+		}
+		block := decompressed[start : start+slotSize]
+		itemNo := int(block[2]) | int(block[3])<<8 | int(block[4])<<16  // 3-byte LE
+		enhance := int(block[6])
+		ampOpt := int(block[48])
+		ampVal := int(block[49]) | int(block[50])<<8
+
+		eq := EquipmentDetail{
+			Equipment: Equipment{
+				SlotNo:   slot,
+				SlotName: slotNames[slot],
+				ItemId:   itemNo,
+				Enhance:  enhance,
+			},
+			AmplifyOption: ampOpt,
+			AmplifyValue:  ampVal,
+		}
+		equipment = append(equipment, eq)
+	}
+
+	// Get full item details from dnf_item_info
+	if len(equipment) > 0 {
+		itIDs := make([]int, 0, len(equipment))
+		for _, eq := range equipment {
+			if eq.ItemId > 0 {
+				itIDs = append(itIDs, eq.ItemId)
+			}
+		}
+		if len(itIDs) > 0 {
+			inClause := buildInClause(itIDs)
+			rows, err := sdb.DB.Query(fmt.Sprintf(`
+				SELECT it_no, it_name, rarity, level,
+				  COALESCE(equip_phy_att,0), COALESCE(equip_mag_att,0), COALESCE(equip_phy_def,0), COALESCE(equip_mag_def,0),
+				  COALESCE(hp_max,0), COALESCE(mp_max,0),
+				  COALESCE(mov_speed,0), COALESCE(att_speed,0),
+				  COALESCE(jump,0), COALESCE(hit_recovery,0),
+				  COALESCE(criticalhit_rate,0), COALESCE(stuck_rate,0),
+				  COALESCE(ref_fire,0), COALESCE(ref_water,0), COALESCE(ref_dark,0), COALESCE(ref_light,0), COALESCE(ref_all,0),
+				  COALESCE(it_explain,''), COALESCE(detail_explain,''), COALESCE(flavor_text,''),
+				  COALESCE(set_name,''), COALESCE(set_item,''), COALESCE(skill_levelup,'')
+				FROM taiwan_cain_web.dnf_item_info WHERE it_no IN (%s)
+			`, inClause))
+			if err == nil {
+				defer rows.Close()
+				type itemFull struct {
+					Name, Explain, DetailExplain, FlavorText string
+					SetName, SetItem, SkillLevelUp string
+					Rarity, Level int
+					PhyAtt, MagAtt, PhyDef, MagDef int
+					HPMax, MPMax int
+					MovSpeed, AtkSpeed, CastSpd int
+					Jump, HitRec int
+					CritRate, StuckRate float64
+					RefFire, RefWater, RefDark, RefLight, RefAll int
+				}
+				infoMap := make(map[int]itemFull)
+				for rows.Next() {
+					var itNo int
+					var info itemFull
+					if err := rows.Scan(&itNo, &info.Name, &info.Rarity, &info.Level,
+						&info.PhyAtt, &info.MagAtt, &info.PhyDef, &info.MagDef,
+						&info.HPMax, &info.MPMax,
+						&info.MovSpeed, &info.AtkSpeed,
+						&info.Jump, &info.HitRec,
+						&info.CritRate, &info.StuckRate,
+						&info.RefFire, &info.RefWater, &info.RefDark, &info.RefLight, &info.RefAll,
+						&info.Explain, &info.DetailExplain, &info.FlavorText,
+						&info.SetName, &info.SetItem, &info.SkillLevelUp,
+					); err == nil {
+						infoMap[itNo] = info
+					}
+				}
+				for i := range equipment {
+					if info, ok := infoMap[equipment[i].ItemId]; ok {
+						equipment[i].ItemName = decodeUnicode(info.Name)
+						equipment[i].Rarity = info.Rarity
+						equipment[i].Level = info.Level
+						equipment[i].PhyAtk = info.PhyAtt
+						equipment[i].MagAtk = info.MagAtt
+						equipment[i].PhyDef = info.PhyDef
+						equipment[i].MagDef = info.MagDef
+						equipment[i].HPMax = info.HPMax
+						equipment[i].MPMax = info.MPMax
+						equipment[i].MovSpeed = info.MovSpeed
+						equipment[i].AtkSpeed = info.AtkSpeed
+						equipment[i].CastSpd = info.CastSpd
+						equipment[i].JumpBonus = info.Jump
+						equipment[i].HitRecBonus = info.HitRec
+						equipment[i].CritRate = info.CritRate
+						equipment[i].StuckRate = info.StuckRate
+						equipment[i].RefFire = info.RefFire
+						equipment[i].RefWater = info.RefWater
+						equipment[i].RefDark = info.RefDark
+						equipment[i].RefLight = info.RefLight
+						equipment[i].RefAll = info.RefAll
+						equipment[i].Explain = decodeUnicode(info.Explain)
+						equipment[i].DetailExplain = decodeUnicode(info.DetailExplain)
+						equipment[i].FlavorText = decodeUnicode(info.FlavorText)
+						equipment[i].SetName = decodeUnicode(info.SetName)
+						equipment[i].SetItem = decodeUnicode(info.SetItem)
+						equipment[i].SkillLevelUp = decodeUnicode(info.SkillLevelUp)
+					}
+				}
+			}
+		}
+	}
+
+	return equipment, nil
 }
 
 // categorizeItem categorizes an item by its it_no range

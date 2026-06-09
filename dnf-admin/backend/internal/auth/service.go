@@ -62,17 +62,14 @@ func (s *Service) Login(username, password string) (*LoginResponse, error) {
 	var user User
 	sdb := database.GetDefaultServerDB()
 	if sdb != nil && sdb.DB != nil {
+		var no int
+		var userID, pwd, name string
 		err := sdb.DB.QueryRow(
-			"SELECT id, username, password, role, status FROM admin_users WHERE username = ?",
+			"SELECT no, user_id, password, name FROM admin_member WHERE user_id = ?",
 			username,
-		).Scan(&user.ID, &user.Username, &user.Password, &user.Role, &user.Status)
-		if err == nil {
-			if user.Status != 1 {
-				return nil, errors.New("account disabled")
-			}
-			if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-				return nil, ErrInvalidCredentials
-			}
+		).Scan(&no, &userID, &pwd, &name)
+		if err == nil && pwd == password {
+			user = User{ID: no, Username: userID, Role: "admin", Status: 1}
 			token, err := s.generateToken(user)
 			if err != nil {
 				return nil, err

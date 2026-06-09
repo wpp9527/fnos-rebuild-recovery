@@ -11,10 +11,15 @@ import (
 	"dnf-admin/internal/audit"
 	"dnf-admin/internal/auth"
 	"dnf-admin/internal/character"
-	"dnf-admin/internal/gm"
-	"dnf-admin/internal/pvf"
-	"dnf-admin/internal/pve"
 	"dnf-admin/internal/database"
+	"dnf-admin/internal/gm"
+	"dnf-admin/internal/guild"
+	"dnf-admin/internal/postal"
+	"dnf-admin/internal/punish"
+	"dnf-admin/internal/pve"
+	"dnf-admin/internal/pvf"
+	"dnf-admin/internal/skill"
+	"dnf-admin/internal/stat"
 )
 
 // Router holds all service dependencies
@@ -27,6 +32,11 @@ type Router struct {
 	pvfService       *pvf.Service
 	pveService       *pve.Service
 	auditService     *audit.Service
+	guildService     *guild.Service
+	skillService     *skill.Service
+	postalService    *postal.Service
+	punishService    *punish.Service
+	statService      *stat.Service
 }
 
 // NewRouter creates a new router with all dependencies
@@ -64,6 +74,31 @@ func (r *Router) getServerID(c *gin.Context) string {
 	return serverID
 }
 
+// getGuildService returns guild service for server
+func (r *Router) getGuildService(serverID string) *guild.Service {
+	return guild.NewService(serverID)
+}
+
+// getSkillService returns skill service for server
+func (r *Router) getSkillService(serverID string) *skill.Service {
+	return skill.NewService(serverID)
+}
+
+// getPostalService returns postal service for server
+func (r *Router) getPostalService(serverID string) *postal.Service {
+	return postal.NewService(serverID)
+}
+
+// getPunishService returns punish service for server
+func (r *Router) getPunishService(serverID string) *punish.Service {
+	return punish.NewService(serverID)
+}
+
+// getStatService returns stat service for server
+func (r *Router) getStatService(serverID string) *stat.Service {
+	return stat.NewService(serverID)
+}
+
 // Setup sets up all routes
 func (r *Router) Setup() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
@@ -85,7 +120,6 @@ func (r *Router) Setup() *gin.Engine {
 	// 静态文件服务（前端）
 	engine.StaticFile("/", "./frontend/dist/index.html")
 	engine.Static("/assets", "./frontend/dist/assets")
-	// SPA fallback：非 /api 路径返回 index.html
 	engine.NoRoute(func(c *gin.Context) {
 		if len(c.Request.URL.Path) < 4 || c.Request.URL.Path[:4] != "/api" {
 			c.File("./frontend/dist/index.html")
@@ -96,20 +130,16 @@ func (r *Router) Setup() *gin.Engine {
 
 	v1 := engine.Group("/api/v1")
 	{
-		// Auth routes (no auth required)
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/login", r.login)
 		}
 
-		// Servers (no auth required for listing)
 		v1.GET("/servers", r.listServers)
 
-		// Protected routes
 		protected := v1.Group("")
 		protected.Use(r.authMiddleware())
 		{
-			// Auth
 			protected.GET("/auth/me", r.me)
 
 			// Accounts
@@ -126,44 +156,30 @@ func (r *Router) Setup() *gin.Engine {
 				characters.GET("/search", r.searchCharacters)
 				characters.GET("/online", r.getOnlineCharacters)
 				characters.GET("/:cNo", r.getCharacter)
+				characters.GET("/:cNo/detail", r.getCharacterDetail)
 				characters.GET("/:cNo/items", r.getCharacterItems)
 				characters.GET("/:cNo/equipment", r.getCharacterEquipment)
+				characters.GET("/:cNo/equipment/detail", r.getCharacterEquipmentDetail)
+				characters.GET("/:cNo/skills", r.getCharacterSkills)
 			}
 
-			// Dashboard stats
+			// Dashboard
 			dashboard := protected.Group("/dashboard")
 			{
 				dashboard.GET("/stats", r.getDashboardStats)
 			}
 
-			// dnf-server-public compatible API endpoints
-			charac := protected.Group("/charac")
-			{
-				charac.GET("", r.listCharactersCompat)
-				charac.PUT("", r.updateCharacterCompat)
-				charac.POST(":characId/overTasks", r.overTasksCompat)
-			}
-			account := protected.Group("/account")
-			{
-				account.GET("", r.listAccountsCompat)
-				account.GET("/:uid", r.getAccountCompat)
-			}
-			postal := protected.Group("/postal")
-			{
-				postal.POST("", r.sendMailCompat)
-			}
-
 			// GM operations
-			gm := protected.Group("/gm")
+			gmGroup := protected.Group("/gm")
 			{
-				gm.POST("/mail", r.sendMail)
-				gm.POST("/item", r.sendItem)
-				gm.POST("/gold", r.sendGold)
-				gm.POST("/cera", r.sendCera)
-				gm.POST("/character/level", r.setLevel)
-				gm.POST("/character/fatigue", r.resetFatigue)
-				gm.POST("/account/ban", r.banAccount)
-				gm.POST("/account/unban", r.unbanAccount)
+				gmGroup.POST("/mail", r.sendMail)
+				gmGroup.POST("/item", r.sendItem)
+				gmGroup.POST("/gold", r.sendGold)
+				gmGroup.POST("/cera", r.sendCera)
+				gmGroup.POST("/character/level", r.setLevel)
+				gmGroup.POST("/character/fatigue", r.resetFatigue)
+				gmGroup.POST("/account/ban", r.banAccount)
+				gmGroup.POST("/account/unban", r.unbanAccount)
 			}
 
 			// Activities
@@ -176,28 +192,76 @@ func (r *Router) Setup() *gin.Engine {
 			}
 
 			// PVF
-			pvf := protected.Group("/pvf")
+			pvfGroup := protected.Group("/pvf")
 			{
-				pvf.GET("/items", r.searchPVFItems)
-				pvf.GET("/items/:id", r.getPVFItem)
-				pvf.GET("/equipments", r.searchPVFEquipments)
-				pvf.GET("/skills", r.searchPVFSkills)
-				pvf.GET("/stats", r.getPVFStats)
-				pvf.POST("/reload", r.reloadPVF)
+				pvfGroup.GET("/items", r.searchPVFItems)
+				pvfGroup.GET("/items/:id", r.getPVFItem)
+				pvfGroup.GET("/equipments", r.searchPVFEquipments)
+				pvfGroup.GET("/skills", r.searchPVFSkills)
+				pvfGroup.GET("/stats", r.getPVFStats)
+				pvfGroup.POST("/reload", r.reloadPVF)
 			}
 
 			// PVE
-			pve := protected.Group("/pve")
+			pveGroup := protected.Group("/pve")
 			{
-				pve.GET("/status", r.getPVEStatus)
-				pve.POST("/service/:name/start", r.startPVEService)
-				pve.POST("/service/:name/stop", r.stopPVEService)
-				pve.GET("/files", r.getPVEFiles)
-				pve.POST("/exec", r.execPVECommand)
+				pveGroup.GET("/status", r.getPVEStatus)
+				pveGroup.POST("/service/:name/start", r.startPVEService)
+				pveGroup.POST("/service/:name/stop", r.stopPVEService)
+				pveGroup.GET("/files", r.getPVEFiles)
+				pveGroup.POST("/exec", r.execPVECommand)
+			}
+
+			// Guild
+			guildGroup := protected.Group("/guilds")
+			{
+				guildGroup.GET("", r.listGuilds)
+				guildGroup.GET("/:id/members", r.getGuildMembers)
+			}
+
+			// Postal (GM Mail)
+			postalGroup := protected.Group("/postal")
+			{
+				postalGroup.POST("", r.sendPostal)
+				postalGroup.GET("/history", r.getPostalHistory)
+			}
+
+			// Punish
+			punishGroup := protected.Group("/punish")
+			{
+				punishGroup.GET("", r.listPunish)
+				punishGroup.POST("", r.addPunish)
+				punishGroup.DELETE("/:mId", r.removePunish)
+			}
+
+			// Stats
+			statsGroup := protected.Group("/stats")
+			{
+				statsGroup.GET("/online", r.getOnlineStat)
+				statsGroup.GET("/pvp", r.getPVPRankings)
+				statsGroup.GET("/dungeon", r.getDungeonStats)
+			}
+
+			// Skill Info (百科)
+			skillInfoGroup := protected.Group("/skill-info")
+			{
+				skillInfoGroup.GET("", r.listSkillInfo)
 			}
 
 			// Audit logs
 			protected.GET("/audit/logs", r.getAuditLogs)
+
+			// 兼容旧接口
+			charac := protected.Group("/charac")
+			{
+				charac.GET("", r.listCharactersCompat)
+				charac.PUT("", r.updateCharacterCompat)
+			}
+			account := protected.Group("/account")
+			{
+				account.GET("", r.listAccountsCompat)
+				account.GET("/:uid", r.getAccountCompat)
+			}
 		}
 	}
 
@@ -211,14 +275,12 @@ func (r *Router) authMiddleware() gin.HandlerFunc {
 		if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
 			tokenString = tokenString[7:]
 		}
-
 		claims, err := r.authService.ValidateToken(tokenString)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
 		}
-
 		c.Set("user_id", claims.UserID)
 		c.Set("username", claims.Username)
 		c.Set("role", claims.Role)
@@ -226,21 +288,18 @@ func (r *Router) authMiddleware() gin.HandlerFunc {
 	}
 }
 
-// --- Auth handlers ---
-
+// --- Auth ---
 func (r *Router) login(c *gin.Context) {
 	var req auth.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
 	resp, err := r.authService.Login(req.Username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -248,41 +307,26 @@ func (r *Router) me(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	username, _ := c.Get("username")
 	role, _ := c.Get("role")
-
-	c.JSON(http.StatusOK, gin.H{
-		"user_id":  userID,
-		"username": username,
-		"role":     role,
-	})
+	c.JSON(http.StatusOK, gin.H{"user_id": userID, "username": username, "role": role})
 }
 
-// --- Server handlers ---
-
+// --- Servers ---
 func (r *Router) listServers(c *gin.Context) {
-	servers := database.ListServers()
-	c.JSON(http.StatusOK, servers)
+	c.JSON(http.StatusOK, database.ListServers())
 }
 
-// --- Account handlers ---
-
+// --- Accounts ---
 func (r *Router) searchAccounts(c *gin.Context) {
 	serverID := r.getServerID(c)
 	q := c.DefaultQuery("q", "")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
-
 	accounts, total, err := r.accountService.Search(serverID, q, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data":  accounts,
-		"total": total,
-		"page":  page,
-		"size":  pageSize,
-	})
+	c.JSON(http.StatusOK, gin.H{"data": accounts, "total": total, "page": page, "size": pageSize})
 }
 
 func (r *Router) getAccount(c *gin.Context) {
@@ -311,8 +355,7 @@ func (r *Router) getAccountCharacters(c *gin.Context) {
 	c.JSON(http.StatusOK, characters)
 }
 
-// --- Character handlers ---
-
+// --- Characters ---
 func (r *Router) getCharacter(c *gin.Context) {
 	serverID := r.getServerID(c)
 	cNo, _ := strconv.Atoi(c.Param("cNo"))
@@ -326,6 +369,21 @@ func (r *Router) getCharacter(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, character)
+}
+
+func (r *Router) getCharacterDetail(c *gin.Context) {
+	serverID := r.getServerID(c)
+	cNo, _ := strconv.Atoi(c.Param("cNo"))
+	detail, err := r.characterService.GetDetail(serverID, cNo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if detail == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "character not found"})
+		return
+	}
+	c.JSON(http.StatusOK, detail)
 }
 
 func (r *Router) getCharacterItems(c *gin.Context) {
@@ -348,6 +406,28 @@ func (r *Router) getCharacterEquipment(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, equipment)
+}
+
+func (r *Router) getCharacterEquipmentDetail(c *gin.Context) {
+	serverID := r.getServerID(c)
+	cNo, _ := strconv.Atoi(c.Param("cNo"))
+	equipment, err := r.characterService.GetEquipmentDetail(serverID, cNo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, equipment)
+}
+
+func (r *Router) getCharacterSkills(c *gin.Context) {
+	serverID := r.getServerID(c)
+	cNo, _ := strconv.Atoi(c.Param("cNo"))
+	skills, err := r.getSkillService(serverID).GetSkills(cNo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, skills)
 }
 
 func (r *Router) getOnlineCharacters(c *gin.Context) {
@@ -376,8 +456,6 @@ func (r *Router) searchCharacters(c *gin.Context) {
 	if pageSize < 1 || pageSize > 100 {
 		pageSize = 20
 	}
-
-	// Build query from multiple params
 	searchQuery := q
 	if name != "" {
 		searchQuery = name
@@ -385,7 +463,6 @@ func (r *Router) searchCharacters(c *gin.Context) {
 	if account != "" {
 		searchQuery = account
 	}
-
 	characters, total, err := r.characterService.SearchWithFilters(sID, searchQuery, account, job, minLev, maxLev, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -394,8 +471,7 @@ func (r *Router) searchCharacters(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": characters, "total": total, "page": page, "size": pageSize})
 }
 
-// --- GM handlers ---
-
+// --- GM ---
 func (r *Router) sendMail(c *gin.Context) {
 	serverID := r.getServerID(c)
 	var req gm.MailRequest
@@ -524,8 +600,7 @@ func (r *Router) unbanAccount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "account unbanned"})
 }
 
-// --- Activity handlers ---
-
+// --- Activities ---
 func (r *Router) listActivities(c *gin.Context) {
 	activities, err := r.activityService.List()
 	if err != nil {
@@ -565,8 +640,7 @@ func (r *Router) getActivityLogs(c *gin.Context) {
 	c.JSON(http.StatusOK, logs)
 }
 
-// --- PVF handlers ---
-
+// --- PVF ---
 func (r *Router) searchPVFItems(c *gin.Context) {
 	q := c.DefaultQuery("q", "")
 	category := c.DefaultQuery("category", "")
@@ -579,7 +653,6 @@ func (r *Router) searchPVFItems(c *gin.Context) {
 	if pageSize < 1 || pageSize > 100 {
 		pageSize = 20
 	}
-
 	items, total, err := r.pvfService.SearchItems(q, category, rarity, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -635,8 +708,7 @@ func (r *Router) reloadPVF(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "pvf reloaded"})
 }
 
-// --- PVE handlers ---
-
+// --- PVE ---
 func (r *Router) getPVEStatus(c *gin.Context) {
 	serverID := r.getServerID(c)
 	status, err := r.pveService.GetStatus(serverID)
@@ -694,13 +766,139 @@ func (r *Router) execPVECommand(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"output": output})
 }
 
-// --- Audit handlers ---
+// --- Guild ---
+func (r *Router) listGuilds(c *gin.Context) {
+	serverID := r.getServerID(c)
+	guilds, err := r.getGuildService(serverID).ListGuilds()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, guilds)
+}
 
+func (r *Router) getGuildMembers(c *gin.Context) {
+	serverID := r.getServerID(c)
+	guildID, _ := strconv.Atoi(c.Param("id"))
+	members, err := r.getGuildService(serverID).GetGuildMembers(guildID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, members)
+}
+
+// --- Postal ---
+func (r *Router) sendPostal(c *gin.Context) {
+	serverID := r.getServerID(c)
+	var req postal.PostalRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := r.getPostalService(serverID).SendPostal(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "postal sent"})
+}
+
+func (r *Router) getPostalHistory(c *gin.Context) {
+	serverID := r.getServerID(c)
+	characNo, _ := strconv.Atoi(c.DefaultQuery("charac_no", "0"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	history, err := r.getPostalService(serverID).GetPostalHistory(characNo, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, history)
+}
+
+// --- Punish ---
+func (r *Router) listPunish(c *gin.Context) {
+	serverID := r.getServerID(c)
+	list, err := r.getPunishService(serverID).ListPunish()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, list)
+}
+
+func (r *Router) addPunish(c *gin.Context) {
+	serverID := r.getServerID(c)
+	var req punish.PunishRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := r.getPunishService(serverID).AddPunish(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "punish added"})
+}
+
+func (r *Router) removePunish(c *gin.Context) {
+	serverID := r.getServerID(c)
+	mID, _ := strconv.Atoi(c.Param("mId"))
+	if err := r.getPunishService(serverID).RemovePunish(mID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "punish removed"})
+}
+
+// --- Stats ---
+func (r *Router) getOnlineStat(c *gin.Context) {
+	serverID := r.getServerID(c)
+	stat, err := r.getStatService(serverID).GetOnlineStat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, stat)
+}
+
+func (r *Router) getPVPRankings(c *gin.Context) {
+	serverID := r.getServerID(c)
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	ranks, err := r.getStatService(serverID).GetPVPRankings(limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, ranks)
+}
+
+func (r *Router) getDungeonStats(c *gin.Context) {
+	serverID := r.getServerID(c)
+	stats, err := r.getStatService(serverID).GetDungeonStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
+}
+
+// --- Skill Info ---
+func (r *Router) listSkillInfo(c *gin.Context) {
+	serverID := r.getServerID(c)
+	jobIndex, _ := strconv.Atoi(c.DefaultQuery("job", "-1"))
+	infos, err := r.getSkillService(serverID).ListSkillInfo(jobIndex)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, infos)
+}
+
+// --- Audit ---
 func (r *Router) getAuditLogs(c *gin.Context) {
 	operatorID, _ := strconv.Atoi(c.DefaultQuery("operator_id", "0"))
 	action := c.DefaultQuery("action", "")
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
-
 	logs, err := r.auditService.GetLogs(operatorID, action, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -709,6 +907,7 @@ func (r *Router) getAuditLogs(c *gin.Context) {
 	c.JSON(http.StatusOK, logs)
 }
 
+// --- Dashboard ---
 func (r *Router) getDashboardStats(c *gin.Context) {
 	serverID := r.getServerID(c)
 	sdb, err := database.GetServerDB(serverID)
@@ -716,66 +915,24 @@ func (r *Router) getDashboardStats(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	// Total accounts
-	var totalAccounts int
+	var totalAccounts, totalCharacters, totalGuilds, totalGold int
 	sdb.DB.QueryRow("SELECT COUNT(*) FROM d_taiwan.accounts").Scan(&totalAccounts)
-
-	// Total characters
-	var totalCharacters int
 	sdb.DB.QueryRow("SELECT COUNT(*) FROM taiwan_cain.charac_info").Scan(&totalCharacters)
-
-	// Total guilds
-	var totalGuilds int
 	sdb.DB.QueryRow("SELECT COUNT(*) FROM d_guild.guild_info").Scan(&totalGuilds)
-
-	// Total gold
-	var totalGold int
 	sdb.DB.QueryRow("SELECT COALESCE(SUM(cera), 0) FROM taiwan_billing.cash_cera").Scan(&totalGold)
-
-	// Recent logins
-	var recentLogins []map[string]interface{}
-	rows, err := sdb.DB.Query("SELECT m_id FROM taiwan_login.member_login ORDER BY m_id DESC LIMIT 10")
-	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var mID int
-			rows.Scan(&mID)
-			recentLogins = append(recentLogins, map[string]interface{}{"m_id": mID})
-		}
-	}
-
 	c.JSON(http.StatusOK, gin.H{
-		"total_accounts":  totalAccounts,
-		"total_characters": totalCharacters,
-		"total_guilds":    totalGuilds,
-		"total_gold":      totalGold,
-		"recent_logins":   recentLogins,
+		"total_accounts": totalAccounts, "total_characters": totalCharacters,
+		"total_guilds": totalGuilds, "total_gold": totalGold,
 	})
 }
 
-// --- dnf-server-public compatible API handlers ---
-
+// --- Compat ---
 func (r *Router) listCharactersCompat(c *gin.Context) {
 	serverID := r.getServerID(c)
-	name := c.DefaultQuery("name", "")
-	account := c.DefaultQuery("account", "")
-	minLev, _ := strconv.Atoi(c.DefaultQuery("minLev", "0"))
-	maxLevel, _ := strconv.Atoi(c.DefaultQuery("maxLevel", "0"))
+	q := c.DefaultQuery("name", "")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	_ = minLev
-	_ = maxLevel
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
-
-	if page < 1 { page = 1 }
-	if pageSize < 1 || pageSize > 100 { pageSize = 10 }
-
-	query := name
-	if query == "" && account != "" {
-		query = account
-	}
-
-	characters, total, err := r.characterService.Search(serverID, query, page, pageSize)
+	characters, total, err := r.characterService.Search(serverID, q, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -786,37 +943,23 @@ func (r *Router) listCharactersCompat(c *gin.Context) {
 func (r *Router) updateCharacterCompat(c *gin.Context) {
 	sID := r.getServerID(c)
 	var req struct {
-		CharacNo    int `json:"c_no"`
-		CharacName  string `json:"c_name"`
-		Lev         int `json:"c_level"`
-		MaxHp       int `json:"max_hp"`
-		MaxMp       int `json:"max_mp"`
-		PhyAttack   int `json:"phy_attack"`
-		PhyDefense  int `json:"phy_defense"`
-		MagAttack   int `json:"mag_attack"`
-		MagDefense  int `json:"mag_defense"`
-		Jump        int `json:"jump"`
-		HitRecovery int `json:"hit_recovery"`
-		MoveSpeed   int `json:"move_speed"`
-		AttackSpeed int `json:"attack_speed"`
-		CastSpeed   int `json:"cast_speed"`
-		Fatigue     int `json:"c_fatigue"`
+		CharacNo int `json:"c_no"`
+		Lev      int `json:"c_level"`
+		MaxHp    int `json:"max_hp"`
+		MaxMp    int `json:"max_mp"`
+		Fatigue  int `json:"c_fatigue"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
 	sdb, err := database.GetServerDB(sID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	_, err = sdb.DB.Exec(
-		"UPDATE taiwan_cain.charac_info SET lev=?, maxHP=?, maxMP=?, phy_attack=?, phy_defense=?, mag_attack=?, mag_defense=?, jump=?, hit_recovery=?, move_speed=?, attack_speed=?, cast_speed=?, fatigue=? WHERE charac_no=?",
-		req.Lev, req.MaxHp, req.MaxMp, req.PhyAttack, req.PhyDefense, req.MagAttack, req.MagDefense, req.Jump, req.HitRecovery, req.MoveSpeed, req.AttackSpeed, req.CastSpeed, req.Fatigue, req.CharacNo,
-	)
+	_, err = sdb.DB.Exec("UPDATE taiwan_cain.charac_info SET lev=?, maxHP=?, maxMP=?, fatigue=? WHERE charac_no=?",
+		req.Lev, req.MaxHp, req.MaxMp, req.Fatigue, req.CharacNo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -824,34 +967,12 @@ func (r *Router) updateCharacterCompat(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
 }
 
-func (r *Router) overTasksCompat(c *gin.Context) {
-	serverID := r.getServerID(c)
-	characId := c.Param("characId")
-
-	sdb, err := database.GetServerDB(serverID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	_, err = sdb.DB.Exec("UPDATE taiwan_cain.quest_status SET clear_flag=1 WHERE charac_no=?", characId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "tasks completed"})
-}
-
 func (r *Router) listAccountsCompat(c *gin.Context) {
 	serverID := r.getServerID(c)
-	account := c.DefaultQuery("account", "")
+	q := c.DefaultQuery("account", "")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
-
-	if page < 1 { page = 1 }
-	if pageSize < 1 || pageSize > 100 { pageSize = 10 }
-
-	accounts, total, err := r.accountService.Search(serverID, account, page, pageSize)
+	accounts, total, err := r.accountService.Search(serverID, q, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -862,7 +983,6 @@ func (r *Router) listAccountsCompat(c *gin.Context) {
 func (r *Router) getAccountCompat(c *gin.Context) {
 	serverID := r.getServerID(c)
 	uid, _ := strconv.Atoi(c.Param("uid"))
-
 	account, err := r.accountService.GetByUID(serverID, uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -873,42 +993,4 @@ func (r *Router) getAccountCompat(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, account)
-}
-
-func (r *Router) sendMailCompat(c *gin.Context) {
-	serverID := r.getServerID(c)
-	var req struct {
-		SendCharacName  string `json:"sendCharacName"`
-		ReceiveCharacNo int    `json:"receiveCharacNo"`
-		ItemId          int    `json:"itemId"`
-		AddInfo         int    `json:"addInfo"`
-		Upgrade         int    `json:"upgrade"`
-		Gold            int    `json:"gold"`
-		Message         string `json:"message"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	sdb, err := database.GetServerDB(serverID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	senderName := req.SendCharacName
-	if senderName == "" { senderName = "GM" }
-
-	_, err = sdb.DB.Exec(
-		`INSERT INTO taiwan_cain_2nd.postal
-			(occ_time, send_charac_name, receive_charac_no, item_id, add_info, upgrade, gold, letter_id)
-		 VALUES (NOW(), ?, ?, ?, ?, 0, ?, 0)`,
-		senderName, req.ReceiveCharacNo, req.ItemId, req.AddInfo, req.Gold,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "mail sent"})
 }

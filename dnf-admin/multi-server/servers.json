@@ -13,7 +13,8 @@
         "cain": "taiwan_cain",
         "cain_2nd": "taiwan_cain_2nd",
         "billing": "taiwan_billing",
-        "login": "taiwan_login"
+        "login": "taiwan_login",
+        "web": "taiwan_cain_web"
       }
     },
     {
@@ -29,7 +30,8 @@
         "cain": "taiwan_cain",
         "cain_2nd": "taiwan_cain_2nd",
         "billing": "taiwan_billing",
-        "login": "taiwan_login"
+        "login": "taiwan_login",
+        "web": "taiwan_cain_web"
       }
     }
   ]

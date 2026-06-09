@@ -144,27 +144,54 @@ func generateDescription(item Item) string {
 	return desc
 }
 
+// s2tMap maps simplified Chinese characters to traditional for search
+var s2tMap = map[rune]rune{
+	'剑': '劍', '枪': '槍', '链': '鏈', '铠': '鎧', '锤': '錘',
+	'铁': '鐵', '钢': '鋼', '银': '銀', '铜': '銅', '头': '頭',
+	'颈': '頸', '脸': '臉', '齿': '齒', '龙': '龍', '凤': '鳳',
+	'鹰': '鷹', '兽': '獸', '鸟': '鳥', '鱼': '魚', '风': '風',
+	'云': '雲', '电': '電', '圣': '聖', '斗': '鬥', '战': '戰',
+	'体': '體', '运': '運', '术': '術', '宝': '寶', '壳': '殼',
+	'鳞': '鱗', '丝': '絲', '线': '線', '裤': '褲', '药': '藥',
+	'矿': '礦', '书': '書', '图': '圖', '币': '幣', '环': '環',
+	'项': '項', '锁': '鎖', '镜': '鏡', '钟': '鐘', '灵': '靈',
+}
+
+func toTraditional(s string) string {
+	var result []rune
+	for _, r := range s {
+		if t, ok := s2tMap[r]; ok {
+			result = append(result, t)
+		} else {
+			result = append(result, r)
+		}
+	}
+	return string(result)
+}
+
 // SearchItems searches for items by query with optional filters
 func (s *Service) SearchItems(query string, category string, rarity string, page, pageSize int) ([]Item, int, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	query = strings.ToLower(query)
+	queryTrad := toTraditional(query)
 	var filtered []Item
 
 	for _, item := range s.items {
-		// Filter by category
 		if category != "" && item.Category != category {
 			continue
 		}
-		// Filter by rarity
 		if rarity != "" && item.Rarity != rarity {
 			continue
 		}
-		// Filter by query (name or ID)
-		if query != "" && !strings.Contains(strings.ToLower(item.Name), query) && 
-		   !strings.Contains(strings.ToLower(item.ID), query) {
-			continue
+		if query != "" {
+			nameLower := strings.ToLower(item.Name)
+			if !strings.Contains(nameLower, query) &&
+			   !strings.Contains(nameLower, queryTrad) &&
+			   !strings.Contains(strings.ToLower(item.ID), query) {
+				continue
+			}
 		}
 		filtered = append(filtered, item)
 	}

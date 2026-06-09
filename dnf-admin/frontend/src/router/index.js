@@ -52,6 +52,26 @@ const routes = [
         path: 'audit',
         name: 'Audit',
         component: () => import('../views/Audit.vue')
+      },
+      {
+        path: 'guilds',
+        name: 'Guilds',
+        component: () => import('../views/Guilds.vue')
+      },
+      {
+        path: 'stats',
+        name: 'Stats',
+        component: () => import('../views/Stats.vue')
+      },
+      {
+        path: 'punish',
+        name: 'Punish',
+        component: () => import('../views/Punish.vue')
+      },
+      {
+        path: 'postal',
+        name: 'Postal',
+        component: () => import('../views/Postal.vue')
       }
     ]
   }

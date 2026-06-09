@@ -55,6 +55,7 @@
               <a-button type="text" size="small" @click="viewDetail(record)">详情</a-button>
               <a-button type="text" size="small" status="success" @click="viewEquipment(record)">装备</a-button>
               <a-button type="text" size="small" status="warning" @click="viewInventory(record)">背包</a-button>
+              <a-button type="text" size="small" status="normal" @click="viewSkills(record)">技能</a-button>
               <a-button type="text" size="small" status="danger" @click="editCharacter(record)">编辑</a-button>
             </a-space>
           </template>
@@ -68,7 +69,8 @@
     </div>
 
     <!-- 角色详情弹窗 -->
-    <a-modal v-model:visible="detailVisible" title="角色详情" :width="700" :footer="false">
+    <a-modal v-model:visible="detailVisible" title="角色详情" :width="800" :footer="false">
+      <a-spin :loading="detail._loading" style="width: 100%">
       <a-descriptions :column="2" bordered size="small">
         <a-descriptions-item label="角色ID">{{ detail.c_no }}</a-descriptions-item>
         <a-descriptions-item label="角色名">{{ detail.c_name }}</a-descriptions-item>
@@ -80,49 +82,58 @@
         <a-descriptions-item label="物理防御">{{ detail.phy_defense }}</a-descriptions-item>
         <a-descriptions-item label="魔法攻击">{{ detail.mag_attack }}</a-descriptions-item>
         <a-descriptions-item label="魔法防御">{{ detail.mag_defense }}</a-descriptions-item>
-        <a-descriptions-item label="疲劳值">{{ detail.c_fatigue }}</a-descriptions-item>
+        <a-descriptions-item label="疲劳值">{{ detail.c_fatigue }} / {{ detail.max_fatigue || 156 }}</a-descriptions-item>
+        <a-descriptions-item label="金币">{{ detail.money ? detail.money.toLocaleString() : '-' }}</a-descriptions-item>
+        <a-descriptions-item label="点券">{{ detail.coin ? detail.coin.toLocaleString() : '-' }}</a-descriptions-item>
+        <a-descriptions-item label="公会">{{ detail.guild_name || '无' }}</a-descriptions-item>
+        <a-descriptions-item label="总游戏时间">{{ detail.total_play_time ? Math.floor(detail.total_play_time / 3600) + '小时' : '-' }}</a-descriptions-item>
+        <a-descriptions-item label="幸运点">{{ detail.luck_point || '-' }}</a-descriptions-item>
       </a-descriptions>
+      </a-spin>
     </a-modal>
 
     <!-- 装备栏弹窗 -->
-    <a-modal v-model:visible="equipmentVisible" title="装备栏" :width="900" :footer="false">
+    <a-modal v-model:visible="equipmentVisible" title="装备栏" :width="1000" :footer="false">
       <a-spin :loading="equipmentLoading" style="width: 100%">
         <a-table :data="equipment" :pagination="false" size="small">
           <template #columns>
-            <a-table-column title="槽位" data-index="slot_name" :width="100" />
-            <a-table-column title="装备名称" :width="200">
+            <a-table-column title="槽位" data-index="slot_name" :width="80" />
+            <a-table-column title="装备名称" :width="180">
               <template #cell="{ record }">
                 <span :style="{ color: getRarityColorHex(record.rarity), fontWeight: record.rarity >= 3 ? 'bold' : 'normal' }">
                   {{ record.item_name || (record.it_id ? '装备#' + record.it_id : '空') }}
                 </span>
               </template>
             </a-table-column>
-            <a-table-column title="品质" :width="80">
+            <a-table-column title="品质" :width="70">
               <template #cell="{ record }">
-                <a-tag v-if="record.it_id" :color="getRarityColor(record.rarity)">{{ getRarityName(record.rarity) }}</a-tag>
+                <a-tag v-if="record.it_id" :color="getRarityColor(record.rarity)" size="small">{{ getRarityName(record.rarity) }}</a-tag>
               </template>
             </a-table-column>
-            <a-table-column title="等级" :width="60">
+            <a-table-column title="等级" :width="55">
               <template #cell="{ record }">{{ record.level > 0 ? record.level : '-' }}</template>
             </a-table-column>
-            <a-table-column title="强化" :width="60">
+            <a-table-column title="强化" :width="55">
               <template #cell="{ record }">
                 <span v-if="record.enhance > 0" style="color: #f5222d">+{{ record.enhance }}</span>
                 <span v-else>-</span>
               </template>
             </a-table-column>
-            <a-table-column title="属性" :min-width="250">
+            <a-table-column title="攻击属性" :min-width="180">
               <template #cell="{ record }">
                 <span v-if="record.phy_attack" class="stat-tag atk">物攻+{{ record.phy_attack }}</span>
                 <span v-if="record.mag_attack" class="stat-tag atk">魔攻+{{ record.mag_attack }}</span>
                 <span v-if="record.phy_defense" class="stat-tag def">物防+{{ record.phy_defense }}</span>
                 <span v-if="record.mag_defense" class="stat-tag def">魔防+{{ record.mag_defense }}</span>
-                <span v-if="record.str" class="stat-tag stat">力量+{{ record.str }}</span>
-                <span v-if="record.int" class="stat-tag stat">智力+{{ record.int }}</span>
-                <span v-if="record.vit" class="stat-tag stat">体力+{{ record.vit }}</span>
-                <span v-if="record.spr" class="stat-tag stat">精神+{{ record.spr }}</span>
-                <span v-if="record.phy_crit" class="stat-tag crit">物暴+{{ record.phy_crit }}</span>
-                <span v-if="record.mag_crit" class="stat-tag crit">魔暴+{{ record.mag_crit }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column title="附加信息" :min-width="200">
+              <template #cell="{ record }">
+                <div v-if="record.explain" style="font-size:12px;color:#666;white-space:pre-line">{{ record.explain }}</div>
+                <div v-if="record.set_name" style="font-size:12px;color:#722ed1;margin-top:4px">
+                  <icon-layers /> 套装: {{ record.set_name }}
+                </div>
+                <div v-if="record.flavor_text" style="font-size:11px;color:#999;font-style:italic;margin-top:2px">{{ record.flavor_text }}</div>
               </template>
             </a-table-column>
           </template>
@@ -203,6 +214,33 @@
       </a-tabs>
     </a-modal>
 
+    <!-- 技能列表弹窗 -->
+    <a-modal v-model:visible="skillsVisible" title="技能列表" :width="800" :footer="false">
+      <a-spin :loading="skillsLoading" style="width: 100%">
+        <a-table :data="skills" :pagination="false" size="small">
+          <template #columns>
+            <a-table-column title="技能索引" data-index="skill_index" :width="80" />
+            <a-table-column title="技能名称" :width="200">
+              <template #cell="{ record }">
+                {{ record.name || '未知技能#' + record.skill_index }}
+              </template>
+            </a-table-column>
+            <a-table-column title="等级" :width="120">
+              <template #cell="{ record }">
+                <span style="font-weight:bold;color:#165dff">Lv.{{ record.level }}</span>
+                <span v-if="record.max_level > 0" style="color:#999"> / {{ record.max_level }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column title="说明" data-index="explain" :min-width="250">
+              <template #cell="{ record }">
+                <span style="font-size:12px;color:#666">{{ record.explain || '-' }}</span>
+              </template>
+            </a-table-column>
+          </template>
+        </a-table>
+      </a-spin>
+    </a-modal>
+
     <!-- 编辑角色弹窗 -->
     <a-modal v-model:visible="editVisible" title="编辑角色" :width="600" @ok="confirmEdit">
       <a-form :model="editForm" layout="vertical">
@@ -248,6 +286,9 @@ const inventory = ref([])
 const inventoryTab = ref('all')
 const editVisible = ref(false)
 const editForm = ref({})
+const skillsVisible = ref(false)
+const skillsLoading = ref(false)
+const skills = ref([])
 
 const decodeUnicode = (str) => {
   if (!str) return str
@@ -295,16 +336,39 @@ const search = async (resetPage = false) => {
 
 const onPageChange = (page) => { pageNum.value = page; search() }
 const onPageSizeChange = (size) => { pageSize.value = size; pageNum.value = 1; search() }
-const viewDetail = (record) => { detail.value = record; detailVisible.value = true }
+// 角色详情（使用新 API）
+const viewDetail = async (record) => {
+  detailVisible.value = true
+  detail.value = { ...record, _loading: true }
+  try {
+    const res = await api.get('/characters/' + record.c_no + '/detail')
+    detail.value = { ...record, ...res.data, _loading: false }
+  } catch (e) {
+    detail.value = { ...record, _loading: false }
+  }
+}
 
 const viewEquipment = async (record) => {
   equipmentVisible.value = true
   equipmentLoading.value = true
   try {
-    const res = await api.get('/characters/' + record.c_no + '/equipment')
-    equipment.value = (res.data || []).map(item => ({ ...item, item_name: decodeUnicode(item.item_name), slot_name: decodeUnicode(item.slot_name) }))
-  } catch (e) { console.error('Failed to load equipment:', e); equipment.value = [] }
-  finally { equipmentLoading.value = false }
+    const res = await api.get('/characters/' + record.c_no + '/equipment/detail')
+    equipment.value = (res.data || []).map(item => ({
+      ...item,
+      item_name: decodeUnicode(item.item_name),
+      slot_name: decodeUnicode(item.slot_name),
+      explain: decodeUnicode(item.explain),
+      detail_explain: decodeUnicode(item.detail_explain),
+      flavor_text: decodeUnicode(item.flavor_text),
+      set_name: decodeUnicode(item.set_name)
+    }))
+  } catch (e) {
+    // 降级到旧 API
+    try {
+      const res = await api.get('/characters/' + record.c_no + '/equipment')
+      equipment.value = (res.data || []).map(item => ({ ...item, item_name: decodeUnicode(item.item_name), slot_name: decodeUnicode(item.slot_name) }))
+    } catch (_) { equipment.value = [] }
+  } finally { equipmentLoading.value = false }
 }
 
 const viewInventory = async (record) => {
@@ -319,6 +383,18 @@ const viewInventory = async (record) => {
 }
 
 const editCharacter = (record) => { editForm.value = { ...record }; editVisible.value = true }
+
+const viewSkills = async (record) => {
+  skillsVisible.value = true
+  skillsLoading.value = true
+  try {
+    const res = await api.get('/characters/' + record.c_no + '/skills')
+    skills.value = (res.data || []).filter(s => s.level > 0)
+  } catch (e) {
+    skills.value = []
+    Message.error('获取技能失败: ' + (e.response?.data?.error || e.message))
+  } finally { skillsLoading.value = false }
+}
 
 const confirmEdit = async () => {
   try {

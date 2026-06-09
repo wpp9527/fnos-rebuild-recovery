@@ -3,6 +3,7 @@ package activity
 import (
 	"fmt"
 	"sync"
+	"unicode/utf8"
 
 	"dnf-admin/internal/database"
 )
@@ -46,7 +47,7 @@ func (s *Service) loadFromDB() error {
 
 	rows, err := sdb.DB.Query(`
 		SELECT event_id, event_name, COALESCE(event_explain, ''), apply_type, 
-			   COALESCE(start_date, '0000-00-00'), COALESCE(end_date, '0000-00-00')
+		       COALESCE(start_date, '0000-00-00'), COALESCE(end_date, '0000-00-00')
 		FROM d_taiwan.dnf_event_info 
 		ORDER BY event_id
 	`)
@@ -64,7 +65,6 @@ func (s *Service) loadFromDB() error {
 			continue
 		}
 
-		// Determine type based on name
 		actType := "event"
 		if contains(name, "Fatigue") || contains(explain, "疲劳") {
 			actType = "fatigue"
@@ -96,6 +96,105 @@ func (s *Service) loadFromDB() error {
 
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && (s[0:len(substr)] == substr || contains(s[1:], substr)))
+}
+
+// fixEncoding repairs strings from dnf_item_info where UTF-8 bytes were
+// stored in latin1 columns. The MySQL driver with charset=utf8 partially
+// decodes high bytes into Latin Extended Unicode chars via cp1252.
+// Activity tables are proper UTF-8 so this function returns them as-is.
+func fixEncoding(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	var b []byte
+	needsFix := false
+	for _, r := range s {
+		if r > 255 {
+			orig, ok := unicodeToByte(r)
+			if ok {
+				b = append(b, orig)
+				needsFix = true
+			} else {
+				return s
+			}
+		} else {
+			b = append(b, byte(r))
+		}
+	}
+	if !needsFix {
+		return s
+	}
+	converted := string(b)
+	if utf8.ValidString(converted) {
+		return converted
+	}
+	return s
+}
+
+// unicodeToByte maps Unicode chars back to their original byte values.
+// The MySQL driver converts 0x80-0xFF bytes using cp1252 encoding.
+// Undefined cp1252 positions (0x81,0x8D,0x8F,0x90,0x9D) are passed through.
+func unicodeToByte(r rune) (byte, bool) {
+	if r <= 0xFF {
+		return byte(r), true
+	}
+	switch r {
+	case 0x20AC:
+		return 0x80, true
+	case 0x201A:
+		return 0x82, true
+	case 0x0192:
+		return 0x83, true
+	case 0x201E:
+		return 0x84, true
+	case 0x2026:
+		return 0x85, true
+	case 0x2020:
+		return 0x86, true
+	case 0x2021:
+		return 0x87, true
+	case 0x02C6:
+		return 0x88, true
+	case 0x2030:
+		return 0x89, true
+	case 0x0160:
+		return 0x8A, true
+	case 0x2039:
+		return 0x8B, true
+	case 0x0152:
+		return 0x8C, true
+	case 0x017D:
+		return 0x8E, true
+	case 0x2018:
+		return 0x91, true
+	case 0x2019:
+		return 0x92, true
+	case 0x201C:
+		return 0x93, true
+	case 0x201D:
+		return 0x94, true
+	case 0x2022:
+		return 0x95, true
+	case 0x2013:
+		return 0x96, true
+	case 0x2014:
+		return 0x97, true
+	case 0x02DC:
+		return 0x98, true
+	case 0x2122:
+		return 0x99, true
+	case 0x0161:
+		return 0x9A, true
+	case 0x203A:
+		return 0x9B, true
+	case 0x0153:
+		return 0x9C, true
+	case 0x017E:
+		return 0x9E, true
+	case 0x0178:
+		return 0x9F, true
+	}
+	return 0, false
 }
 
 func (s *Service) List() ([]Item, error) {

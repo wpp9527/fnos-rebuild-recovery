@@ -51,8 +51,8 @@ type MultiServerConfig struct {
 }
 
 func Init(cfg *config.Config) error {
-	// 数据库字符集是latin1但数据实际是UTF-8，使用latin1避免双重编码
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=latin1&parseTime=True&loc=Local",
+	// 数据库列是latin1但实际存UTF-8字节，用latin1读取原始字节
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
 
 	var err error
@@ -144,8 +144,8 @@ func InitServerDB(serverID, serverName, host, port, user, password, dbName strin
 		return sdb, nil
 	}
 
-	// 数据库字符集是latin1但数据实际是UTF-8，使用latin1避免双重编码
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=latin1&parseTime=True&loc=Local",
+	// 数据库列是latin1但实际存UTF-8字节，用latin1读取原始字节
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		user, password, host, port, dbName)
 
 	db, err := sql.Open("mysql", dsn)
@@ -205,6 +205,40 @@ func GetDefaultServerDB() *ServerDB {
 		}
 	}
 	return nil
+}
+
+// GetWebDB returns the web database connection for a server
+func GetWebDB(serverID string) (*ServerDB, error) {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	cfg, exists := serverConfigs[serverID]
+	if !exists {
+		return nil, fmt.Errorf("server %s config not found", serverID)
+	}
+
+	webDBName := cfg.Databases["web"]
+	if webDBName == "" {
+		return nil, fmt.Errorf("web database not configured for server %s", serverID)
+	}
+
+	// Create a new connection to web database
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local",
+		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, webDBName)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("open web db: %w", err)
+	}
+	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(2)
+
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("ping web db: %w", err)
+	}
+
+	return &ServerDB{ID: serverID, Name: cfg.Name + "_web", DB: db}, nil
 }
 
 // ListServers returns all connected servers

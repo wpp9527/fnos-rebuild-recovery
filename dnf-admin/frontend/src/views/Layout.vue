@@ -25,6 +25,22 @@
             <template #icon><icon-settings /></template>
             GM 工具
           </a-menu-item>
+          <a-menu-item key="/postal">
+            <template #icon><icon-email /></template>
+            GM 邮件
+          </a-menu-item>
+          <a-menu-item key="/punish">
+            <template #icon><icon-stop /></template>
+            惩罚管理
+          </a-menu-item>
+          <a-menu-item key="/guilds">
+            <template #icon><icon-user-group /></template>
+            公会管理
+          </a-menu-item>
+          <a-menu-item key="/stats">
+            <template #icon><icon-bar-chart /></template>
+            数据统计
+          </a-menu-item>
           <a-menu-item key="/pvf">
             <template #icon><icon-search /></template>
             PVF 搜索
