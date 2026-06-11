@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -20,6 +21,7 @@ import (
 	"dnf-admin/internal/pvf"
 	"dnf-admin/internal/skill"
 	"dnf-admin/internal/stat"
+	"dnf-admin/internal/tieba"
 )
 
 // Router holds all service dependencies
@@ -262,6 +264,9 @@ func (r *Router) Setup() *gin.Engine {
 				account.GET("", r.listAccountsCompat)
 				account.GET("/:uid", r.getAccountCompat)
 			}
+
+			// Tieba (百度贴吧)
+			r.setupTiebaRoutes(protected)
 		}
 	}
 
@@ -993,4 +998,26 @@ func (r *Router) getAccountCompat(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, account)
+}
+
+// --- Tieba ---
+func (r *Router) setupTiebaRoutes(protected *gin.RouterGroup) {
+	// Initialize Tieba service with database connection
+	tiebaService, err := tieba.NewServiceWithDB()
+	if err != nil {
+		log.Printf("Warning: Failed to initialize Tieba service: %v", err)
+		// Still register routes but they will fail gracefully
+		tiebaService = tieba.NewService(nil)
+	}
+	tiebaHandler := NewTiebaHandler(tiebaService)
+	
+	tiebaGroup := protected.Group("/tieba")
+	{
+		tiebaGroup.GET("/search", tiebaHandler.Search)
+		tiebaGroup.GET("/hot/:name", tiebaHandler.GetHotPosts)
+		tiebaGroup.GET("/post/:id", tiebaHandler.GetPost)
+		tiebaGroup.POST("/scrape/:name", tiebaHandler.ScrapeTieba)
+		tiebaGroup.GET("/stats", tiebaHandler.GetStats)
+		tiebaGroup.GET("/export", tiebaHandler.ExportToJSON)
+	}
 }

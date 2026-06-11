@@ -17,3 +17,18 @@
 
 - CPA 额度有限，gpt-5.5/gpt-5.4 经常限流
 - Ollama qwen3:4b 在高负载（load>8）时容易超时，需等负载下降
+- 飞书渠道使用 openclaw 模型可自动路由到主会话模型
+
+## 飞书渠道
+
+- 飞书 observer 容器使用 host 网络，可直接访问宿主机端口
+- requests 库可能存在代理配置问题，需显式禁用代理
+- Gateway 端点 (18789) 需要正确的 Token 认证
+- openclaw 模型会自动路由到配置的 primary 模型
+
+## Nginx 代理
+
+- 静态文件优先：`location = /` 精确匹配根路径
+- API 代理：`location /v0/` 优先匹配
+- try_files 会先查找静态文件，找不到再代理到后端
+- 管理面板 HTML 需要正确配置 __CPA_CONFIG__ 注入

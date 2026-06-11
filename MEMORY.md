@@ -17,7 +17,7 @@
 - **GitHub**: wpp9527 / 6 仓库（含 claw-code 100K+ stars）
 - **DNF Admin Pro 已部署到 192.168.1.204:18890**，全部 API 测试通过
 - **模型主力**: cpa/gpt-5.5（常限流）→ fallback baidu/glm-5.1
-- **OpenClaw**: 端口 18789，外网 openclaw.19930901.xyz:5000
+- **OpenClaw**: 端口 18789，外网 openclaw.19930901.xyz:1234（代理端口已从 5000 改为 1234）
 
 ## 主题索引
 
@@ -33,9 +33,36 @@
 | 每日日志 | [memory/daily/](memory/daily/) |
 | Hermes 学习 | [memory/learnings-from-hermes.md](memory/learnings-from-hermes.md) |
 | 系统优化 | [memory/2026-06-02-system-optimization.md](memory/2026-06-02-system-optimization.md) |
+| 深度记忆 | [memory/deep-memory-2026-06.md](memory/deep-memory-2026-06.md) |
+
+## 近期重要修复 (2026-06-12)
+
+### 飞书渠道修复
+- **问题**: 飞书 observer 使用旧代理端口 5000，requests 库超时
+- **修复**: 更新 observer.py 使用 Gateway 端点 (18789)，添加代理禁用补丁
+- **配置**: Gateway Token + openclaw 模型，与主会话模型一致
+- **文件**: /app/observer.py (feishu-observe 容器)
+
+### CPA 管理面板修复
+- **问题**: 面板白屏，Nginx 配置错误
+- **修复**: 修复 Nginx 配置，静态文件优先，API 代理正确
+- **配置**: cpa-panel 容器 (端口 8320) → CLIProxyAPI (8317)
+- **访问**: https://cpi.19930901.xyz:1234
+
+### 代理端口变更
+- **旧端口**: 5000
+- **新端口**: 1234
+- **影响**: 所有使用 cpi.19930901.xyz 的服务
+- **已更新**: OpenClaw 配置、飞书 observer
+
+## 深度记忆
+
+详见 [memory/deep-memory-2026-06.md](memory/deep-memory-2026-06.md) 获取完整项目、配置和经验摘要。
 
 ## 快速参考
 
 - **qBittorrent**: 端口 52000 (IPv6 可达)，代理 192.168.1.213:7890
 - **JAVSP**: 每30分钟自动刮削，广告文件自动清理
 - **视频文件**: 已修复特殊字符文件名
+- **飞书渠道**: 使用 Gateway 端点 (18789) + openclaw 模型
+- **CPA 面板**: 端口 8320，管理密钥 cpa2026admin
