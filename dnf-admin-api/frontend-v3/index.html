@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNF 管理后台</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@5.x/dist/antd.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .layout { display: flex; min-height: 100vh; }
+        .sider { width: 250px; background: #001529; color: white; padding: 20px 0; }
+        .sider h2 { color: white; text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .menu { list-style: none; padding: 0; }
+        .menu li { padding: 15px 25px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; }
+        .menu li:hover { background: rgba(255,255,255,0.1); }
+        .menu li.active { background: #1890ff; }
+        .menu li span { margin-left: 10px; }
+        .content { flex: 1; background: #f0f2f5; padding: 24px; }
+        .header { background: white; padding: 16px 24px; margin-bottom: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 24px; color: #333; }
+        .card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card .icon { font-size: 32px; margin-bottom: 10px; }
+        .stat-card .value { font-size: 28px; font-weight: bold; color: #1890ff; }
+        .stat-card .label { color: #666; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e8e8e8; }
+        th { background: #fafafa; font-weight: 600; }
+        tr:hover { background: #f5f5f5; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-box input { flex: 1; padding: 10px; border: 1px solid #d9d9d9; border-radius: 4px; }
+        .search-box button { padding: 10px 20px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .search-box button:hover { background: #40a9ff; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .badge-success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .badge-warning { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+        .badge-error { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+        .section { display: none; }
+        .section.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="sider">
+            <h2>🎮 DNF 管理后台</h2>
+            <ul class="menu">
+                <li class="active" onclick="showSection('dashboard')">📊 仪表盘</li>
+                <li onclick="showSection('characters')">👥 角色管理</li>
+                <li onclick="showSection('accounts')">👤 账号管理</li>
+                <li onclick="showSection('items')">📦 物品查询</li>
+                <li onclick="showSection('monsters')">👾 怪物图鉴</li>
+                <li onclick="showSection('skills')">⚔️ 技能查询</li>
+                <li onclick="showSection('guilds')">🏰 公会管理</li>
+                <li onclick="showSection('punish')">🚫 封禁管理</li>
+                <li onclick="showSection('postal')">📧 邮件系统</li>
+                <li onclick="showSection('stats')">📈 统计分析</li>
+                <li onclick="showSection('tieba')">💬 贴吧联动</li>
+                <li onclick="showSection('feedback')">📝 反馈追踪</li>
+                <li onclick="showSection('version')">🔄 版本监控</li>
+                <li onclick="showSection('check')">🔍 数据自检</li>
+                <li onclick="showSection('pvf')">📋 PVF解析</li>
+            </ul>
+        </div>
+        
+        <div class="content">
+            <!-- 仪表盘 -->
+            <div id="dashboard" class="section active">
+                <div class="header">
+                    <h1>📊 系统仪表盘</h1>
+                </div>
+                <div class="stat-cards" id="dashboard-stats"></div>
+                <div class="card" id="dashboard-chart">
+                    <h3>📈 实时数据</h3>
+                    <div id="realtime-data">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 角色管理 -->
+            <div id="characters" class="section">
+                <div class="header">
+                    <h1>👥 角色管理</h1>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="char-search" placeholder="输入角色名搜索...">
+                        <button onclick="searchCharacters()">搜索</button>
+                    </div>
+                    <div id="characters-table"></div>
+                    <div id="character-detail" style="margin-top: 20px; display: none;"></div>
+                </div>
+            </div>
+
+            <!-- 账号管理 -->
+            <div id="accounts" class="section">
+                <div class="header">
+                    <h1>👤 账号管理</h1>
+                </div>
+                <div class="card">
+                    <div id="accounts-table"></div>
+                </div>
+            </div>
+
+            <!-- 物品查询 -->
+            <div id="items" class="section">
+                <div class="header">
+                    <h1>📦 物品查询</h1>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="item-search" placeholder="输入物品名搜索...">
+                        <button onclick="searchItems()">搜索</button>
+                    </div>
+                    <div id="items-table"></div>
+                </div>
+            </div>
+
+            <!-- 怪物图鉴 -->
+            <div id="monsters" class="section">
+                <div class="header">
+                    <h1>👾 怪物图鉴</h1>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="monster-search" placeholder="输入怪物名搜索...">
+                        <button onclick="searchMonsters()">搜索</button>
+                    </div>
+                    <div id="monsters-table"></div>
+                    <div id="monster-detail" style="margin-top: 20px; display: none;"></div>
+                </div>
+            </div>
+
+            <!-- 技能查询 -->
+            <div id="skills" class="section">
+                <div class="header">
+                    <h1>⚔️ 技能查询</h1>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <select id="skill-job">
+                            <option value="0">鬼剑士</option>
+                            <option value="1">格斗家</option>
+                            <option value="2">神枪手</option>
+                            <option value="3">魔法师</option>
+                            <option value="4">圣职者</option>
+                            <option value="100">狂战士</option>
+                            <option value="101">剑魂</option>
+                            <option value="102">鬼泣</option>
+                            <option value="103">阿修罗</option>
+                        </select>
+                        <button onclick="searchSkills()">查询技能</button>
+                    </div>
+                    <div id="skills-table"></div>
+                </div>
+            </div>
+
+            <!-- 公会管理 -->
+            <div id="guilds" class="section">
+                <div class="header">
+                    <h1>🏰 公会管理</h1>
+                </div>
+                <div class="card">
+                    <div id="guilds-content">暂无公会数据</div>
+                </div>
+            </div>
+
+            <!-- 封禁管理 -->
+            <div id="punish" class="section">
+                <div class="header">
+                    <h1>🚫 封禁管理</h1>
+                </div>
+                <div class="card">
+                    <div id="punish-table"></div>
+                </div>
+            </div>
+
+            <!-- 邮件系统 -->
+            <div id="postal" class="section">
+                <div class="header">
+                    <h1>📧 邮件系统</h1>
+                </div>
+                <div class="card">
+                    <div id="postal-stats"></div>
+                    <div id="postal-table" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- 统计分析 -->
+            <div id="stats" class="section">
+                <div class="header">
+                    <h1>📈 统计分析</h1>
+                </div>
+                <div class="stat-cards" id="stats-cards"></div>
+                <div class="card" id="stats-detail"></div>
+            </div>
+
+            <!-- 贴吧联动 -->
+            <div id="tieba" class="section">
+                <div class="header">
+                    <h1>💬 贴吧联动</h1>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="tieba-search" placeholder="搜索贴吧帖子...">
+                        <button onclick="searchTieba()">搜索</button>
+                    </div>
+                    <div id="tieba-table"></div>
+                </div>
+            </div>
+
+            <!-- 反馈追踪 -->
+            <div id="feedback" class="section">
+                <div class="header">
+                    <h1>📝 玩家反馈</h1>
+                </div>
+                <div class="card">
+                    <div id="feedback-table"></div>
+                </div>
+            </div>
+
+            <!-- 版本监控 -->
+            <div id="version" class="section">
+                <div class="header">
+                    <h1>🔄 版本更新监控</h1>
+                </div>
+                <div class="card">
+                    <div id="version-table"></div>
+                </div>
+            </div>
+
+            <!-- 数据自检 -->
+            <div id="check" class="section">
+                <div class="header">
+                    <h1>🔍 数据自检</h1>
+                </div>
+                <div class="card">
+                    <button onclick="runCheck()" style="margin-bottom: 20px; padding: 10px 20px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">运行自检</button>
+                    <div id="check-result"></div>
+                </div>
+            </div>
+            
+            <!-- PVF解析 -->
+            <div id="pvf" class="section">
+                <div class="header">
+                    <h1>📋 PVF数据解析</h1>
+                </div>
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="pvf-search" placeholder="输入物品名称搜索...">
+                        <button onclick="searchPVF()">搜索</button>
+                    </div>
+                    <div id="pvf-table"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 基础地址 - 使用本机 API 服务器
+        const API_BASE = '/api/v2';
+
+        // 显示模块
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.menu li').forEach(l => l.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.closest('li').classList.add('active');
+
+            // 加载数据
+            switch(sectionId) {
+                case 'dashboard': loadDashboard(); break;
+                case 'characters': loadCharacters(); break;
+                case 'accounts': loadAccounts(); break;
+                case 'items': loadItems(); break;
+                case 'monsters': loadMonsters(); break;
+                case 'skills': loadSkills(); break;
+                case 'stats': loadStats(); break;
+                case 'tieba': loadTieba(); break;
+                case 'feedback': loadFeedback(); break;
+                case 'version': loadVersion(); break;
+                case 'punish': loadPunish(); break;
+                case 'postal': loadPostal(); break;
+                case 'pvf': loadPVF(); break;
+            }
+        }
+
+        // API 请求
+        async function api(endpoint) {
+            try {
+                const resp = await fetch(`${API_BASE}/${endpoint}`);
+                return await resp.json();
+            } catch (e) {
+                console.error('API Error:', e);
+                return { error: e.message };
+            }
+        }
+
+        // 仪表盘
+        async function loadDashboard() {
+            const data = await api('stats/server');
+            if (data.error) {
+                document.getElementById('dashboard-stats').innerHTML = '<div class="card">加载失败: ' + data.error + '</div>';
+                return;
+            }
+            
+            const stats = data.data || {};
+            const html = `
+                <div class="stat-card">
+                    <div class="icon">👥</div>
+                    <div class="value">${stats.total_accounts || 0}</div>
+                    <div class="label">总账号数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">🎭</div>
+                    <div class="value">${stats.total_characters || 0}</div>
+                    <div class="label">总角色数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">📦</div>
+                    <div class="value">${stats.total_items || 0}</div>
+                    <div class="label">总物品数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">💬</div>
+                    <div class="value">${stats.total_tieba_posts || 0}</div>
+                    <div class="label">贴吧帖子</div>
+                </div>
+            `;
+            document.getElementById('dashboard-stats').innerHTML = html;
+            
+            // 加载实时数据
+            const realtime = await api('stats/online');
+            document.getElementById('realtime-data').innerHTML = `
+                <p>当前在线: <strong>${realtime.current?.current_online || 0}</strong> 人</p>
+                <p>数据更新时间: ${new Date().toLocaleString()}</p>
+            `;
+        }
+
+        // 加载角色
+        async function loadCharacters() {
+            const data = await api('charac?page=1&page_size=20');
+            renderTable('characters-table', data.data || [], [
+                { key: 'c_no', title: 'ID' },
+                { key: 'c_name', title: '角色名' },
+                { key: 'c_level', title: '等级' },
+                { key: 'c_job', title: '职业', render: v => getJobName(v) },
+                { key: 'c_fatigue', title: '疲劳' },
+                { key: 'last_play_time', title: '最后登录' },
+                { key: 'c_no', title: '操作', render: v => `<button onclick="showCharacterDetail(${v})">详情</button>` }
+            ]);
+        }
+        
+        // 显示角色详情
+        async function showCharacterDetail(charId) {
+            const data = await api(`character/attributes?id=${charId}`);
+            if (data.error) {
+                document.getElementById('character-detail').innerHTML = `<p style="color: red;">加载失败: ${data.error}</p>`;
+                document.getElementById('character-detail').style.display = 'block';
+                return;
+            }
+            const char = data.data || {};
+            let html = `
+                <h3>角色详情: ${char.charac_name || ''}</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                    <p><strong>ID:</strong> ${char.m_id || '-'}</p>
+                    <p><strong>职业:</strong> ${char.job_name || getJobName(char.job)}</p>
+                    <p><strong>等级:</strong> ${char.lev || '-'}</p>
+                    <p><strong>经验:</strong> ${char.exp || '-'}</p>
+                    <p><strong>HP:</strong> ${char.HP || 0}/${char.maxHP || 0}</p>
+                    <p><strong>MP:</strong> ${char.maxMP || 0}</p>
+                    <p><strong>物攻:</strong> ${char.phy_attack || 0}</p>
+                    <p><strong>魔攻:</strong> ${char.mag_attack || 0}</p>
+                    <p><strong>物防:</strong> ${char.phy_defense || 0}</p>
+                    <p><strong>魔防:</strong> ${char.mag_defense || 0}</p>
+                    <p><strong>疲劳:</strong> ${char.fatigue || 0}/${char.max_fatigue || 0}</p>
+                    <p><strong>创建时间:</strong> ${char.create_time || '-'}</p>
+                </div>
+            `;
+            document.getElementById('character-detail').innerHTML = html;
+            document.getElementById('character-detail').style.display = 'block';
+        }
+
+        // 搜索角色
+        async function searchCharacters() {
+            const keyword = document.getElementById('char-search').value;
+            if (!keyword) { loadCharacters(); return; }
+            const data = await api(`character/search?q=${encodeURIComponent(keyword)}`);
+            renderTable('characters-table', data.data || [], [
+                { key: 'c_no', title: 'ID' },
+                { key: 'c_name', title: '角色名' },
+                { key: 'c_level', title: '等级' },
+                { key: 'c_job', title: '职业', render: v => getJobName(v) }
+            ]);
+        }
+
+        // 加载账号
+        async function loadAccounts() {
+            const data = await api('account?page=1&page_size=20');
+            renderTable('accounts-table', data.data || [], [
+                { key: 'uid', title: 'UID' },
+                { key: 'uname', title: '用户名' },
+                { key: 'level', title: '等级' },
+                { key: 'status', title: '状态', render: v => v === 1 ? '<span class="badge badge-success">正常</span>' : '<span class="badge badge-error">禁用</span>' }
+            ]);
+        }
+
+        // 当前物品页码
+        let itemPage = 1;
+        let itemKeyword = '';
+        
+        // 加载物品列表
+        async function loadItems(page = 1) {
+            itemPage = page;
+            itemKeyword = '';
+            const data = await api(`item/list?page=${page}&page_size=50`);
+            const total = data.total || 0;
+            const totalPages = Math.ceil(total / 50);
+            let html = `<p>共 ${total} 个物品，第 ${page}/${totalPages} 页</p>`;
+            html += renderTableHtml(data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'name', title: '名称' },
+                { key: 'category', title: '类型' },
+                { key: 'level', title: '等级' },
+                { key: 'rarity', title: '稀有度' },
+                { key: 'id', title: '操作', render: v => `<button onclick="showItemDetail(${v})">详情</button>` }
+            ]);
+            if (totalPages > 1) {
+                html += `<div style="margin-top:10px;">`;
+                if (page > 1) html += `<button onclick="loadItems(${page-1})">上一页</button> `;
+                if (page < totalPages) html += `<button onclick="loadItems(${page+1})">下一页</button>`;
+                html += `</div>`;
+            }
+            document.getElementById('items-table').innerHTML = html;
+        }
+        
+        // 搜索物品
+        async function searchItems(page = 1) {
+            const keyword = document.getElementById('item-search').value;
+            if (!keyword) { loadItems(); return; }
+            itemPage = page;
+            itemKeyword = keyword;
+            const data = await api(`item/search?q=${encodeURIComponent(keyword)}&page=${page}&page_size=50`);
+            const total = data.total || 0;
+            const totalPages = Math.ceil(total / 50);
+            let html = `<p>搜索"${keyword}"共 ${total} 个结果，第 ${page}/${totalPages} 页</p>`;
+            html += renderTableHtml(data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'name', title: '名称' },
+                { key: 'category', title: '类型' },
+                { key: 'level', title: '等级' },
+                { key: 'rarity', title: '稀有度' },
+                { key: 'id', title: '操作', render: v => `<button onclick="showItemDetail(${v})">详情</button>` }
+            ]);
+            if (totalPages > 1) {
+                html += `<div style="margin-top:10px;">`;
+                if (page > 1) html += `<button onclick="searchItems(${page-1})">上一页</button> `;
+                if (page < totalPages) html += `<button onclick="searchItems(${page+1})">下一页</button>`;
+                html += `</div>`;
+            }
+            document.getElementById('items-table').innerHTML = html;
+        }
+        
+        // 显示物品详情
+        async function showItemDetail(itemId) {
+            const data = await api(`item/detail?id=${itemId}`);
+            if (data.error) {
+                alert('加载失败: ' + data.error);
+                return;
+            }
+            const item = data.data || {};
+            alert(`物品详情: ${item.name || ''}\n类型: ${item.category || '-'}\n等级: ${item.level || '-'}\n稀有度: ${item.rarity || '-'}`);
+        }
+
+        // 加载怪物列表
+        async function loadMonsters() {
+            const data = await api('monster/list?page=1&page_size=20');
+            renderTable('monsters-table', data.data || [], [
+                { key: 'idx', title: 'ID' },
+                { key: 'mon_name_kr', title: '名称' },
+                { key: 'level', title: '等级' },
+                { key: 'hp', title: 'HP' },
+                { key: 'idx', title: '操作', render: v => `<button onclick="showMonsterDetail(${v})">详情</button>` }
+            ]);
+        }
+        
+        // 显示怪物详情
+        async function showMonsterDetail(monsterId) {
+            const data = await api(`monster/detail?id=${monsterId}`);
+            if (data.error) {
+                document.getElementById('monster-detail').innerHTML = `<p style="color: red;">加载失败: ${data.error}</p>`;
+                document.getElementById('monster-detail').style.display = 'block';
+                return;
+            }
+            const monster = data.data || {};
+            let html = `
+                <h3>怪物详情: ${monster.mon_name_kr || ''}</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                    <p><strong>ID:</strong> ${monster.idx || '-'}</p>
+                    <p><strong>名称:</strong> ${monster.mon_name_kr || '-'}</p>
+                    <p><strong>等级:</strong> ${monster.level || '-'}</p>
+                    <p><strong>HP:</strong> ${monster.hp || '-'}</p>
+                    <p><strong>攻击力:</strong> ${monster.attack || '-'}</p>
+                    <p><strong>防御力:</strong> ${monster.defense || '-'}</p>
+                </div>
+            `;
+            document.getElementById('monster-detail').innerHTML = html;
+            document.getElementById('monster-detail').style.display = 'block';
+        }
+        
+        // 搜索怪物
+        async function searchMonsters() {
+            const keyword = document.getElementById('monster-search').value;
+            if (!keyword) { loadMonsters(); return; }
+            const data = await api(`monster/search?q=${encodeURIComponent(keyword)}`);
+            renderTable('monsters-table', data.data || [], [
+                { key: 'idx', title: 'ID' },
+                { key: 'mon_name_kr', title: '名称' },
+                { key: 'level', title: '等级' },
+                { key: 'hp', title: 'HP' }
+            ]);
+        }
+
+        // 加载技能列表
+        async function loadSkills() {
+            const data = await api('skill/jobs');
+            const jobs = data.data || [];
+            let html = '<h3>职业列表</h3>';
+            html += '<table><tr><th>职业ID</th><th>职业名称</th><th>操作</th></tr>';
+            jobs.forEach(j => {
+                html += `<tr><td>${j.job}</td><td>${getJobName(j.job)}</td><td><button onclick="searchSkillsByJob(${j.job})">查看技能</button></td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('skills-table').innerHTML = html;
+        }
+        
+        // 按职业查看技能
+        async function searchSkillsByJob(jobId) {
+            const data = await api(`skill/by-job?job=${jobId}`);
+            const skills = data.skills || [];
+            let html = `<h3>${data.job_name || '未知职业'} (${data.total || 0}个技能)</h3>`;
+            html += '<table><tr><th>技能ID</th><th>名称</th><th>类型</th><th>等级</th></tr>';
+            skills.forEach(s => {
+                html += `<tr><td>${s.skill_index}</td><td>${s.name}</td><td>${s.type || '-'}</td><td>${s.required_level || '-'}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('skills-table').innerHTML = html;
+        }
+        
+        // 搜索技能
+        async function searchSkills() {
+            const job = document.getElementById('skill-job').value;
+            const data = await api(`skill/by-job?job=${job}`);
+            const skills = data.skills || [];
+            let html = `<h3>${data.job_name || '未知职业'} (${data.total || 0}个技能)</h3>`;
+            html += '<table><tr><th>技能ID</th><th>名称</th><th>类型</th><th>等级</th></tr>';
+            skills.forEach(s => {
+                html += `<tr><td>${s.skill_index}</td><td>${s.name}</td><td>${s.type || '-'}</td><td>${s.required_level || '-'}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('skills-table').innerHTML = html;
+        }
+
+        // 加载公会
+        async function loadGuilds() {
+            const data = await api('guild/list');
+            if (data.data && data.data.length > 0) {
+                renderTable('guilds-content', data.data, [
+                    { key: 'guild_id', title: '公会ID' },
+                    { key: 'guild_name', title: '公会名称' },
+                    { key: 'guild_master', title: '会长' },
+                    { key: 'guild_level', title: '等级' }
+                ]);
+            } else {
+                document.getElementById('guilds-content').innerHTML = '<p>暂无公会数据</p>';
+            }
+        }
+        
+        // 加载统计
+        async function loadStats() {
+            const [economy, dungeon, pvp] = await Promise.all([
+                api('stats/economy'),
+                api('stats/dungeon'),
+                api('stats/pvp')
+            ]);
+            
+            const ec = economy.accounts || {};
+            const du = dungeon.stats || {};
+            const pv = pvp.stats || {};
+            
+            document.getElementById('stats-cards').innerHTML = `
+                <div class="stat-card">
+                    <div class="icon">💰</div>
+                    <div class="value">${ec.total_accounts || 0}</div>
+                    <div class="label">总账号</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">🏰</div>
+                    <div class="value">${du.unique_dungeons || 0}</div>
+                    <div class="label">副本种类</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">⚔️</div>
+                    <div class="value">${pv.max_players || 0}</div>
+                    <div class="label">PVP峰值</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">📊</div>
+                    <div class="value">${du.total_enter_count || 0}</div>
+                    <div class="label">副本进入次数</div>
+                </div>
+            `;
+        }
+
+        // 加载贴吧
+        async function loadTieba() {
+            const data = await api('tieba/posts?limit=20');
+            renderTable('tieba-table', data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'title', title: '标题', render: (v, row) => `<a href="${row.url}" target="_blank">${v}</a>` },
+                { key: 'reply_count', title: '回复' },
+                { key: 'view_count', title: '浏览' },
+                { key: 'post_time', title: '时间' }
+            ]);
+        }
+
+        // 搜索贴吧
+        async function searchTieba() {
+            const keyword = document.getElementById('tieba-search').value;
+            if (!keyword) { loadTieba(); return; }
+            const data = await api(`tieba/search?q=${encodeURIComponent(keyword)}`);
+            renderTable('tieba-table', data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'title', title: '标题', render: (v, row) => `<a href="${row.url}" target="_blank">${v}</a>` },
+                { key: 'reply_count', title: '回复' },
+                { key: 'view_count', title: '浏览' }
+            ]);
+        }
+
+        // 加载反馈
+        async function loadFeedback() {
+            const data = await api('feedback/list');
+            renderTable('feedback-table', data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'title', title: '标题', render: (v, row) => `<a href="${row.url}" target="_blank">${v}</a>` },
+                { key: 'reply_count', title: '回复' },
+                { key: 'post_time', title: '时间' }
+            ]);
+        }
+
+        // 加载版本监控
+        async function loadVersion() {
+            const data = await api('version/monitor');
+            renderTable('version-table', data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'title', title: '标题', render: (v, row) => `<a href="${row.url}" target="_blank">${v}</a>` },
+                { key: 'reply_count', title: '回复' },
+                { key: 'post_time', title: '时间' }
+            ]);
+        }
+
+        // 加载封禁
+        async function loadPunish() {
+            const data = await api('punish/list');
+            renderTable('punish-table', data.data || [], [
+                { key: 'm_id', title: 'ID' },
+                { key: 'punish_type', title: '类型' },
+                { key: 'occ_time', title: '时间' }
+            ]);
+        }
+
+        // 加载邮件
+        async function loadPostal() {
+            const stats = await api('mail/stats');
+            const s = stats.data || {};
+            document.getElementById('postal-stats').innerHTML = `
+                <p>总邮件: ${s.total_mails || 0} | 未读: ${s.unread_mails || 0} | 含金币: ${s.mails_with_gold || 0}</p>
+            `;
+            
+            const data = await api('mail/list');
+            renderTable('postal-table', data.data || [], [
+                { key: 'postal_id', title: 'ID' },
+                { key: 'send_charac_name', title: '发件人' },
+                { key: 'gold', title: '金币' },
+                { key: 'status', title: '状态' },
+                { key: 'occ_time', title: '时间' }
+            ]);
+        }
+
+        // 运行自检
+        async function runCheck() {
+            document.getElementById('check-result').innerHTML = '正在运行自检...';
+            const data = await api('check/report');
+            
+            if (data.error) {
+                document.getElementById('check-result').innerHTML = '<div class="card" style="color: red;">自检失败: ' + data.error + '</div>';
+                return;
+            }
+            
+            let html = `<p><strong>自检时间:</strong> ${data.report_time}</p>`;
+            html += `<p><strong>检查项:</strong> ${data.summary?.total_checks || 0} | <strong>通过:</strong> ${data.summary?.passed || 0} | <strong>失败:</strong> ${data.summary?.failed || 0}</p>`;
+            
+            html += '<h4 style="margin-top: 20px;">完整性检查</h4>';
+            (data.integrity || []).forEach(c => {
+                const status = c.status === '正常' ? 'badge-success' : 'badge-error';
+                html += `<p>${c.item}: <span class="badge ${status}">${c.status}</span></p>`;
+            });
+            
+            html += '<h4 style="margin-top: 20px;">一致性检查</h4>';
+            (data.consistency || []).forEach(c => {
+                const status = c.status === '正常' ? 'badge-success' : 'badge-error';
+                html += `<p>${c.item}: <span class="badge ${status}">${c.status}</span></p>`;
+            });
+            
+            document.getElementById('check-result').innerHTML = html;
+        }
+
+        // 加载PVF数据
+        async function loadPVF() {
+            const data = await api('pvf/list?page=1&page_size=20');
+            renderTable('pvf-table', data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'name', title: '名称' },
+                { key: 'category', title: '类型' }
+            ]);
+        }
+        
+        // 搜索PVF数据
+        async function searchPVF() {
+            const keyword = document.getElementById('pvf-search').value;
+            if (!keyword) { loadPVF(); return; }
+            const data = await api(`pvf/search?q=${encodeURIComponent(keyword)}`);
+            renderTable('pvf-table', data.data || [], [
+                { key: 'id', title: 'ID' },
+                { key: 'name', title: '名称' },
+                { key: 'category', title: '类型' }
+            ]);
+        }
+
+        // 渲染表格
+        function renderTable(containerId, data, columns) {
+            if (!data || data.length === 0) {
+                document.getElementById(containerId).innerHTML = '<p>暂无数据</p>';
+                return;
+            }
+            
+            let html = '<table><tr>';
+            columns.forEach(col => html += `<th>${col.title}</th>`);
+            html += '</tr>';
+            
+            data.forEach(row => {
+                html += '<tr>';
+                columns.forEach(col => {
+                    const value = row[col.key];
+                    html += `<td>${col.render ? col.render(value, row) : (value || '-')}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            document.getElementById(containerId).innerHTML = html;
+        }
+        
+        // 渲染表格并返回HTML
+        function renderTableHtml(data, columns) {
+            if (!data || data.length === 0) {
+                return '<p>暂无数据</p>';
+            }
+            
+            let html = '<table><tr>';
+            columns.forEach(col => html += `<th>${col.title}</th>`);
+            html += '</tr>';
+            
+            data.forEach(row => {
+                html += '<tr>';
+                columns.forEach(col => {
+                    const value = row[col.key];
+                    html += `<td>${col.render ? col.render(value, row) : (value || '-')}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            return html;
+        }
+
+        // 职业映射
+        function getJobName(job) {
+            const jobs = {
+                0: '鬼剑士', 1: '格斗家', 2: '神枪手', 3: '魔法师', 4: '圣职者',
+                100: '狂战士', 101: '剑魂', 102: '鬼泣', 103: '阿修罗',
+                200: '气功师', 201: '散打', 202: '街霸', 203: '柔道家',
+                300: '漫游枪手', 301: '枪炮师', 302: '弹药专家', 303: '机械师',
+                400: '元素师', 401: '召唤师', 402: '战斗法师', 403: '魔道学者',
+                500: '圣骑士', 501: '蓝拳圣使', 502: '驱魔师', 503: '复仇者'
+            };
+            return jobs[job] || `职业${job}`;
+        }
+
+        // 初始化
+        loadDashboard();
+    </script>
+</body>
+</html>
