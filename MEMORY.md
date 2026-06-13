@@ -35,9 +35,16 @@
 | 系统优化 | [memory/2026-06-02-system-optimization.md](memory/2026-06-02-system-optimization.md) |
 | 深度记忆 | [memory/deep-memory-2026-06.md](memory/deep-memory-2026-06.md) |
 
-## 近期重要修复 (2026-06-12)
+## 近期重要修复 (2026-06-13)
 
-### 飞书渠道修复
+### 飞书渠道修复 (最新)
+- **问题**: observer.py fallback 到 CPA 外网代理，但 CPA 没有 `openclaw` 模型
+- **修复**: 修改 `load_model_proxy_defaults()` 始终走本地 Gateway (127.0.0.1:18789)
+- **配置**: Gateway 的 `openclaw` 模型别名正常工作
+- **文件**: /app/observer.py (feishu-observe 容器)
+- **验证**: WebSocket 连接正常，消息发送成功
+
+### 飞书渠道修复 (2026-06-12)
 - **问题**: 飞书 observer 使用旧代理端口 5000，requests 库超时
 - **修复**: 更新 observer.py 使用 Gateway 端点 (18789)，添加代理禁用补丁
 - **配置**: Gateway Token + openclaw 模型，与主会话模型一致
@@ -64,5 +71,13 @@
 - **qBittorrent**: 端口 52000 (IPv6 可达)，代理 192.168.1.213:7890
 - **JAVSP**: 每30分钟自动刮削，广告文件自动清理
 - **视频文件**: 已修复特殊字符文件名
-- **飞书渠道**: 使用 Gateway 端点 (18789) + openclaw 模型
+- **飞书渠道**: 使用本地 Gateway (127.0.0.1:18789) + openclaw 模型
 - **CPA 面板**: 端口 8320，管理密钥 cpa2026admin
+- **DNF 后台**: 192.168.1.204:18882，全部 API 测试通过，管理员密码: admin123
+- **DNF 数据库**: 已采集账号、角色、物品、邮件、交易记录，贴吧帖子 104 条
+- **贴吧抓取**: scripts/dnf-data-collector.sh 一键采集游戏+贴吧数据
+- **自检系统**: scripts/dnf-self-check.sh 每日自检数据完整性
+- **功能扩展**: data/dnf-features-20260613/feature_suggestions.md 详细方案
+- **API 服务器**: dnf-admin-api/api_server.py 端口 18883，完整功能 API
+- **定时任务**: 每小时采集、每天自检、每6小时抓贴吧、每周生成周报
+- **RSSHub**: 127.0.0.1:1200，已运行 179 小时

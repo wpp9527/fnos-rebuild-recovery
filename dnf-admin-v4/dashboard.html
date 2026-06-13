@@ -1,0 +1,2508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNF 管理后台 v4.0</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --bg: #0f1419;
+            --panel: #1a1f2e;
+            --panel2: #242b3d;
+            --line: #2d3548;
+            --text: #e1e8f0;
+            --muted: #6b7b8d;
+            --ok: #00d68f;
+            --warn: #ffaa00;
+            --danger: #ff3d71;
+            --acc: #3366ff;
+            --acc2: #9b51e0;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* 布局 */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            width: 240px;
+            background: var(--panel);
+            border-right: 1px solid var(--line);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo {
+            padding: 20px;
+            border-bottom: 1px solid var(--line);
+            text-align: center;
+        }
+        
+        .logo h1 {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--acc), var(--acc2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo .version {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        
+        .nav {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+        }
+        
+        .nav-group {
+            margin-bottom: 16px;
+        }
+        
+        .nav-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: 8px 12px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: 14px;
+            color: var(--text);
+        }
+        
+        .nav-item:hover {
+            background: var(--panel2);
+        }
+        
+        .nav-item.active {
+            background: var(--acc);
+            color: #fff;
+        }
+        
+        .nav-item .icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--panel2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+        
+        .nav-item.active .badge {
+            background: rgba(255,255,255,.2);
+            color: #fff;
+        }
+        
+        /* 主内容区 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 顶部栏 */
+        .header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--panel);
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all .2s;
+        }
+        
+        .btn-primary {
+            background: var(--acc);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            background: #2952cc;
+        }
+        
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--line);
+            color: var(--text);
+        }
+        
+        .btn-ghost:hover {
+            background: var(--panel2);
+        }
+        
+        /* 内容区 */
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        /* 统计卡片 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .stat-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .stat-value.ok { color: var(--ok); }
+        .stat-value.warn { color: var(--warn); }
+        .stat-value.danger { color: var(--danger); }
+        .stat-value.acc { color: var(--acc); }
+        
+        /* 面板 */
+        .panel {
+            display: none;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        /* 卡片 */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* 表格 */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th,
+        .table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+        }
+        
+        .table th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+        
+        .table tr:hover {
+            background: var(--panel2);
+        }
+        
+        .table .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        
+        /* 表单 */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--muted);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color .2s;
+        }
+        
+        .form-input:focus {
+            border-color: var(--acc);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        /* 搜索框 */
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .search-box .form-input {
+            flex: 1;
+        }
+        
+        /* 分页 */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+        }
+        
+        .pagination-info {
+            font-size: 13px;
+            color: var(--muted);
+        }
+        
+        .pagination-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* 弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.open {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: var(--panel2);
+            color: var(--text);
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .tag-ok { background: rgba(0,214,143,.1); color: var(--ok); }
+        .tag-warn { background: rgba(255,170,0,.1); color: var(--warn); }
+        .tag-danger { background: rgba(255,61,113,.1); color: var(--danger); }
+        .tag-info { background: rgba(51,102,255,.1); color: var(--acc); }
+        
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            transition: all .2s;
+        }
+        
+        .tab:hover {
+            color: var(--text);
+        }
+        
+        .tab.active {
+            color: var(--acc);
+            border-bottom-color: var(--acc);
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        /* 属性网格 */
+        .prop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .prop-item {
+            padding: 12px;
+            background: var(--panel2);
+            border-radius: 8px;
+        }
+        
+        .prop-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        
+        .prop-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        /* 描述列表 */
+        .desc-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .desc-item {
+            padding: 12px;
+            background: var(--panel2);
+            border-radius: 8px;
+        }
+        
+        .desc-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        
+        .desc-value {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* 快速操作 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        
+        .action-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        
+        .action-card:hover {
+            border-color: var(--acc);
+            transform: translateY(-2px);
+        }
+        
+        .action-card .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .action-card .title {
+            font-size: 13px;
+            color: var(--muted);
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--muted);
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--line);
+            border-top-color: var(--acc);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            
+            .nav-item span:not(.icon) {
+                display: none;
+            }
+            
+            .nav-item .badge {
+                display: none;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>DNF 管理后台</h1>
+                <div class="version">v4.0</div>
+            </div>
+            <div class="nav">
+                <div class="nav-group">
+                    <div class="nav-title">概览</div>
+                    <div class="nav-item active" data-page="dashboard">
+                        <span class="icon">📊</span>
+                        <span>仪表盘</span>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-title">玩家管理</div>
+                    <div class="nav-item" data-page="characters">
+                        <span class="icon">👥</span>
+                        <span>角色列表</span>
+                        <span class="badge" id="char-count">0</span>
+                    </div>
+                    <div class="nav-item" data-page="accounts">
+                        <span class="icon">👤</span>
+                        <span>账号列表</span>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-title">数据查询</div>
+                    <div class="nav-item" data-page="items">
+                        <span class="icon">📦</span>
+                        <span>物品查询</span>
+                    </div>
+                    <div class="nav-item" data-page="skills">
+                        <span class="icon">⚔️</span>
+                        <span>技能查询</span>
+                    </div>
+                    <div class="nav-item" data-page="monsters">
+                        <span class="icon">👹</span>
+                        <span>怪物查询</span>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-title">系统管理</div>
+                    <div class="nav-item" data-page="server">
+                        <span class="icon">🖥️</span>
+                        <span>服务端监控</span>
+                    </div>
+                    <div class="nav-item" data-page="events">
+                        <span class="icon">🎉</span>
+                        <span>活动管理</span>
+                    </div>
+                    <div class="nav-item" data-page="pvf">
+                        <span class="icon">📄</span>
+                        <span>PVF管理</span>
+                    </div>
+                    <div class="nav-item" data-page="gm">
+                        <span class="icon">🎮</span>
+                        <span>GM工具</span>
+                    </div>
+                    <div class="nav-item" data-page="mail">
+                        <span class="icon">📧</span>
+                        <span>邮件系统</span>
+                    </div>
+                    <div class="nav-item" data-page="notice">
+                        <span class="icon">📢</span>
+                        <span>公告管理</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main">
+            <div class="header">
+                <div class="header-title" id="page-title">仪表盘</div>
+                <div class="header-actions">
+                    <button class="btn btn-ghost" onclick="refreshData()">刷新</button>
+                </div>
+            </div>
+            
+            <div class="content">
+                <!-- 仪表盘 -->
+                <div class="panel active" id="panel-dashboard">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-label">总角色数</div>
+                            <div class="stat-value acc" id="stat-chars">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">总账号数</div>
+                            <div class="stat-value ok" id="stat-accounts">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">物品总数</div>
+                            <div class="stat-value warn" id="stat-items">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">技能总数</div>
+                            <div class="stat-value" id="stat-skills">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">怪物总数</div>
+                            <div class="stat-value danger" id="stat-monsters">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">快速操作</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="quick-actions">
+                                <div class="action-card" onclick="showPage('characters')">
+                                    <div class="icon">👥</div>
+                                    <div class="title">角色管理</div>
+                                </div>
+                                <div class="action-card" onclick="showPage('items')">
+                                    <div class="icon">📦</div>
+                                    <div class="title">物品查询</div>
+                                </div>
+                                <div class="action-card" onclick="showPage('gm')">
+                                    <div class="icon">🎮</div>
+                                    <div class="title">GM工具</div>
+                                </div>
+                                <div class="action-card" onclick="showPage('notice')">
+                                    <div class="icon">📢</div>
+                                    <div class="title">发布公告</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 角色列表 -->
+                <div class="panel" id="panel-characters">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">角色列表</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-box">
+                                <input type="text" class="form-input" id="char-search" placeholder="搜索角色名...">
+                                <select class="form-input" id="char-job" style="width: 150px;">
+                                    <option value="">全部职业</option>
+                                </select>
+                                <input type="number" class="form-input" id="char-min-lev" placeholder="最低等级" style="width: 120px;">
+                                <input type="number" class="form-input" id="char-max-lev" placeholder="最高等级" style="width: 120px;">
+                                <button class="btn btn-primary" onclick="loadCharacters()">搜索</button>
+                            </div>
+                            
+                            <div class="loading" id="char-loading" style="display: none;">
+                                <div class="spinner"></div>
+                                <span>加载中...</span>
+                            </div>
+                            
+                            <table class="table" id="char-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>昵称</th>
+                                        <th>职业</th>
+                                        <th>等级</th>
+                                        <th>HP</th>
+                                        <th>MP</th>
+                                        <th>物攻</th>
+                                        <th>物防</th>
+                                        <th>魔攻</th>
+                                        <th>魔防</th>
+                                        <th>疲劳</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="char-body"></tbody>
+                            </table>
+                            
+                            <div class="pagination">
+                                <div class="pagination-info" id="char-info">共 0 条</div>
+                                <div class="pagination-btns">
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('char', -1)">上一页</button>
+                                    <span id="char-page">1</span>
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('char', 1)">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 账号列表 -->
+                <div class="panel" id="panel-accounts">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">账号列表</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-box">
+                                <input type="text" class="form-input" id="account-uid" placeholder="搜索UID...">
+                                <input type="text" class="form-input" id="account-search" placeholder="搜索用户名...">
+                                <button class="btn btn-primary" onclick="loadAccounts()">搜索</button>
+                            </div>
+                            
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>UID</th>
+                                        <th>用户名</th>
+                                        <th>QQ</th>
+                                        <th>计费</th>
+                                        <th>管理员</th>
+                                        <th>上级UID</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="account-body"></tbody>
+                            </table>
+                            
+                            <div class="pagination">
+                                <div class="pagination-info" id="account-info">共 0 条</div>
+                                <div class="pagination-btns">
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('account', -1)">上一页</button>
+                                    <span id="account-page">1</span>
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('account', 1)">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 物品查询 -->
+                <div class="panel" id="panel-items">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">物品查询</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-box">
+                                <input type="text" class="form-input" id="item-search" placeholder="搜索物品名称...">
+                                <button class="btn btn-primary" onclick="loadItems()">搜索</button>
+                            </div>
+                            
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>名称</th>
+                                        <th>分类</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="item-body"></tbody>
+                            </table>
+                            
+                            <div class="pagination">
+                                <div class="pagination-info" id="item-info">共 0 条</div>
+                                <div class="pagination-btns">
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('item', -1)">上一页</button>
+                                    <span id="item-page">1</span>
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('item', 1)">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 技能查询 -->
+                <div class="panel" id="panel-skills">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">技能查询</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-box">
+                                <select class="form-input" id="skill-base-job" style="width: 150px;" onchange="updateSkillJobSelect()">
+                                    <option value="">选择基础职业</option>
+                                    <option value="0">鬼剑士</option>
+                                    <option value="1">格斗家</option>
+                                    <option value="2">神枪手</option>
+                                    <option value="3">魔法师</option>
+                                    <option value="4">圣职者</option>
+                                    <option value="5">暗夜使者</option>
+                                    <option value="6">魔枪士</option>
+                                    <option value="7">枪剑士</option>
+                                    <option value="8">弓箭手</option>
+                                </select>
+                                <select class="form-input" id="skill-job" style="width: 150px;"></select>
+                                <button class="btn btn-primary" onclick="loadSkills()">查询</button>
+                            </div>
+                            
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>名称</th>
+                                        <th>描述</th>
+                                        <th>需要等级</th>
+                                        <th>消耗MP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="skill-body"></tbody>
+                            </table>
+                            
+                            <div class="pagination">
+                                <div class="pagination-info" id="skill-info">共 0 条</div>
+                                <div class="pagination-btns">
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('skill', -1)">上一页</button>
+                                    <span id="skill-page">1</span>
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('skill', 1)">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 怪物查询 -->
+                <div class="panel" id="panel-monsters">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">怪物查询</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-box">
+                                <input type="text" class="form-input" id="monster-search" placeholder="搜索怪物名称...">
+                                <button class="btn btn-primary" onclick="loadMonsters()">搜索</button>
+                            </div>
+                            
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>名称</th>
+                                        <th>等级</th>
+                                        <th>HP</th>
+                                        <th>攻击</th>
+                                        <th>防御</th>
+                                        <th>类型</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="monster-body"></tbody>
+                            </table>
+                            
+                            <div class="pagination">
+                                <div class="pagination-info" id="monster-info">共 0 条</div>
+                                <div class="pagination-btns">
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('monster', -1)">上一页</button>
+                                    <span id="monster-page">1</span>
+                                    <button class="btn btn-ghost btn-sm" onclick="changePage('monster', 1)">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- GM工具 -->
+                <div class="panel" id="panel-gm">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-label">发送物品</div>
+                            <div class="form-group">
+                                <label class="form-label">角色ID</label>
+                                <input type="number" class="form-input" id="gm-charac-no">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">物品ID</label>
+                                <input type="number" class="form-input" id="gm-item-id">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">数量</label>
+                                    <input type="number" class="form-input" id="gm-item-count" value="1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">强化</label>
+                                    <input type="number" class="form-input" id="gm-item-upgrade" value="0">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="gmSendItem()" style="width: 100%;">发送物品</button>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label">设置等级</div>
+                            <div class="form-group">
+                                <label class="form-label">角色ID</label>
+                                <input type="number" class="form-input" id="gm-level-charac">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">等级</label>
+                                <input type="number" class="form-input" id="gm-level">
+                            </div>
+                            <button class="btn btn-primary" onclick="gmSetLevel()" style="width: 100%;">设置等级</button>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label">添加金币</div>
+                            <div class="form-group">
+                                <label class="form-label">角色ID</label>
+                                <input type="number" class="form-input" id="gm-gold-charac">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">金币数量</label>
+                                <input type="number" class="form-input" id="gm-gold">
+                            </div>
+                            <button class="btn btn-primary" onclick="gmAddGold()" style="width: 100%;">添加金币</button>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label">用户管理</div>
+                            <div class="form-group">
+                                <label class="form-label">用户UID</label>
+                                <input type="number" class="form-input" id="gm-user-uid">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">封禁原因</label>
+                                <input type="text" class="form-input" id="gm-ban-reason" value="违规操作">
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary" onclick="gmKick()" style="flex: 1;">踢出</button>
+                                <button class="btn btn-primary" onclick="gmBan()" style="flex: 1; background: var(--danger);">封禁</button>
+                                <button class="btn btn-primary" onclick="gmUnban()" style="flex: 1; background: var(--ok);">解封</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 邮件系统 -->
+                <div class="panel" id="panel-mail">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">发送邮件</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">收件人（角色名或ID）</label>
+                                <input type="text" class="form-input" id="mail-to">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">物品ID</label>
+                                    <input type="number" class="form-input" id="mail-item-id">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">数量</label>
+                                    <input type="number" class="form-input" id="mail-count" value="1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">金币</label>
+                                    <input type="number" class="form-input" id="mail-gold" value="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">消息内容</label>
+                                <textarea class="form-input" id="mail-message" rows="4"></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="sendMail()">发送邮件</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 公告管理 -->
+                <div class="panel" id="panel-notice">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">公告管理</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">公告内容</label>
+                                <textarea class="form-input" id="notice-content" rows="10" placeholder="请输入公告内容..."></textarea>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="saveNotice()">保存公告</button>
+                                <button class="btn btn-ghost" onclick="loadNotice()">加载公告</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 服务端监控 -->
+                <div class="panel" id="panel-server">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-label">服务端状态</div>
+                            <div id="server-status">
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">Docker</div>
+                                    <div class="prop-value" id="server-docker">-</div>
+                                </div>
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">MySQL</div>
+                                    <div class="prop-value" id="server-mysql">-</div>
+                                </div>
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">游戏服务</div>
+                                    <div class="prop-value" id="server-game">-</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-ghost" onclick="loadServerStatus()" style="margin-top: 12px; width: 100%;">刷新状态</button>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label">系统资源</div>
+                            <div id="server-resources">
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">磁盘使用</div>
+                                    <div class="prop-value" id="server-disk">-</div>
+                                </div>
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">内存使用</div>
+                                    <div class="prop-value" id="server-memory">-</div>
+                                </div>
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">网络延迟</div>
+                                    <div class="prop-value" id="server-network">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label">启动控制</div>
+                            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                                <button class="btn btn-primary" onclick="startServer('all')" style="width: 100%;">启动全部服务</button>
+                                <button class="btn btn-ghost" onclick="startServer('game')" style="width: 100%;">启动游戏服务</button>
+                                <button class="btn btn-ghost" onclick="startServer('channel')" style="width: 100%;">启动频道服务</button>
+                                <button class="btn btn-danger" onclick="stopServer('all')" style="width: 100%;">停止全部服务</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <div class="card-title">问题诊断</div>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-ghost" onclick="loadServerIssues()" style="margin-bottom: 12px;">检查问题</button>
+                            <div id="server-issues"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <div class="card-title">服务端配置</div>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-ghost" onclick="loadServerConfig()" style="margin-bottom: 12px;">加载配置</button>
+                            <div id="server-config"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 活动管理 -->
+                <div class="panel" id="panel-events">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">活动管理</div>
+                            <button class="btn btn-primary" onclick="loadEvents()">刷新</button>
+                        </div>
+                        <div class="card-body">
+                            <div style="margin-bottom: 12px; padding: 12px; background: var(--panel2); border-radius: 8px;">
+                                <div style="font-size: 14px; color: var(--muted);">
+                                    <strong>说明：</strong>
+                                    <ul style="margin-top: 8px; padding-left: 20px;">
+                                        <li>活动启用后，日期自动设置为今天起30天</li>\li>
+                                        <li>活动禁用后，日期清空为 0000-00-00</li>
+                                        <li>也可以手动设置自定义日期范围</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>活动名称</th>
+                                        <th>说明</th>
+                                        <th>类型</th>
+                                        <th>开始日期</th>
+                                        <th>结束日期</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="events-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <div class="card-title">批量操作</div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="enableAllEvents()">启用全部活动</button>
+                                <button class="btn btn-danger" onclick="disableAllEvents()">禁用全部活动</button>
+                                <button class="btn btn-ghost" onclick="loadEvents()">刷新列表</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PVF 管理 -->
+                <div class="panel" id="panel-pvf">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-label">当前 PVF 状态</div>
+                            <div id="pvf-status">
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">缓存物品数</div>
+                                    <div class="prop-value" id="pvf-cache-count">-</div>
+                                </div>
+                                <div class="prop-item" style="margin-top: 10px;">
+                                    <div class="prop-label">数据来源</div>
+                                    <div class="prop-value" id="pvf-source">-</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-ghost" onclick="loadPvfStatus()" style="margin-top: 12px; width: 100%;">刷新状态</button>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label">服务端文件</div>
+                            <div id="pvf-files-list" style="max-height: 200px; overflow-y: auto; margin-top: 10px;">
+                                <div style="color: var(--muted);">点击"加载文件列表"获取</div>
+                            </div>
+                            <button class="btn btn-ghost" onclick="loadPvfFiles()" style="margin-top: 12px; width: 100%;">加载文件列表</button>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label">上传本地文件</div>
+                            <div class="form-group" style="margin-top: 10px;">
+                                <label class="form-label">文件类型</label>
+                                <select class="form-input" id="pvf-upload-type">
+                                    <option value="gold">gold.txt (ID:Name格式)</option>
+                                    <option value="csv">CSV (逗号分隔)</option>
+                                    <option value="tsv">TSV (制表符分隔)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">文件内容</label>
+                                <textarea class="form-input" id="pvf-upload-content" rows="6" placeholder="粘贴文件内容..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="uploadPvfFile()" style="width: 100%;">上传并解析</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <div class="card-title">导入到数据库</div>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--muted); margin-bottom: 12px;">将当前缓存的 PVF 数据导入到 dnf_item_info 表，可以修复物品名称显示问题。</p>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="importPvfToDb()">导入到数据库</button>
+                                <button class="btn btn-ghost" onclick="previewPvfData()">预览数据</button>
+                            </div>
+                            <div id="pvf-import-result" style="margin-top: 12px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 角色详情弹窗 -->
+    <div class="modal" id="char-modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <div class="modal-title" id="char-modal-title">角色详情</div>
+                <button class="modal-close" onclick="closeModal('char-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 基本信息 -->
+                <div class="desc-list" id="char-basic" style="margin-bottom: 20px;"></div>
+                
+                <!-- 标签页 -->
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab(this, 'char-props')">属性</div>
+                    <div class="tab" onclick="switchTab(this, 'char-equip')">装备 (<span id="char-equip-count">0</span>)</div>
+                    <div class="tab" onclick="switchTab(this, 'char-inventory')">背包 (<span id="char-item-count">0</span>)</div>
+                    <div class="tab" onclick="switchTab(this, 'char-skills')">技能 (<span id="char-skill-count">0</span>)</div>
+                </div>
+                
+                <!-- 属性面板 -->
+                <div class="tab-panel active" id="char-props">
+                    <div class="prop-grid" id="char-props-grid"></div>
+                </div>
+                
+                <!-- 装备面板 -->
+                <div class="tab-panel" id="char-equip">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>槽位</th>
+                                <th>物品名称</th>
+                                <th>物品ID</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="char-equip-body"></tbody>
+                    </table>
+                </div>
+                
+                <!-- 背包面板 -->
+                <div class="tab-panel" id="char-inventory">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>槽位</th>
+                                <th>物品名称</th>
+                                <th>物品ID</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="char-items-body"></tbody>
+                    </table>
+                </div>
+                
+                <!-- 技能面板 -->
+                <div class="tab-panel" id="char-skills">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>技能ID</th>
+                                <th>技能名称</th>
+                                <th>等级</th>
+                                <th>最大等级</th>
+                            </tr>
+                        </thead>
+                        <tbody id="char-skills-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 物品详情弹窗 -->
+    <div class="modal" id="item-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <div class="modal-title" id="item-modal-title">物品详情</div>
+                <button class="modal-close" onclick="closeModal('item-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="prop-grid" id="item-props"></div>
+                <div style="margin-top: 16px;">
+                    <h4 style="margin-bottom: 8px;">描述</h4>
+                    <div id="item-desc" style="padding: 12px; background: var(--panel2); border-radius: 8px; font-size: 14px; line-height: 1.6;"></div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <h4 style="margin-bottom: 8px;">详细说明</h4>
+                    <div id="item-detail-desc" style="padding: 12px; background: var(--panel2); border-radius: 8px; font-size: 14px; line-height: 1.6;"></div>
+                </div>
+                <div id="item-set-info" style="margin-top: 16px; display: none;">
+                    <h4 style="margin-bottom: 8px;">套装信息</h4>
+                    <div id="item-set" style="padding: 12px; background: var(--panel2); border-radius: 8px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 怪物详情弹窗 -->
+    <div class="modal" id="monster-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title" id="monster-modal-title">怪物详情</div>
+                <button class="modal-close" onclick="closeModal('monster-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="prop-grid" id="monster-props"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 账号详情弹窗 -->
+    <div class="modal" id="account-modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <div class="modal-title" id="account-modal-title">账号详情</div>
+                <button class="modal-close" onclick="closeModal('account-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="desc-list" id="account-detail"></div>
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 12px;">角色列表</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>昵称</th>
+                                <th>职业</th>
+                                <th>等级</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="account-chars-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 状态
+        const state = {
+            currentPage: 'dashboard',
+            charPage: 1,
+            accountPage: 1,
+            itemPage: 1,
+            skillPage: 1,
+            monsterPage: 1,
+            pageSize: 20,
+            jobs: {}
+        };
+        
+        // 标签页切换
+        function switchTab(tab, panelId) {
+            // 更新标签状态
+            tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // 更新面板状态
+            const modalBody = tab.closest('.modal-body');
+            modalBody.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            modalBody.querySelector('#' + panelId).classList.add('active');
+        }
+        
+        // API 调用
+        async function api(path, options = {}) {
+            const response = await fetch('/api/' + path, options);
+            return await response.json();
+        }
+        
+        // 职业树
+        const JOB_TREE = {
+            0: [100, 101, 102, 103],
+            1: [200, 201, 202, 203],
+            2: [300, 301, 302, 303],
+            3: [400, 401, 402, 403],
+            4: [500, 501, 502, 503],
+            5: [600, 601, 602, 603],
+            6: [700, 701, 702, 703],
+            7: [800, 801, 802, 803],
+            8: [900, 901],
+        };
+        
+        // 更新技能职业选择框
+        function updateSkillJobSelect() {
+            const baseJob = document.getElementById('skill-base-job').value;
+            const skillJobSelect = document.getElementById('skill-job');
+            skillJobSelect.innerHTML = '';
+            
+            if (baseJob === '') {
+                skillJobSelect.innerHTML = '<option value="">选择转职</option>';
+                return;
+            }
+            
+            const jobs = JOB_TREE[baseJob] || [];
+            for (const jobId of jobs) {
+                const name = state.jobs[jobId] || `职业${jobId}`;
+                skillJobSelect.innerHTML += `<option value="${jobId}">${name}</option>`;
+            }
+        }
+        
+        // 初始化
+        async function init() {
+            // 加载职业列表
+            const jobsData = await api('jobs');
+            state.jobs = jobsData.jobs || {};
+            
+            // 填充角色职业选择框
+            const charJobSelect = document.getElementById('char-job');
+            for (const [id, name] of Object.entries(state.jobs)) {
+                if (parseInt(id) < 100) {
+                    charJobSelect.innerHTML += `<option value="${id}">${name}</option>`;
+                }
+            }
+            
+            // 初始化技能职业选择框
+            updateSkillJobSelect();
+            
+            // 加载统计数据
+            loadStats();
+        }
+        
+        // 加载统计数据
+        async function loadStats() {
+            const stats = await api('stats');
+            document.getElementById('stat-chars').textContent = stats.total_chars || 0;
+            document.getElementById('stat-accounts').textContent = stats.total_accounts || 0;
+            document.getElementById('stat-items').textContent = stats.total_items || 0;
+            document.getElementById('stat-skills').textContent = stats.total_skills || 0;
+            document.getElementById('stat-monsters').textContent = stats.total_monsters || 0;
+            document.getElementById('char-count').textContent = stats.total_chars || 0;
+        }
+        
+        // 页面切换
+        function showPage(page) {
+            state.currentPage = page;
+            
+            // 更新导航
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === page);
+            });
+            
+            // 更新面板
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.toggle('active', panel.id === 'panel-' + page);
+            });
+            
+            // 更新标题
+            const titles = {
+                dashboard: '仪表盘',
+                characters: '角色列表',
+                accounts: '账号列表',
+                items: '物品查询',
+                skills: '技能查询',
+                monsters: '怪物查询',
+                server: '服务端监控',
+                events: '活动管理',
+                pvf: 'PVF管理',
+                gm: 'GM工具',
+                mail: '邮件系统',
+                notice: '公告管理'
+            };
+            document.getElementById('page-title').textContent = titles[page] || page;
+            
+            // 加载数据
+            if (page === 'characters') loadCharacters();
+            if (page === 'accounts') loadAccounts();
+            if (page === 'items') loadItems();
+            if (page === 'skills') loadSkills();
+            if (page === 'monsters') loadMonsters();
+            if (page === 'notice') loadNotice();
+            if (page === 'pvf') loadPvfStatus();
+            if (page === 'server') loadServerStatus();
+            if (page === 'events') loadEvents();
+        }
+        
+        // 加载角色列表
+        async function loadCharacters() {
+            const search = document.getElementById('char-search').value;
+            const job = document.getElementById('char-job').value;
+            const minLev = document.getElementById('char-min-lev').value;
+            const maxLev = document.getElementById('char-max-lev').value;
+            
+            document.getElementById('char-loading').style.display = 'flex';
+            
+            const params = new URLSearchParams({
+                page: state.charPage,
+                page_size: state.pageSize
+            });
+            if (search) params.append('name', search);
+            if (job) params.append('job', job);
+            if (minLev) params.append('min_lev', minLev);
+            if (maxLev) params.append('max_lev', maxLev);
+            
+            const data = await api('characters?' + params);
+            document.getElementById('char-loading').style.display = 'none';
+            
+            const tbody = document.getElementById('char-body');
+            tbody.innerHTML = '';
+            
+            for (const char of (data.data || [])) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${char.m_id}</td>
+                        <td>${char.charac_name || '-'}</td>
+                        <td>${char.job_name || '-'}</td>
+                        <td>${char.lev || 0}</td>
+                        <td>${char.maxHP || 0}</td>
+                        <td>${char.maxMP || 0}</td>
+                        <td>${char.phy_attack || 0}</td>
+                        <td>${char.phy_defense || 0}</td>
+                        <td>${char.mag_attack || 0}</td>
+                        <td>${char.mag_defense || 0}</td>
+                        <td>${char.fatigue || 0}/${char.max_fatigue || 156}</td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-ghost btn-sm" onclick="showCharDetail(${char.m_id})">详情</button>
+                                <button class="btn btn-ghost btn-sm" onclick="sendMailTo('${char.charac_name}')">邮件</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('char-info').textContent = `共 ${data.total || 0} 条`;
+            document.getElementById('char-page').textContent = state.charPage;
+        }
+        
+        // 显示角色详情
+        async function showCharDetail(charId) {
+            const data = await api('character/' + charId);
+            const char = data.data;
+            
+            if (!char) return;
+            
+            document.getElementById('char-modal-title').textContent = '角色详情 - ' + (char.charac_name || '');
+            
+            // 基本信息
+            const basic = document.getElementById('char-basic');
+            basic.innerHTML = `
+                <div class="desc-item"><div class="desc-label">ID</div><div class="desc-value">${char.m_id}</div></div>
+                <div class="desc-item"><div class="desc-label">昵称</div><div class="desc-value">${char.charac_name || '-'}</div></div>
+                <div class="desc-item"><div class="desc-label">职业</div><div class="desc-value">${char.job_name || '-'}</div></div>
+                <div class="desc-item"><div class="desc-label">等级</div><div class="desc-value">${char.lev || 0}</div></div>
+                <div class="desc-item"><div class="desc-label">性别</div><div class="desc-value">${char.sex === 0 ? '男' : '女'}</div></div>
+                <div class="desc-item"><div class="desc-label">创建时间</div><div class="desc-value">${char.create_time || '-'}</div></div>
+            `;
+            
+            // 属性面板
+            const props = document.getElementById('char-props-grid');
+            props.innerHTML = `
+                <div class="prop-item"><div class="prop-label">HP</div><div class="prop-value">${char.HP || 0}/${char.maxHP || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">MP</div><div class="prop-value">${char.maxMP || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">物理攻击</div><div class="prop-value">${char.phy_attack || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">魔法攻击</div><div class="prop-value">${char.mag_attack || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">物理防御</div><div class="prop-value">${char.phy_defense || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">魔法防御</div><div class="prop-value">${char.mag_defense || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">疲劳值</div><div class="prop-value">${char.fatigue || 0}/${char.max_fatigue || 156}</div></div>
+                <div class="prop-item"><div class="prop-label">移动速度</div><div class="prop-value">${char.move_speed || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">攻击速度</div><div class="prop-value">${char.attack_speed || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">施法速度</div><div class="prop-value">${char.cast_speed || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">跳跃力</div><div class="prop-value">${char.jump || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">负重</div><div class="prop-value">${char.charac_weight || 0}/${char.inven_weight || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">HP回复</div><div class="prop-value">${char.hp_regen || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">MP回复</div><div class="prop-value">${char.mp_regen || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">硬直恢复</div><div class="prop-value">${char.hit_recovery || 0}</div></div>
+            `;
+            
+            // 分离装备和背包物品
+            const equipItems = (char.inventory || []).filter(i => i.slot < 100);
+            const backpackItems = (char.inventory || []).filter(i => i.slot >= 100);
+            
+            // 装备面板
+            document.getElementById('char-equip-count').textContent = equipItems.length;
+            const equipBody = document.getElementById('char-equip-body');
+            equipBody.innerHTML = '';
+            
+            for (const item of equipItems) {
+                equipBody.innerHTML += `
+                    <tr>
+                        <td>${item.slot_name || item.slot}</td>
+                        <td>${item.item_name || '-'}</td>
+                        <td>${item.it_id}</td>
+                        <td><button class="btn btn-ghost btn-sm" onclick="showItemDetail(${item.it_id})">详情</button></td>
+                    </tr>
+                `;
+            }
+            
+            // 背包面板
+            document.getElementById('char-item-count').textContent = backpackItems.length;
+            const itemsBody = document.getElementById('char-items-body');
+            itemsBody.innerHTML = '';
+            
+            for (const item of backpackItems) {
+                itemsBody.innerHTML += `
+                    <tr>
+                        <td>${item.slot_name || item.slot}</td>
+                        <td>${item.item_name || '-'}</td>
+                        <td>${item.it_id}</td>
+                        <td><button class="btn btn-ghost btn-sm" onclick="showItemDetail(${item.it_id})">详情</button></td>
+                    </tr>
+                `;
+            }
+            
+            // 技能面板
+            document.getElementById('char-skill-count').textContent = char.skills_count || 0;
+            const skillsBody = document.getElementById('char-skills-body');
+            skillsBody.innerHTML = '';
+            
+            for (const skill of (char.skills || [])) {
+                skillsBody.innerHTML += `
+                    <tr>
+                        <td>${skill.skill_index}</td>
+                        <td>${skill.name || '-'}</td>
+                        <td>${skill.level || 0}</td>
+                        <td>${skill.max_level || 0}</td>
+                    </tr>
+                `;
+            }
+            
+            // 重置到第一个标签
+            const tabs = document.querySelector('#char-modal .tabs');
+            if (tabs) {
+                switchTab(tabs.querySelector('.tab'), 'char-props');
+            }
+            
+            document.getElementById('char-modal').classList.add('open');
+        }
+        
+        // 关闭弹窗
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+        
+        // 加载账号列表
+        async function loadAccounts() {
+            const uid = document.getElementById('account-uid').value;
+            const search = document.getElementById('account-search').value;
+            
+            const params = new URLSearchParams({
+                page: state.accountPage,
+                page_size: state.pageSize
+            });
+            if (uid) params.append('uid', uid);
+            if (search) params.append('name', search);
+            
+            const data = await api('accounts?' + params);
+            
+            const tbody = document.getElementById('account-body');
+            tbody.innerHTML = '';
+            
+            for (const acc of (data.data || [])) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${acc.UID}</td>
+                        <td>${acc.accountname || '-'}</td>
+                        <td>${acc.qq || '-'}</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>${acc.billing || 0}</td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm" onclick="showAccountDetail(${acc.UID})">详情</button>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('account-info').textContent = `共 ${data.total || 0} 条`;
+            document.getElementById('account-page').textContent = state.accountPage;
+        }
+        
+        // 显示账号详情
+        async function showAccountDetail(uid) {
+            const data = await api('account/' + uid);
+            const acc = data.data;
+            
+            if (!acc) return;
+            
+            document.getElementById('account-modal-title').textContent = '账号详情 - ' + (acc.accountname || '');
+            
+            const detail = document.getElementById('account-detail');
+            detail.innerHTML = `
+                <div class="desc-item"><div class="desc-label">UID</div><div class="desc-value">${acc.UID}</div></div>
+                <div class="desc-item"><div class="desc-label">用户名</div><div class="desc-value">${acc.accountname || '-'}</div></div>
+                <div class="desc-item"><div class="desc-label">QQ</div><div class="desc-value">${acc.qq || '-'}</div></div>
+                <div class="desc-item"><div class="desc-label">计费</div><div class="desc-value">${acc.billing || 0}</div></div>
+                <div class="desc-item"><div class="desc-label">VIP</div><div class="desc-value">${acc.VIP || '-'}</div></div>
+                <div class="desc-item"><div class="desc-label">管理员</div><div class="desc-value">${acc.admin || 0}</div></div>
+                <div class="desc-item"><div class="desc-label">上级UID</div><div class="desc-value">${acc.parent_uid || 0}</div></div>
+            `;
+            
+            // 角色列表
+            const charsBody = document.getElementById('account-chars-body');
+            charsBody.innerHTML = '';
+            
+            for (const char of (acc.characters || [])) {
+                charsBody.innerHTML += `
+                    <tr>
+                        <td>${char.charac_no}</td>
+                        <td>${char.charac_name || '-'}</td>
+                        <td>${char.job_name || '-'}</td>
+                        <td>${char.lev || 0}</td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm" onclick="closeModal('account-modal'); showCharDetail(${char.charac_no})">查看详情</button>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('account-modal').classList.add('open');
+        }
+        
+        // 显示物品详情
+        async function showItemDetail(itemId) {
+            const data = await api('item/' + itemId);
+            const item = data.data;
+            
+            if (!item) return;
+            
+            document.getElementById('item-modal-title').textContent = '物品详情 - ' + (item.it_name || itemId);
+            
+            // 基本属性
+            const props = document.getElementById('item-props');
+            props.innerHTML = `
+                <div class="prop-item"><div class="prop-label">物品ID</div><div class="prop-value">${item.it_no}</div></div>
+                <div class="prop-item"><div class="prop-label">名称</div><div class="prop-value">${item.it_name || '-'}</div></div>
+                <div class="prop-item"><div class="prop-label">英文名</div><div class="prop-value">${item.it_eng_name || '-'}</div></div>
+                <div class="prop-item"><div class="prop-label">类型</div><div class="prop-value">${item.master_type_name || '-'}</div></div>
+                <div class="prop-item"><div class="prop-label">稀有度</div><div class="prop-value">${item.rarity_name || '-'}</div></div>
+                <div class="prop-item"><div class="prop-label">等级</div><div class="prop-value">${item.level || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">HP</div><div class="prop-value">${item.hp_max || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">MP</div><div class="prop-value">${item.mp_max || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">物攻</div><div class="prop-value">${item.phy_att || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">物防</div><div class="prop-value">${item.phy_def || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">魔攻</div><div class="prop-value">${item.mag_att || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">魔防</div><div class="prop-value">${item.mag_def || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">价格</div><div class="prop-value">${item.price || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">重量</div><div class="prop-value">${item.weight || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">耐久度</div><div class="prop-value">${item.durability || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">冷却时间</div><div class="prop-value">${item.cooltime || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">移动速度</div><div class="prop-value">${item.mov_speed || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">攻击速度</div><div class="prop-value">${item.att_speed || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">暴击率</div><div class="prop-value">${item.criticalhit_rate || 0}%</div></div>
+            `;
+            
+            // 描述
+            document.getElementById('item-desc').textContent = item.it_explain || '无描述';
+            document.getElementById('item-detail-desc').textContent = item.detail_explain || item.flavor_text || '无详细说明';
+            
+            // 套装信息
+            const setInfo = document.getElementById('item-set-info');
+            if (item.set_name || item.set_item) {
+                setInfo.style.display = 'block';
+                document.getElementById('item-set').innerHTML = `
+                    <div><strong>套装名称:</strong> ${item.set_name || '-'}</div>
+                    <div><strong>套装件数:</strong> ${item.set_item || '-'}</div>
+                    <div><strong>套装效果:</strong> ${item.fullset_basic_explain || '-'}</div>
+                    <div style="margin-top: 8px;">${item.fullset_detail_explain || ''}</div>
+                `;
+            } else {
+                setInfo.style.display = 'none';
+            }
+            
+            document.getElementById('item-modal').classList.add('open');
+        }
+        
+        // 显示怪物详情
+        async function showMonsterDetail(idx) {
+            const data = await api('monster/' + idx);
+            const monster = data.data;
+            
+            if (!monster) return;
+            
+            document.getElementById('monster-modal-title').textContent = '怪物详情 - ' + (monster.mon_name_kr || idx);
+            
+            const props = document.getElementById('monster-props');
+            props.innerHTML = `
+                <div class="prop-item"><div class="prop-label">ID</div><div class="prop-value">${monster.idx}</div></div>
+                <div class="prop-item"><div class="prop-label">名称</div><div class="prop-value">${monster.mon_name_kr || '-'}</div></div>
+                <div class="prop-item"><div class="prop-label">等级</div><div class="prop-value">${monster.level || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">HP</div><div class="prop-value">${monster.hp || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">MP</div><div class="prop-value">${monster.mp || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">攻击</div><div class="prop-value">${monster.attack || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">防御</div><div class="prop-value">${monster.defense || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">经验</div><div class="prop-value">${monster.exp || 0}</div></div>
+                <div class="prop-item"><div class="prop-label">类型</div><div class="prop-value">${monster.monster_type || '-'}</div></div>
+            `;
+            
+            document.getElementById('monster-modal').classList.add('open');
+        }
+        
+        // PVF 管理功能
+        async function loadPvfStatus() {
+            const data = await api('pvf/status');
+            document.getElementById('pvf-cache-count').textContent = data.cached || 0;
+            document.getElementById('pvf-source').textContent = data.source || '-';
+        }
+        
+        async function loadPvfFiles() {
+            const data = await api('pvf/files');
+            const list = document.getElementById('pvf-files-list');
+            
+            if (data.files && data.files.length > 0) {
+                list.innerHTML = data.files.map(f => `
+                    <div style="padding: 8px; border-bottom: 1px solid var(--line); cursor: pointer;" 
+                         onclick="loadPvfFile('${f.path}', '${f.type}')">
+                        <div style="font-size: 13px;">${f.name}</div>
+                        <div style="font-size: 11px; color: var(--muted);">${f.path}</div>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<div style="color: var(--muted);">没有找到文件</div>';
+            }
+        }
+        
+        async function loadPvfFile(filePath, fileType) {
+            if (!confirm(`确定要加载文件 ${filePath} 吗？这会替换当前的 PVF 缓存。`)) return;
+            
+            const data = await api(`pvf/load?path=${encodeURIComponent(filePath)}&type=${fileType}`);
+            
+            if (data.success) {
+                alert(`加载成功！共 ${data.count} 个物品`);
+                loadPvfStatus();
+            } else {
+                alert('加载失败: ' + (data.error || '未知错误'));
+            }
+        }
+        
+        async function uploadPvfFile() {
+            const type = document.getElementById('pvf-upload-type').value;
+            const content = document.getElementById('pvf-upload-content').value;
+            
+            if (!content.trim()) {
+                alert('请输入文件内容');
+                return;
+            }
+            
+            const data = await api('pvf/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, type, name: 'uploaded.txt' })
+            });
+            
+            if (data.success) {
+                alert(`上传成功！解析了 ${data.count} 个物品`);
+                loadPvfStatus();
+            } else {
+                alert('上传失败: ' + (data.error || '未知错误'));
+            }
+        }
+        
+        async function importPvfToDb() {
+            if (!confirm('确定要将 PVF 数据导入到数据库吗？这会更新 dnf_item_info 表。')) return;
+            
+            const resultDiv = document.getElementById('pvf-import-result');
+            resultDiv.innerHTML = '<div style="color: var(--warn);">导入中...</div>';
+            
+            // 先获取当前缓存的物品数据
+            const statusData = await api('pvf/status');
+            if (!statusData.cached) {
+                resultDiv.innerHTML = '<div style="color: var(--danger);">没有缓存数据，请先加载 PVF 文件</div>';
+                return;
+            }
+            
+            // 获取物品列表
+            const itemsData = await api('items?q=&page=1&page_size=99999');
+            
+            const data = await api('pvf/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: itemsData.data || [] })
+            });
+            
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <div style="color: var(--ok);">
+                        导入成功！<br>
+                        新增: ${data.imported} 条<br>
+                        更新: ${data.updated} 条<br>
+                        错误: ${data.errors} 条<br>
+                        总计: ${data.total} 条
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<div style="color: var(--danger);">导入失败: ${data.error}</div>`;
+            }
+        }
+        
+        async function previewPvfData() {
+            const data = await api('items?q=&page=1&page_size=20');
+            const resultDiv = document.getElementById('pvf-import-result');
+            
+            if (data.data && data.data.length > 0) {
+                resultDiv.innerHTML = `
+                    <div style="margin-top: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">预览前 20 条数据:</div>
+                        <table class="table" style="font-size: 12px;">
+                            <thead><tr><th>ID</th><th>名称</th><th>分类</th></tr></thead>
+                            <tbody>
+                                ${data.data.map(item => `
+                                    <tr><td>${item.id}</td><td>${item.name}</td><td>${item.category}</td></tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="color: var(--muted); margin-top: 8px;">共 ${data.total} 条数据</div>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = '<div style="color: var(--muted);">没有数据</div>';
+            }
+        }
+        
+        // 服务端监控功能
+        async function loadServerStatus() {
+            const data = await api('server/status');
+            
+            // Docker 状态
+            const dockerEl = document.getElementById('server-docker');
+            dockerEl.textContent = data.docker?.status || '-';
+            dockerEl.style.color = data.docker?.status === 'running' ? 'var(--ok)' : 'var(--danger)';
+            
+            // MySQL 状态
+            const mysqlEl = document.getElementById('server-mysql');
+            mysqlEl.textContent = data.mysql?.status === 'running' ? `运行中 (${data.mysql.connections} 连接)` : '-';
+            mysqlEl.style.color = data.mysql?.status === 'running' ? 'var(--ok)' : 'var(--danger)';
+            
+            // 游戏服务状态
+            const gameEl = document.getElementById('server-game');
+            gameEl.textContent = data.game_server?.status || '-';
+            gameEl.style.color = data.game_server?.status === 'running' ? 'var(--ok)' : 'var(--danger)';
+            
+            // 系统资源
+            document.getElementById('server-disk').textContent = data.disk?.usage || '-';
+            document.getElementById('server-memory').textContent = data.memory?.usage || '-';
+            document.getElementById('server-network').textContent = data.network?.latency ? `${data.network.latency}ms` : '-';
+            
+            // 显示问题
+            if (data.issues && data.issues.length > 0) {
+                const issuesHtml = data.issues.map(issue => `
+                    <div style="padding: 8px 12px; background: rgba(255,199,0,.1); border-radius: 8px; margin-bottom: 8px; color: var(--warn);">
+                        ⚠️ ${issue}
+                    </div>
+                `).join('');
+                document.getElementById('server-issues').innerHTML = issuesHtml;
+            }
+        }
+        
+        async function loadServerIssues() {
+            const data = await api('server/issues');
+            const issuesDiv = document.getElementById('server-issues');
+            
+            if (data.issues && data.issues.length > 0) {
+                issuesDiv.innerHTML = data.issues.map(issue => {
+                    const color = issue.level === 'error' ? 'var(--danger)' : issue.level === 'warning' ? 'var(--warn)' : 'var(--info)';
+                    const icon = issue.level === 'error' ? '❌' : issue.level === 'warning' ? '⚠️' : 'ℹ️';
+                    
+                    let actionBtn = '';
+                    if (issue.type === 'account_ban') {
+                        const uid = issue.message.match(/账号 (\d+)/)?.[1];
+                        if (uid) {
+                            actionBtn = `<button class="btn btn-ghost" onclick="unbanAccount(${uid})" style="margin-top: 8px;">解封账号</button>`;
+                        }
+                    }
+                    
+                    return `
+                        <div style="padding: 12px; background: ${color}10; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid ${color};">
+                            <div style="font-weight: 600; color: ${color};">${icon} ${issue.type}</div>
+                            <div style="margin-top: 4px;">${issue.message}</div>
+                            <div style="margin-top: 4px; font-size: 12px; color: var(--muted);">解决方案: ${issue.solution}</div>
+                            ${actionBtn}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                issuesDiv.innerHTML = '<div style="color: var(--ok);">✅ 没有发现问题</div>';
+            }
+        }
+        
+        async function loadServerConfig() {
+            const data = await api('server/config');
+            const configDiv = document.getElementById('server-config');
+            
+            let html = '<div style="font-family: monospace; font-size: 13px;">';
+            
+            // 服务器信息
+            html += `<div style="margin-bottom: 12px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">服务器</div>
+                <div style="padding-left: 12px; color: var(--muted);">
+                    IP: ${data.server?.ip || '-'}<br>
+                    Docker: ${data.docker?.image || '-'}
+                </div>
+            </div>`;
+            
+            // 端口状态
+            if (data.server?.ports) {
+                html += `<div style="margin-bottom: 12px;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">端口状态</div>
+                    <div style="padding-left: 12px; color: var(--muted);">
+                        ${Object.entries(data.server.ports).map(([port, info]) => `
+                            ${port} (${info.name}): <span style="color: ${info.status === 'running' ? 'var(--ok)' : 'var(--danger)'}">${info.status}</span>
+                        `).join('<br>')}
+                    </div>
+                </div>`;
+            }
+            
+            // 数据库信息
+            html += `<div style="margin-bottom: 12px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">数据库</div>
+                <div style="padding-left: 12px; color: var(--muted);">
+                    Host: ${data.database?.host || '-'}<br>
+                    Port: ${data.database?.port || '-'}
+                </div>
+            </div>`;
+            
+            html += '</div>';
+            configDiv.innerHTML = html;
+        }
+        
+        async function startServer(service) {
+            if (!confirm(`确定要启动 ${service === 'all' ? '全部' : service} 服务吗？`)) return;
+            
+            const data = await api(`server/start?service=${service}`);
+            
+            if (data.success) {
+                alert('启动成功！');
+                setTimeout(loadServerStatus, 3000);
+            } else {
+                alert('启动失败: ' + (data.error || '未知错误'));
+            }
+        }
+        
+        async function stopServer(service) {
+            if (!confirm(`确定要停止 ${service === 'all' ? '全部' : service} 服务吗？`)) return;
+            
+            const data = await api(`server/stop?service=${service}`);
+            
+            if (data.success) {
+                alert('停止成功！');
+                setTimeout(loadServerStatus, 3000);
+            } else {
+                alert('停止失败: ' + (data.error || '未知错误'));
+            }
+        }
+        
+        // 解封账号
+        async function unbanAccount(uid) {
+            if (!confirm(`确定要解封账号 ${uid} 吗？`)) return;
+            
+            const data = await api('server/unban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid })
+            });
+            
+            if (data.success) {
+                alert('解封成功！');
+                loadServerIssues();
+            } else {
+                alert('解封失败: ' + (data.error || '未知错误'));
+            }
+        }
+        
+        // 活动管理功能
+        async function loadEvents() {
+            const data = await api('events');
+            const tbody = document.getElementById('events-body');
+            tbody.innerHTML = '';
+            
+            // 活动类型映射
+            const APPLY_TYPES = {0: '全局', 1: '等级', 2: '频道', 3: '其他'};
+            
+            for (const event of (data.events || [])) {
+                const isEnabled = event.is_enabled;
+                const statusColor = isEnabled ? 'var(--ok)' : 'var(--muted)';
+                const statusText = isEnabled ? '已启用' : '未启用';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${event.event_id || '-'}</td>
+                        <td>${event.event_name || '-'}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${event.event_explain || '-'}</td>
+                        <td>${APPLY_TYPES[event.apply_type] || event.apply_type}</td>
+                        <td>${event.start_date || '-'}</td>
+                        <td>${event.end_date || '-'}</td>
+                        <td><span style="color: ${statusColor}; font-weight: 600;">${statusText}</span></td>
+                        <td>
+                            <button class="btn ${isEnabled ? 'btn-danger' : 'btn-primary'} btn-sm" 
+                                    onclick="toggleEvent(${event.event_id}, ${!isEnabled})">
+                                ${isEnabled ? '禁用' : '启用'}
+                            </button>
+                            <button class="btn btn-ghost btn-sm" onclick="setEventDate(${event.event_id})">设置日期</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // 切换活动状态
+        async function toggleEvent(eventId, enable) {
+            const action = enable ? '启用' : '禁用';
+            if (!confirm(`确定要${action}活动 ${eventId} 吗？`)) return;
+            
+            const data = await api('event/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event_id: eventId, enable })
+            });
+            
+            if (data.success) {
+                alert(`${action}成功！`);
+                loadEvents();
+            } else {
+                alert(`${action}失败: ` + (data.error || '未知错误'));
+            }
+        }
+        
+        // 设置活动日期
+        async function setEventDate(eventId) {
+            const startDate = prompt('请输入开始日期 (YYYY-MM-DD):');
+            if (!startDate) return;
+            
+            const endDate = prompt('请输入结束日期 (YYYY-MM-DD):');
+            if (!endDate) return;
+            
+            const data = await api('event/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event_id: eventId, start_date: startDate, end_date: endDate })
+            });
+            
+            if (data.success) {
+                alert('设置成功！');
+                loadEvents();
+            } else {
+                alert('设置失败: ' + (data.error || '未知错误'));
+            }
+        }
+        
+        // 启用全部活动
+        async function enableAllEvents() {
+            if (!confirm('确定要启用全部活动吗？这会设置日期为今天起30天。')) return;
+            
+            const data = await api('events');
+            let success = 0;
+            let errors = 0;
+            
+            for (const event of (data.events || [])) {
+                if (!event.is_enabled) {
+                    const result = await api('event/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ event_id: event.event_id, enable: true })
+                    });
+                    if (result.success) success++;
+                    else errors++;
+                }
+            }
+            
+            alert(`完成！成功: ${success}, 失败: ${errors}`);
+            loadEvents();
+        }
+        
+        // 禁用全部活动
+        async function disableAllEvents() {
+            if (!confirm('确定要禁用全部活动吗？')) return;
+            
+            const data = await api('events');
+            let success = 0;
+            let errors = 0;
+            
+            for (const event of (data.events || [])) {
+                if (event.is_enabled) {
+                    const result = await api('event/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ event_id: event.event_id, enable: false })
+                    });
+                    if (result.success) success++;
+                    else errors++;
+                }
+            }
+            
+            alert(`完成！成功: ${success}, 失败: ${errors}`);
+            loadEvents();
+        }
+        
+        // 加载物品列表
+        async function loadItems() {
+            const search = document.getElementById('item-search').value;
+            
+            const params = new URLSearchParams({
+                q: search,
+                page: state.itemPage,
+                page_size: state.pageSize
+            });
+            
+            const data = await api('items?' + params);
+            
+            const tbody = document.getElementById('item-body');
+            tbody.innerHTML = '';
+            
+            for (const item of (data.data || [])) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.category}</td>
+                        <td><button class="btn btn-ghost btn-sm" onclick="showItemDetail(${item.id})">详情</button></td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('item-info').textContent = `共 ${data.total || 0} 条`;
+            document.getElementById('item-page').textContent = state.itemPage;
+        }
+        
+        // 加载技能列表
+        async function loadSkills() {
+            const job = document.getElementById('skill-job').value || 100;
+            
+            const params = new URLSearchParams({
+                job: job,
+                page: state.skillPage,
+                page_size: state.pageSize
+            });
+            
+            const data = await api('skills?' + params);
+            
+            const tbody = document.getElementById('skill-body');
+            tbody.innerHTML = '';
+            
+            for (const skill of (data.data || [])) {
+                const desc = skill.basic_explain || '-';
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${skill.skill_index}</td>
+                        <td>${skill.name || '-'}</td>
+                        <td>${desc.substring(0, 50)}${desc.length > 50 ? '...' : ''}</td>
+                        <td>${skill.required_level || 0}</td>
+                        <td>${skill.consume_mp || 0}</td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('skill-info').textContent = `共 ${data.total || 0} 条`;
+            document.getElementById('skill-page').textContent = state.skillPage;
+        }
+        
+        // 加载怪物列表
+        async function loadMonsters() {
+            const search = document.getElementById('monster-search').value;
+            
+            const params = new URLSearchParams({
+                q: search,
+                page: state.monsterPage,
+                page_size: state.pageSize
+            });
+            
+            const data = await api('monsters?' + params);
+            
+            const tbody = document.getElementById('monster-body');
+            tbody.innerHTML = '';
+            
+            for (const monster of (data.data || [])) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${monster.idx}</td>
+                        <td>${monster.mon_name_kr || '-'}</td>
+                        <td>${monster.level || 0}</td>
+                        <td>${monster.hp || 0}</td>
+                        <td>${monster.attack || 0}</td>
+                        <td>${monster.defense || 0}</td>
+                        <td>${monster.monster_type || '-'}</td>
+                        <td><button class="btn btn-ghost btn-sm" onclick="showMonsterDetail(${monster.idx})">详情</button></td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('monster-info').textContent = `共 ${data.total || 0} 条`;
+            document.getElementById('monster-page').textContent = state.monsterPage;
+        }
+        
+        // 分页
+        function changePage(type, delta) {
+            const pageKey = type + 'Page';
+            state[pageKey] = Math.max(1, state[pageKey] + delta);
+            
+            if (type === 'char') loadCharacters();
+            if (type === 'account') loadAccounts();
+            if (type === 'item') loadItems();
+            if (type === 'skill') loadSkills();
+            if (type === 'monster') loadMonsters();
+        }
+        
+        // GM 功能
+        async function gmSendItem() {
+            const charac_no = document.getElementById('gm-charac-no').value;
+            const item_id = document.getElementById('gm-item-id').value;
+            const count = document.getElementById('gm-item-count').value;
+            const upgrade = document.getElementById('gm-item-upgrade').value;
+            
+            if (!charac_no || !item_id) {
+                alert('请输入角色ID和物品ID');
+                return;
+            }
+            
+            const data = await api('gm/send-item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ charac_no: parseInt(charac_no), item_id: parseInt(item_id), count: parseInt(count), upgrade: parseInt(upgrade) })
+            });
+            
+            alert(data.message);
+        }
+        
+        async function gmSetLevel() {
+            const charac_no = document.getElementById('gm-level-charac').value;
+            const level = document.getElementById('gm-level').value;
+            
+            if (!charac_no || !level) {
+                alert('请输入角色ID和等级');
+                return;
+            }
+            
+            const data = await api('gm/set-level', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ charac_no: parseInt(charac_no), level: parseInt(level) })
+            });
+            
+            alert(data.message);
+        }
+        
+        async function gmAddGold() {
+            const charac_no = document.getElementById('gm-gold-charac').value;
+            const gold = document.getElementById('gm-gold').value;
+            
+            if (!charac_no || !gold) {
+                alert('请输入角色ID和金币数量');
+                return;
+            }
+            
+            const data = await api('gm/add-gold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ charac_no: parseInt(charac_no), gold: parseInt(gold) })
+            });
+            
+            alert(data.message);
+        }
+        
+        async function gmKick() {
+            const uid = document.getElementById('gm-user-uid').value;
+            if (!uid) { alert('请输入用户UID'); return; }
+            
+            const data = await api('gm/kick', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: parseInt(uid) })
+            });
+            
+            alert(data.message);
+        }
+        
+        async function gmBan() {
+            const uid = document.getElementById('gm-user-uid').value;
+            const reason = document.getElementById('gm-ban-reason').value;
+            if (!uid) { alert('请输入用户UID'); return; }
+            
+            const data = await api('gm/ban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: parseInt(uid), reason, duration: 0 })
+            });
+            
+            alert(data.message);
+        }
+        
+        async function gmUnban() {
+            const uid = document.getElementById('gm-user-uid').value;
+            if (!uid) { alert('请输入用户UID'); return; }
+            
+            const data = await api('gm/unban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: parseInt(uid) })
+            });
+            
+            alert(data.message);
+        }
+        
+        // 邮件功能
+        function sendMailTo(name) {
+            document.getElementById('mail-to').value = name;
+            showPage('mail');
+        }
+        
+        async function sendMail() {
+            const to = document.getElementById('mail-to').value;
+            const item_id = document.getElementById('mail-item-id').value;
+            const count = document.getElementById('mail-count').value;
+            const gold = document.getElementById('mail-gold').value;
+            const message = document.getElementById('mail-message').value;
+            
+            if (!to) { alert('请输入收件人'); return; }
+            
+            const data = await api('mail/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to, item_id: parseInt(item_id) || 0, count: parseInt(count) || 1, gold: parseInt(gold) || 0, message })
+            });
+            
+            alert(data.message);
+        }
+        
+        // 公告功能
+        async function loadNotice() {
+            const data = await api('gm/notice');
+            document.getElementById('notice-content').value = data.content || '';
+        }
+        
+        async function saveNotice() {
+            const content = document.getElementById('notice-content').value;
+            
+            const data = await api('gm/notice/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            
+            alert(data.message);
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            loadStats();
+            if (state.currentPage === 'characters') loadCharacters();
+            if (state.currentPage === 'items') loadItems();
+            if (state.currentPage === 'skills') loadSkills();
+            if (state.currentPage === 'monsters') loadMonsters();
+        }
+        
+        // 绑定导航事件
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                showPage(item.dataset.page);
+            });
+        });
+        
+        // 初始化
+        init();
+    </script>
+</body>
+</html>

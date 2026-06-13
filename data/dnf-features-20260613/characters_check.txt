@@ -1,0 +1,2 @@
+total_chars	job_types	avg_level	max_level	in_guild	active_7d	active_30d
+2	2	25.5000	50	0	0	0

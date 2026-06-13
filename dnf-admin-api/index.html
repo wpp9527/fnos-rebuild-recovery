@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNF 后台管理系统 v3.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .nav { background: white; border-radius: 10px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+        .nav-btn { padding: 10px 20px; border: none; border-radius: 5px; background: #667eea; color: white; cursor: pointer; transition: all 0.3s; }
+        .nav-btn:hover { background: #764ba2; transform: translateY(-2px); }
+        .nav-btn.active { background: #764ba2; }
+        .content { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section { display: none; }
+        .section.active { display: block; }
+        .section h2 { color: #333; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #667eea; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #f9f9f9; border-radius: 8px; padding: 20px; border-left: 4px solid #667eea; }
+        .card h3 { color: #667eea; margin-bottom: 10px; }
+        .card p { color: #666; line-height: 1.6; }
+        .stat-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; padding: 20px; text-align: center; }
+        .stat-box .number { font-size: 36px; font-weight: bold; margin: 10px 0; }
+        .stat-box .label { opacity: 0.9; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #667eea; color: white; }
+        tr:hover { background: #f5f5f5; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #333; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; background: #667eea; color: white; cursor: pointer; }
+        .btn:hover { background: #764ba2; }
+        .status-ok { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .loading { text-align: center; padding: 20px; color: #667eea; }
+        .error { color: #dc3545; background: #f8d7da; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 DNF 后台管理系统 v3.0</h1>
+        <p>14个功能模块 | 数据自检 | 实时监控</p>
+    </div>
+
+    <div class="container">
+        <div class="nav">
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="showSection('dashboard')">📊 仪表盘</button>
+                <button class="nav-btn" onclick="showSection('character')">👤 角色查询</button>
+                <button class="nav-btn" onclick="showSection('item')">📦 物品查询</button>
+                <button class="nav-btn" onclick="showSection('monster')">👾 怪物图鉴</button>
+                <button class="nav-btn" onclick="showSection('skill')">⚔️ 技能查询</button>
+                <button class="nav-btn" onclick="showSection('stats')">📈 统计分析</button>
+                <button class="nav-btn" onclick="showSection('tieba')">💬 贴吧联动</button>
+                <button class="nav-btn" onclick="showSection('feedback')">📝 反馈追踪</button>
+                <button class="nav-btn" onclick="showSection('check')">🔍 数据自检</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 仪表盘 -->
+            <div id="dashboard" class="section active">
+                <h2>📊 系统仪表盘</h2>
+                <div class="card-grid" id="dashboard-stats">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 角色查询 -->
+            <div id="character" class="section">
+                <h2>👤 角色查询</h2>
+                <div class="form-group">
+                    <label>搜索角色名</label>
+                    <input type="text" id="char-search" placeholder="输入角色名...">
+                </div>
+                <button class="btn" onclick="searchCharacters()">搜索</button>
+                <div class="table-container" id="character-result"></div>
+            </div>
+
+            <!-- 物品查询 -->
+            <div id="item" class="section">
+                <h2>📦 物品查询</h2>
+                <div class="form-group">
+                    <label>搜索物品</label>
+                    <input type="text" id="item-search" placeholder="输入物品名...">
+                </div>
+                <button class="btn" onclick="searchItems()">搜索</button>
+                <div class="table-container" id="item-result"></div>
+            </div>
+
+            <!-- 怪物图鉴 -->
+            <div id="monster" class="section">
+                <h2>👾 怪物图鉴</h2>
+                <div class="form-group">
+                    <label>搜索怪物</label>
+                    <input type="text" id="monster-search" placeholder="输入怪物名...">
+                </div>
+                <button class="btn" onclick="searchMonsters()">搜索</button>
+                <div class="table-container" id="monster-result"></div>
+            </div>
+
+            <!-- 技能查询 -->
+            <div id="skill" class="section">
+                <h2>⚔️ 技能查询</h2>
+                <div class="form-group">
+                    <label>选择职业</label>
+                    <select id="skill-job">
+                        <option value="0">鬼剑士</option>
+                        <option value="1">格斗家</option>
+                        <option value="2">神枪手</option>
+                        <option value="3">魔法师</option>
+                        <option value="4">圣职者</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="searchSkills()">查询</button>
+                <div class="table-container" id="skill-result"></div>
+            </div>
+
+            <!-- 统计分析 -->
+            <div id="stats" class="section">
+                <h2>📈 统计分析</h2>
+                <div class="card-grid" id="stats-content">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 贴吧联动 -->
+            <div id="tieba" class="section">
+                <h2>💬 贴吧联动</h2>
+                <div class="table-container" id="tieba-content">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 反馈追踪 -->
+            <div id="feedback" class="section">
+                <h2>📝 玩家反馈</h2>
+                <div class="table-container" id="feedback-content">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 数据自检 -->
+            <div id="check" class="section">
+                <h2>🔍 数据自检</h2>
+                <div class="card-grid" id="check-content">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://192.168.1.212:18883/api/v2';
+
+        // 显示模块
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+
+            // 加载数据
+            switch(sectionId) {
+                case 'dashboard': loadDashboard(); break;
+                case 'stats': loadStats(); break;
+                case 'tieba': loadTieba(); break;
+                case 'feedback': loadFeedback(); break;
+                case 'check': loadCheck(); break;
+            }
+        }
+
+        // API 请求
+        async function api(endpoint) {
+            try {
+                const resp = await fetch(`${API_BASE}/${endpoint}`);
+                return await resp.json();
+            } catch (e) {
+                return { error: e.message };
+            }
+        }
+
+        // 仪表盘
+        async function loadDashboard() {
+            const data = await api('stats/server');
+            const html = `
+                <div class="stat-box">
+                    <div class="label">总账号数</div>
+                    <div class="number">${data.data?.total_accounts || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">总角色数</div>
+                    <div class="number">${data.data?.total_characters || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">总物品数</div>
+                    <div class="number">${data.data?.total_items || 0}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">贴吧帖子</div>
+                    <div class="number">${data.data?.total_tieba_posts || 0}</div>
+                </div>
+            `;
+            document.getElementById('dashboard-stats').innerHTML = html;
+        }
+
+        // 搜索角色
+        async function searchCharacters() {
+            const keyword = document.getElementById('char-search').value;
+            if (!keyword) return;
+            const data = await api(`character/search?q=${encodeURIComponent(keyword)}`);
+            let html = '<table><tr><th>ID</th><th>角色名</th><th>等级</th><th>职业</th><th>最后登录</th></tr>';
+            (data.data || []).forEach(c => {
+                html += `<tr><td>${c.m_id}</td><td>${c.charac_name}</td><td>${c.lev}</td><td>${c.job}</td><td>${c.last_play_time}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('character-result').innerHTML = html;
+        }
+
+        // 搜索物品
+        async function searchItems() {
+            const keyword = document.getElementById('item-search').value;
+            if (!keyword) return;
+            const data = await api(`item/search?q=${encodeURIComponent(keyword)}`);
+            let html = '<table><tr><th>ID</th><th>名称</th><th>类型</th><th>等级</th><th>稀有度</th></tr>';
+            (data.data || []).forEach(i => {
+                html += `<tr><td>${i.it_no}</td><td>${i.it_name}</td><td>${i.master_type}</td><td>${i.level}</td><td>${i.rarity}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('item-result').innerHTML = html;
+        }
+
+        // 搜索怪物
+        async function searchMonsters() {
+            const keyword = document.getElementById('monster-search').value;
+            if (!keyword) return;
+            const data = await api(`monster/search?q=${encodeURIComponent(keyword)}`);
+            let html = '<table><tr><th>ID</th><th>名称</th></tr>';
+            (data.data || []).forEach(m => {
+                html += `<tr><td>${m.idx}</td><td>${m.mon_name_kr}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('monster-result').innerHTML = html;
+        }
+
+        // 搜索技能
+        async function searchSkills() {
+            const job = document.getElementById('skill-job').value;
+            const data = await api(`skill/by-job?job=${job}`);
+            let html = `<h3>${data.job_name} (${data.total}个技能)</h3>`;
+            html += '<table><tr><th>技能ID</th><th>名称</th><th>类型</th><th>等级</th></tr>';
+            (data.skills || []).forEach(s => {
+                html += `<tr><td>${s.skill_index}</td><td>${s.name}</td><td>${s.type}</td><td>${s.required_level}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('skill-result').innerHTML = html;
+        }
+
+        // 统计分析
+        async function loadStats() {
+            const [economy, dungeon, pvp] = await Promise.all([
+                api('stats/economy'),
+                api('stats/dungeon'),
+                api('stats/pvp')
+            ]);
+            
+            const html = `
+                <div class="card">
+                    <h3>📊 经济统计</h3>
+                    <p>总账号: ${economy.accounts?.total_accounts || 0}</p>
+                    <p>VIP账号: ${economy.accounts?.vip_accounts || 0}</p>
+                    <p>交易记录: ${economy.transactions?.total_transactions || 0}</p>
+                </div>
+                <div class="card">
+                    <h3>🏰 副本统计</h3>
+                    <p>总进入次数: ${dungeon.stats?.total_enter_count || 0}</p>
+                    <p>副本种类: ${dungeon.stats?.unique_dungeons || 0}</p>
+                </div>
+                <div class="card">
+                    <h3>⚔️ PVP 统计</h3>
+                    <p>总记录: ${pvp.stats?.total_records || 0}</p>
+                    <p>最大在线: ${pvp.stats?.max_players || 0}</p>
+                </div>
+            `;
+            document.getElementById('stats-content').innerHTML = html;
+        }
+
+        // 贴吧联动
+        async function loadTieba() {
+            const data = await api('tieba/posts?limit=20');
+            let html = '<table><tr><th>ID</th><th>标题</th><th>回复</th><th>浏览</th><th>时间</th></tr>';
+            (data.data || []).forEach(p => {
+                html += `<tr><td>${p.id}</td><td><a href="${p.url}" target="_blank">${p.title}</a></td><td>${p.reply_count}</td><td>${p.view_count}</td><td>${p.post_time}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('tieba-content').innerHTML = html;
+        }
+
+        // 反馈追踪
+        async function loadFeedback() {
+            const data = await api('feedback/list');
+            let html = '<table><tr><th>ID</th><th>标题</th><th>回复</th><th>时间</th></tr>';
+            (data.data || []).forEach(f => {
+                html += `<tr><td>${f.id}</td><td><a href="${f.url}" target="_blank">${f.title}</a></td><td>${f.reply_count}</td><td>${f.post_time}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('feedback-content').innerHTML = html;
+        }
+
+        // 数据自检
+        async function loadCheck() {
+            const data = await api('check/report');
+            let html = `<h3>自检报告 (${data.report_time})</h3>`;
+            html += `<p><strong>总计:</strong> ${data.summary?.total_checks || 0} 项检查, ${data.summary?.passed || 0} 项通过</p>`;
+            
+            html += '<h4>完整性检查</h4>';
+            (data.integrity || []).forEach(c => {
+                html += `<div class="card"><h3>${c.item}: <span class="${c.status === '正常' ? 'status-ok' : 'status-error'}">${c.status}</span></h3>`;
+                html += `<p>${JSON.stringify(c.details)}</p></div>`;
+            });
+            
+            html += '<h4>一致性检查</h4>';
+            (data.consistency || []).forEach(c => {
+                html += `<div class="card"><h3>${c.item}: <span class="${c.status === '正常' ? 'status-ok' : 'status-error'}">${c.status}</span></h3>`;
+                html += `<p>${JSON.stringify(c.details)}</p></div>`;
+            });
+            
+            document.getElementById('check-content').innerHTML = html;
+        }
+
+        // 初始化
+        loadDashboard();
+    </script>
+</body>
+</html>
