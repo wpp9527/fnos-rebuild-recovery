@@ -1,0 +1,6 @@
+openclaw_version=2026.5.28-zh.1
+edition=zh
+package=@qingchencloud/openclaw-zh
+node_version=v22.22.2
+platform=linux-x64
+build_date=2026-05-28 00:00:00 UTC

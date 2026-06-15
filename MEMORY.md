@@ -73,11 +73,13 @@
 - **视频文件**: 已修复特殊字符文件名
 - **飞书渠道**: 使用本地 Gateway (127.0.0.1:18789) + openclaw 模型
 - **CPA 面板**: 端口 8320，管理密钥 cpa2026admin
-- **DNF 后台**: 192.168.1.204:18882，全部 API 测试通过，管理员密码: admin123
+- **DNF 后台**: http://192.168.1.204:18885 (v4.8.1)，管理员密码: admin123
+- **DNF 后台旧版**: 已清理（dnf-public-admin-backend-old、deploy_frontend_1、deploy_backend_1）
 - **DNF 数据库**: 已采集账号、角色、物品、邮件、交易记录，贴吧帖子 104 条
 - **贴吧抓取**: scripts/dnf-data-collector.sh 一键采集游戏+贴吧数据
 - **自检系统**: scripts/dnf-self-check.sh 每日自检数据完整性
 - **功能扩展**: data/dnf-features-20260613/feature_suggestions.md 详细方案
-- **API 服务器**: dnf-admin-api/api_server.py 端口 18883，完整功能 API
+- **API 服务器**: /opt/dnf-admin-v4/server.py 端口 18885，单文件 Python 后端
+- **数据库端口**: 3000 (宿主机) → 4000 (容器内部)
 - **定时任务**: 每小时采集、每天自检、每6小时抓贴吧、每周生成周报
 - **RSSHub**: 127.0.0.1:1200，已运行 179 小时

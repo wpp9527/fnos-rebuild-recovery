@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@openclaw/proxyline": "^0.3.3",
+    "@qingchencloud/openclaw-zh": "^2026.5.28-zh.1"
+  }
+}
