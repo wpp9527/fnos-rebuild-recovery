@@ -1,0 +1,22 @@
+services:
+  mdc:
+    image: ghcr.io/vergilgao/mdc:latest
+    container_name: mdc
+    restart: "no"
+    environment:
+      TZ: Asia/Shanghai
+      UID: "3000"
+      GID: "3000"
+      UMASK: "002"
+    volumes:
+      # 真实媒体库：运行前请确认，MDC 会重命名/整理并写入图片、NFO
+      - /mnt/nas/media/jav:/data
+      - ./config:/config
+      # 持久化修复：移除 iqq2.xyz/hotav.biz（返回500的源站）
+      - ./patches/storyline.py:/app/scrapinglib/storyline.py:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 1g

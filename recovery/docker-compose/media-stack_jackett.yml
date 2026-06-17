@@ -1,0 +1,14 @@
+services:
+  jackett:
+    image: linuxserver/jackett:latest
+    container_name: jackett
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/jackett/config:/config
+      - /mnt/nas/media/downloads:/downloads
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped

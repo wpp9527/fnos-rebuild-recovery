@@ -1,0 +1,18 @@
+services:
+  feishu:
+    build: .
+    container_name: feishu-observe
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/feishu/logs:/app/logs
+      - /root/.openclaw:/root/.openclaw:rw
+      - /tmp/openclaw:/tmp/openclaw:rw
+    environment:
+      - TZ=Asia/Shanghai
+      - FEISHU_APP_ID=cli_a94fc9a45978de17
+      - FEISHU_APP_SECRET=tMe9QlSFdQAc0eVjcwP2TZYrYG7shgQe
+      - OPENCLAW_API_BASE=http://127.0.0.1:18789
+      - OPENCLAW_API_KEY=8c96c8284dff43ca5c1b95fcfff2914a5e8a95838a5e7ba6
+      - OPENCLAW_MODEL=openclaw
+      - TARGET_OPEN_ID=ou_667e83f2936ba15a84513bd4cf60c262
+    restart: unless-stopped

@@ -15,7 +15,7 @@
 
 - **网络**: 主路由 192.168.1.1 → PVE .190 → FNOS .212（本机）+ 代理 .213
 - **GitHub**: wpp9527 / 6 仓库（含 claw-code 100K+ stars）
-- **DNF Admin Pro 已部署到 192.168.1.204:18890**，全部 API 测试通过
+- **DNF 后台 v4**: 单文件架构（server.py + dashboard.html），端口 18885
 - **模型主力**: cpa/gpt-5.5（常限流）→ fallback baidu/glm-5.1
 - **OpenClaw**: 端口 18789，外网 openclaw.19930901.xyz:1234（代理端口已从 5000 改为 1234）
 
@@ -73,8 +73,8 @@
 - **视频文件**: 已修复特殊字符文件名
 - **飞书渠道**: 使用本地 Gateway (127.0.0.1:18789) + openclaw 模型
 - **CPA 面板**: 端口 8320，管理密钥 cpa2026admin
-- **DNF 后台**: http://192.168.1.204:18885 (v4.8.1)，管理员密码: admin123
-- **DNF 后台旧版**: 已清理（dnf-public-admin-backend-old、deploy_frontend_1、deploy_backend_1）
+- **DNF 后台**: http://192.168.1.204:18885 (v4.0)，管理员密码: admin123
+- **DNF 后台旧版**: 已全部清理（dnf-public-admin、dnf-admin-api、Go 版本均已删除）
 - **DNF 数据库**: 已采集账号、角色、物品、邮件、交易记录，贴吧帖子 104 条
 - **贴吧抓取**: scripts/dnf-data-collector.sh 一键采集游戏+贴吧数据
 - **自检系统**: scripts/dnf-self-check.sh 每日自检数据完整性

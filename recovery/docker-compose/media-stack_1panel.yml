@@ -1,0 +1,17 @@
+services:
+  1panel:
+    image: 1panel/1panel:latest
+    container_name: 1panel
+    network_mode: host
+    privileged: true
+    volumes:
+      - /vol1/1000/docker/media-stack/1panel/db:/opt/1panel/db
+      - /vol1/1000/docker/media-stack/1panel/cache:/opt/1panel/cache
+      - /vol1/1000/docker/media-stack/1panel/log:/opt/1panel/log
+      - /vol1/1000/docker/media-stack/1panel/backup:/opt/1panel/backup
+      - /vol1/1000/docker/media-stack/1panel/app:/opt
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host_root
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped

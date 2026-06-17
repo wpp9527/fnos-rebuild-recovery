@@ -1,0 +1,13 @@
+services:
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/prowlarr/config:/config
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped

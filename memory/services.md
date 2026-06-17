@@ -1,39 +1,29 @@
 # 服务清单
 
-## DNF Admin Pro (192.168.1.204)
+## DNF Admin v4 (192.168.1.204)
 
-| 服务 | 容器名 | 端口 | 状态 |
-|------|--------|------|------|
-| 后端 API | dnf-public-admin-backend | 18882→8080 | ✅ 运行中 |
-| 前端 | dnf-public-admin-frontend | 18883→80 | ✅ 运行中 |
+| 服务 | 说明 | 端口 | 状态 |
+|------|------|------|------|
+| DNF Admin v4 | 单文件 Python 后端 + Vue3 前端 | 18885 | ⚠️ 需启动 |
 | DNF 游戏服务器 | dnf-llnut_dnf-1_1 | 5505,7001,7300,30011 | ✅ 运行中 |
+
+### 架构
+
+- **后端**: `server.py` (Python http.server + pymysql，1328 行)
+- **前端**: `dashboard.html` (Vue3 + Element Plus + ECharts，2508 行)
+- **数据库**: MySQL 直连，端口 3307，库 taiwan_cain/taiwan_login
+- **GitHub**: https://github.com/wpp9527/dnf-admin-v4
+
+### 功能模块
+
+- 仪表盘、账号管理、角色管理、物品查询、怪物查询
+- GM 功能（公告/物品/等级/金币/封禁）
+- PVF 文件管理、服务端监控、活动管理、统计分析
 
 ### 数据源
 
-- **MySQL**: 运行在 `dnf-llnut_dnf-1_1` 容器内，端口 3306
-  - 用户: `dnf_readonly` / `dnf_readonly_2024`
-  - 账号库: `d_taiwan`
-- **PVF 物品数据**: `/opt/dnf-llnut/data/conf.d/dnf-console/source/gold.txt`
-  - 格式: `[ID ] name:Name`
-  - 数量: 83977 个物品
-  - 已实现分类: 武器/防具/首饰/称号/宠物/材料/任务/消耗品/装扮/其他
-
-### API 端点
-
-- `POST /api/v1/auth/login` - 登录
-- `GET /api/v1/accounts` - 账号列表
-- `GET /api/v1/characters` - 角色列表
-- `GET /api/v1/pvf/items?page=1&page_size=20&category=weapon&q=xxx` - PVF 物品（分页+分类+搜索）
-- `GET /api/v1/pvf/categories` - PVF 分类列表
-- `GET /api/v1/pvf/stats` - PVF 统计
-
-### 前端功能
-
-- ✅ 分页控件（上一页/下一页/页码跳转）
-- ✅ 分类筛选（全部/武器/防具/首饰/称号/宠物/材料/任务/消耗品/装扮/其他）
-- ✅ 搜索功能
-- ✅ 物品详情预览
-- ✅ GM 操作联动（发放/邮件）
+- **MySQL**: 端口 3307，用户 root/88888888
+- **PVF 物品数据**: gold.txt (83977 个物品)
 
 ---
 

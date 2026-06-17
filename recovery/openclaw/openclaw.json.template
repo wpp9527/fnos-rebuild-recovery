@@ -1,0 +1,450 @@
+{
+  "$schema": "https://openclaw.ai/schema/config.json",
+  "meta": {
+    "lastTouchedVersion": "2026.6.5",
+    "lastTouchedAt": "2026-06-17T02:28:15.761Z"
+  },
+  "models": {
+    "providers": {
+      "cpa": {
+        "baseUrl": "https://cpi.19930901.xyz:1234/v1",
+        "apiKey": "REDACTED",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-ai/deepseek-v4-pro",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-ai/deepseek-v4-pro"
+          },
+          {
+            "id": "minimax/minimax-m2.5:free",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "minimax/minimax-m2.5:free"
+          }
+        ]
+      },
+      "ollama": {
+        "baseUrl": "http://127.0.0.1:11434/v1",
+        "apiKey": "REDACTED",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "qwen3:4b",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "qwen3:4b",
+            "contextWindow": 8192,
+            "maxTokens": 4096
+          }
+        ]
+      },
+      "baidu": {
+        "baseUrl": "https://qianfan.baidubce.com/v2/coding",
+        "apiKey": "REDACTED",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "glm-5.1",
+            "name": "glm-5.1",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ]
+          }
+        ]
+      },
+      "qtcool": {
+        "baseUrl": "https://gpt.qt.cool/v1",
+        "apiKey": "REDACTED",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-v4-flash",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-v4-flash"
+          }
+        ]
+      },
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com",
+        "apiKey": "REDACTED",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-v4-pro",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "deepseek-v4-pro"
+          }
+        ]
+      },
+      "xiaomimimo": {
+        "baseUrl": "https://token-plan-sgp.xiaomimimo.com/v1",
+        "apiKey": "REDACTED",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "mimo-v2.5",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "mimo-v2.5"
+          },
+          {
+            "id": "mimo-v2.5-pro",
+            "input": [
+              "text",
+              "image"
+            ],
+            "name": "mimo-v2.5-pro"
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "/root/.openclaw/workspace",
+      "model": {
+        "fallbacks": [
+          "deepseek/deepseek-v4-pro",
+          "xiaomimimo/mimo-v2.5"
+        ],
+        "primary": "xiaomimimo/mimo-v2.5-pro"
+      },
+      "models": {
+        "cpa/gpt-5.5": {},
+        "cpa/deepseek-ai/deepseek-v4-pro": {},
+        "cpa/gpt-5.4": {},
+        "cpa/minimaxai/minimax-m2.7": {},
+        "ollama/qwen3:4b": {},
+        "baidu/glm-5.1": {},
+        "qtcool/deepseek-v4-flash": {},
+        "xiaomimimo/mimo-v2.5": {},
+        "deepseek/deepseek-v4-flash": {},
+        "deepseek/deepseek-v4-pro": {},
+        "xiaomimimo/mimo-v2.5-pro": {}
+      },
+      "sandbox": {
+        "mode": "off"
+      },
+      "memorySearch": {
+        "enabled": true,
+        "sources": [
+          "memory"
+        ],
+        "provider": "ollama",
+        "model": "qwen3-embedding:0.6b",
+        "fallback": "none",
+        "chunking": {
+          "tokens": 512,
+          "overlap": 50
+        },
+        "sync": {
+          "onSessionStart": true,
+          "onSearch": true,
+          "watch": true,
+          "watchDebounceMs": 5000
+        },
+        "query": {
+          "maxResults": 10,
+          "minScore": 0.6,
+          "hybrid": {
+            "enabled": true,
+            "vectorWeight": 0.7,
+            "textWeight": 0.3,
+            "candidateMultiplier": 4,
+            "mmr": {
+              "enabled": true,
+              "lambda": 0.7
+            },
+            "temporalDecay": {
+              "enabled": false
+            }
+          }
+        },
+        "cache": {
+          "enabled": true,
+          "maxEntries": 10000
+        }
+      }
+    },
+    "list": []
+  },
+  "bindings": [],
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "appId": "cli_a94fc9a45978de17",
+      "appSecret": "REDACTED",
+      "domain": "lark",
+      "connectionMode": "websocket",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "ou_667e83f2936ba15a84513bd4cf60c262"
+      ],
+      "groupPolicy": "deny",
+      "resolveSenderNames": true,
+      "typingIndicator": true,
+      "httpTimeoutMs": 300000
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "ownerDisplay": "raw",
+    "restart": true,
+    "ownerAllowFrom": [
+      "control-ui"
+    ]
+  },
+  "plugins": {
+    "entries": {
+      "ollama": {
+        "enabled": true
+      },
+      "deepseek": {
+        "enabled": true
+      },
+      "memory-core": {
+        "config": {
+          "dreaming": {
+            "enabled": true
+          }
+        }
+      },
+      "feishu": {
+        "enabled": true
+      }
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "skills": {
+    "entries": {
+      "coding-agent": {
+        "enabled": true
+      },
+      "clawhub": {
+        "enabled": true
+      },
+      "nano-pdf": {
+        "enabled": false
+      },
+      "himalaya": {
+        "enabled": true
+      },
+      "tmux": {
+        "enabled": true
+      },
+      "summarize": {
+        "enabled": true
+      },
+      "1password": {
+        "enabled": false
+      },
+      "apple-notes": {
+        "enabled": false
+      },
+      "apple-reminders": {
+        "enabled": false
+      },
+      "baidu-search": {
+        "enabled": false
+      },
+      "bear-notes": {
+        "enabled": false
+      },
+      "blogwatcher": {
+        "enabled": false
+      },
+      "blucli": {
+        "enabled": false
+      },
+      "camsnap": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": false
+      },
+      "eightctl": {
+        "enabled": false
+      },
+      "gemini": {
+        "enabled": false
+      },
+      "gifgrep": {
+        "enabled": false
+      },
+      "gog": {
+        "enabled": false
+      },
+      "goplaces": {
+        "enabled": false
+      },
+      "imsg": {
+        "enabled": false
+      },
+      "mcporter": {
+        "enabled": false
+      },
+      "model-usage": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": false
+      },
+      "openai-whisper": {
+        "enabled": false
+      },
+      "openai-whisper-api": {
+        "enabled": false
+      },
+      "openhue": {
+        "enabled": false
+      },
+      "oracle": {
+        "enabled": false
+      },
+      "ordercli": {
+        "enabled": false
+      },
+      "peekaboo": {
+        "enabled": false
+      },
+      "sag": {
+        "enabled": false
+      },
+      "sherpa-onnx-tts": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "songsee": {
+        "enabled": false
+      },
+      "sonoscli": {
+        "enabled": false
+      },
+      "spotify-player": {
+        "enabled": false
+      },
+      "things-mac": {
+        "enabled": false
+      },
+      "trello": {
+        "enabled": false
+      },
+      "voice-call": {
+        "enabled": false
+      },
+      "wacli": {
+        "enabled": false
+      },
+      "xurl": {
+        "enabled": false
+      }
+    }
+  },
+  "tools": {
+    "profile": "full",
+    "sessions": {
+      "visibility": "all"
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "REDACTED"
+    },
+    "controlUi": {
+      "enabled": true,
+      "allowedOrigins": [
+        "tauri://localhost",
+        "https://tauri.localhost",
+        "http://tauri.localhost",
+        "http://localhost",
+        "http://localhost:1420",
+        "http://127.0.0.1:1420",
+        "http://localhost:18777",
+        "http://127.0.0.1:18777",
+        "http://192.168.1.212:1420",
+        "http://192.168.1.212:18777",
+        "http://172.23.0.1:1420",
+        "http://172.23.0.1:18777",
+        "http://172.18.0.1:1420",
+        "http://172.18.0.1:18777",
+        "http://172.21.0.1:1420",
+        "http://172.21.0.1:18777",
+        "https://openclaw.19930901.xyz:1234",
+        "http://100.90.163.108:1420",
+        "http://100.90.163.108:18777",
+        "https://clawpanel.19930901.xyz:1234",
+        "http://172.25.0.1:1420",
+        "http://172.25.0.1:18777",
+        "https://openclaw.19930901.xyz",
+        "https://clawpanel.19930901.xyz",
+        "https://clawpanel.19930901.xyz:1234",
+        "http://172.24.0.1:1420",
+        "http://172.24.0.1:18777",
+        "http://172.26.0.1:1420",
+        "http://172.26.0.1:18777",
+        "http://172.17.0.1:1420",
+        "http://172.17.0.1:18777",
+        "http://172.27.0.1:1420",
+        "http://172.27.0.1:18777",
+        "http://172.28.0.1:1420",
+        "http://172.28.0.1:18777",
+        "http://172.29.0.1:1420",
+        "http://172.29.0.1:18777",
+        "http://172.30.0.1:1420",
+        "http://172.30.0.1:18777",
+        "http://172.31.0.1:1420",
+        "http://172.31.0.1:18777"
+      ],
+      "allowInsecureAuth": false
+    },
+    "trustedProxies": [
+      "127.0.0.1",
+      "::1",
+      "192.168.1.0/24",
+      "172.16.0.0/12",
+      "10.0.0.0/8",
+      "100.64.0.0/10",
+      "fc00::/7"
+    ],
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "wizard": {
+    "lastRunAt": "2026-06-01T14:44:01.897Z",
+    "lastRunVersion": "2026.5.28",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  }
+}
