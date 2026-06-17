@@ -1,0 +1,2 @@
+total_mail	unread	with_gold	total_gold_in_mail
+9	0	7	103001

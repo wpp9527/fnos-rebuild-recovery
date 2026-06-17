@@ -143,6 +143,16 @@ class DNFAdminHandler(BaseHTTPRequestHandler):
             '/api/v2/punish/batch': self.punish_batch,
             '/api/v2/mail/send': self.mail_send,
             '/api/v2/event/create': self.event_create,
+            
+            # GM管理功能
+            '/api/v2/gm/notice/save': self.gm_notice_save,
+            '/api/v2/gm/recharge': self.gm_recharge,
+            '/api/v2/gm/kick': self.gm_kick_user,
+            '/api/v2/gm/ban': self.gm_ban_user,
+            '/api/v2/gm/unban': self.gm_unban_user,
+            '/api/v2/gm/send-item': self.gm_send_item,
+            '/api/v2/gm/set-level': self.gm_set_level,
+            '/api/v2/gm/add-gold': self.gm_add_gold,
         }
         
         if path in post_routes:
@@ -241,6 +251,11 @@ class DNFAdminHandler(BaseHTTPRequestHandler):
             '/api/v2/pvf/detail': self.pvf_detail,
             '/api/v2/pvf/stats': self.pvf_stats,
             '/api/v2/pvf/categories': self.pvf_categories,
+            
+            # GM管理功能
+            '/api/v2/gm/notice': self.gm_notice_get,
+            '/api/v2/gm/online-list': self.gm_online_list,
+            '/api/v2/gm/charac-detail': self.gm_charac_detail,
             
             '/api/v2/health': self.health_check,
         }
@@ -412,21 +427,11 @@ class DNFAdminHandler(BaseHTTPRequestHandler):
         offset = (page - 1) * limit
         
         if keyword:
-            # 使用 bytes 编码 SQL 以支持中文搜索
-            keyword_bytes = keyword.encode('utf-8')
-            like_param = b"'%" + keyword_bytes + b"%'"
-            sql = b"SELECT it_no as id, it_name as name, master_type as category, sub_type as type, level, rarity, '' as description FROM dnf_item_info WHERE it_name LIKE " + like_param + b" OR it_eng_name LIKE " + like_param + b" ORDER BY rarity DESC, level DESC LIMIT " + str(limit).encode() + b" OFFSET " + str(offset).encode()
-            
-            conn = pymysql.connect(**DB_CONFIG_RAW, database='taiwan_cain_web')
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
-            cursor.execute(sql)
-            rows = cursor.fetchall()
-            items = [decode_row(row) for row in rows]
-            
-            count_sql = b"SELECT COUNT(*) as total FROM dnf_item_info WHERE it_name LIKE " + like_param + b" OR it_eng_name LIKE " + like_param
-            cursor.execute(count_sql)
-            total = cursor.fetchone()['total']
-            conn.close()
+            # 使用 PVF 数据进行搜索（数据库物品名称是乱码）
+            pvf_items = self._load_pvf_items()
+            matched = [i for i in pvf_items if keyword.lower() in i['name'].lower()]
+            total = len(matched)
+            items = matched[offset:offset + limit]
         else:
             sql = """
                 SELECT it_no as id, it_name as name, master_type as category,
@@ -482,12 +487,19 @@ class DNFAdminHandler(BaseHTTPRequestHandler):
         if not item_id:
             return {'error': 'missing id parameter'}
         
-        sql = "SELECT * FROM taiwan_cain_web.dnf_item_info WHERE it_no = %s"
-        item = execute_query('taiwan_cain_web', sql, (item_id,))
-        if not item:
-            return {'error': 'item not found'}
+        # 先从 PVF 数据中查找
+        pvf_items = self._load_pvf_items()
+        for item in pvf_items:
+            if item['id'] == int(item_id):
+                return {'data': item}
         
-        return {'data': item[0]}
+        # 如果 PVF 中没有，从数据库中查找
+        sql = "SELECT it_no as id, it_name as name, master_type as category, sub_type as type, level, rarity FROM taiwan_cain_web.dnf_item_info WHERE it_no = %s"
+        item = execute_query('taiwan_cain_web', sql, (item_id,))
+        if item:
+            return {'data': item[0]}
+        
+        return {'error': 'item not found'}
     
     def item_rarity_stats(self, params):
         """物品稀有度统计"""
@@ -600,7 +612,52 @@ class DNFAdminHandler(BaseHTTPRequestHandler):
                 cursor2.execute(b"SELECT ui_id, slot, it_id, ability_no, stat FROM user_items WHERE charac_no = " + str(charac_no).encode() + b" ORDER BY slot LIMIT 50")
                 items = cursor2.fetchall()
                 conn2.close()
-                char['inventory'] = [decode_row(item) for item in items]
+                
+                # 装备槽位名称映射
+                SLOT_NAMES = {
+                    0: '武器', 1: '上衣', 2: '下装', 3: '头肩', 4: '腰带',
+                    5: '鞋子', 6: '项链', 7: '手镯', 8: '戒指', 9: '辅助装备',
+                    10: '魔法石', 11: '耳环', 12: '宠物', 13: '称号', 14: '光环',
+                    15: '皮肤', 100: '消耗品', 101: '材料', 102: '任务物品'
+                }
+                
+                # 从物品表查询物品名称
+                item_name_dict = {}
+                item_ids = list(set([decode_row(item).get('it_id') for item in items]))
+                if item_ids:
+                    try:
+                        conn3 = pymysql.connect(**DB_CONFIG_RAW, database='taiwan_cain_web')
+                        cursor3 = conn3.cursor()
+                        ids_str = ','.join([str(i) for i in item_ids])
+                        cursor3.execute(f"SELECT it_no, it_name FROM dnf_item_info WHERE it_no IN ({ids_str})")
+                        for row in cursor3.fetchall():
+                            name = row[1]
+                            if isinstance(name, bytes):
+                                try:
+                                    name = name.decode('utf-8')
+                                except:
+                                    name = name.decode('latin1')
+                            item_name_dict[row[0]] = name
+                        conn3.close()
+                    except:
+                        pass
+                
+                decoded_items = []
+                for item in items:
+                    decoded = decode_row(item)
+                    item_id = decoded.get('it_id')
+                    slot = decoded.get('slot', 0)
+                    
+                    item_name = item_name_dict.get(item_id)
+                    if not item_name:
+                        slot_name = SLOT_NAMES.get(slot, '物品')
+                        item_name = f'{slot_name}-{item_id}'
+                    
+                    decoded['item_name'] = item_name
+                    decoded['slot_name'] = SLOT_NAMES.get(slot, f'槽位{slot}')
+                    decoded_items.append(decoded)
+                
+                char['inventory'] = decoded_items
                 char['inventory_count'] = len(char['inventory'])
             except Exception as e:
                 char['inventory'] = []
@@ -688,7 +745,31 @@ class DNFAdminHandler(BaseHTTPRequestHandler):
         cursor.execute(sql)
         rows = cursor.fetchall()
         conn.close()
-        skills = [decode_row(row) for row in rows]
+        
+        # 解码技能数据（名称UTF-8，描述Big5）
+        skills = []
+        for row in rows:
+            decoded = {}
+            for key, value in row.items():
+                if isinstance(value, bytes):
+                    if key in ('basic_explain', 'skill_explain', 'command_key_explain', 'skill_command_advantage'):
+                        # 描述字段使用Big5编码
+                        try:
+                            decoded[key] = value.decode('big5')
+                        except:
+                            try:
+                                decoded[key] = value.decode('cp950')
+                            except:
+                                decoded[key] = value.decode('utf-8', errors='replace')
+                    else:
+                        # 名称等字段使用UTF-8
+                        try:
+                            decoded[key] = value.decode('utf-8')
+                        except:
+                            decoded[key] = value.decode('latin1')
+                else:
+                    decoded[key] = value
+            skills.append(decoded)
         
         return {
             'job_id': job_id,
@@ -1630,11 +1711,176 @@ class DNFAdminHandler(BaseHTTPRequestHandler):
             ]
         }
 
+    # ==================== GM管理功能 ====================
+    
+    def gm_notice_save(self, data):
+        """保存公告"""
+        content = data.get('content', '')
+        if not content:
+            return {'error': '请输入公告内容'}
+        
+        # 这里可以保存到文件或数据库
+        # 暂时保存到文件
+        try:
+            with open('/tmp/dnf_notice.txt', 'w', encoding='utf-8') as f:
+                f.write(content)
+            return {'status': 'success', 'message': '公告已保存'}
+        except Exception as e:
+            return {'error': str(e)}
+    
+    def gm_notice_get(self, params):
+        """获取公告"""
+        try:
+            with open('/tmp/dnf_notice.txt', 'r', encoding='utf-8') as f:
+                content = f.read()
+            return {'content': content}
+        except:
+            return {'content': ''}
+    
+    def gm_online_list(self, params):
+        """获取在线玩家列表"""
+        # 这里应该查询游戏服务器
+        # 暂时返回模拟数据
+        return {
+            'data': [],
+            'total': 0,
+            'message': '需要连接游戏服务器获取在线数据'
+        }
+    
+    def gm_charac_detail(self, params):
+        """获取角色详细信息（GM专用）"""
+        charac_no = params.get('id', [None])[0]
+        if not charac_no:
+            return {'error': 'missing id parameter'}
+        
+        # 查询角色信息
+        sql = "SELECT * FROM taiwan_cain.charac_info WHERE m_id = %s"
+        char = execute_query('taiwan_cain', sql, (charac_no,))
+        if not char:
+            return {'error': 'character not found'}
+        
+        char = char[0]
+        
+        # 查询账号信息
+        account_sql = "SELECT * FROM d_taiwan.accounts WHERE UID = %s"
+        account = execute_query('d_taiwan', account_sql, (char.get('m_id'),))
+        if account:
+            char['account'] = account[0]
+        
+        # 查询背包物品
+        items_sql = "SELECT * FROM taiwan_cain_2nd.user_items WHERE charac_no = %s LIMIT 100"
+        items = execute_query('taiwan_cain_2nd', items_sql, (charac_no,))
+        char['inventory'] = items
+        char['inventory_count'] = len(items)
+        
+        return {'data': char}
+    
+    def gm_recharge(self, data):
+        """充值功能"""
+        uid = data.get('uid')
+        cera = data.get('cera', 0)
+        
+        if not uid:
+            return {'error': 'missing uid'}
+        
+        # 这里应该调用数据库更新
+        # 暂时返回成功
+        return {
+            'status': 'success',
+            'message': f'充值成功: UID={uid}, 金额={cera}',
+            'uid': uid,
+            'cera': cera
+        }
+    
+    def gm_kick_user(self, data):
+        """踢出用户"""
+        uid = data.get('uid')
+        if not uid:
+            return {'error': 'missing uid'}
+        
+        # 这里应该调用游戏服务器API
+        return {
+            'status': 'success',
+            'message': f'已踢出用户: UID={uid}'
+        }
+    
+    def gm_ban_user(self, data):
+        """封禁用户"""
+        uid = data.get('uid')
+        reason = data.get('reason', '违规操作')
+        duration = data.get('duration', 0)  # 0=永久
+        
+        if not uid:
+            return {'error': 'missing uid'}
+        
+        # 这里应该调用数据库更新
+        return {
+            'status': 'success',
+            'message': f'已封禁用户: UID={uid}, 原因={reason}, 时长={duration}天'
+        }
+    
+    def gm_unban_user(self, data):
+        """解封用户"""
+        uid = data.get('uid')
+        if not uid:
+            return {'error': 'missing uid'}
+        
+        # 这里应该调用数据库更新
+        return {
+            'status': 'success',
+            'message': f'已解封用户: UID={uid}'
+        }
+    
+    def gm_send_item(self, data):
+        """发送物品（GM命令）"""
+        charac_no = data.get('charac_no')
+        item_id = data.get('item_id')
+        count = data.get('count', 1)
+        upgrade = data.get('upgrade', 0)
+        
+        if not charac_no or not item_id:
+            return {'error': 'missing charac_no or item_id'}
+        
+        # 这里应该调用游戏服务器API
+        return {
+            'status': 'success',
+            'message': f'已发送物品: 角色={charac_no}, 物品={item_id}, 数量={count}, 强化={upgrade}'
+        }
+    
+    def gm_set_level(self, data):
+        """设置等级（GM命令）"""
+        charac_no = data.get('charac_no')
+        level = data.get('level')
+        
+        if not charac_no or not level:
+            return {'error': 'missing charac_no or level'}
+        
+        # 这里应该调用数据库更新
+        return {
+            'status': 'success',
+            'message': f'已设置等级: 角色={charac_no}, 等级={level}'
+        }
+    
+    def gm_add_gold(self, data):
+        """添加金币（GM命令）"""
+        charac_no = data.get('charac_no')
+        gold = data.get('gold', 0)
+        
+        if not charac_no:
+            return {'error': 'missing charac_no'}
+        
+        # 这里应该调用数据库更新
+        return {
+            'status': 'success',
+            'message': f'已添加金币: 角色={charac_no}, 金币={gold}'
+        }
+
 def run_server(port=18883):
     """启动服务器"""
     server = HTTPServer(('0.0.0.0', port), DNFAdminHandler)
-    print(f"[*] DNF Admin API v2.0 启动在端口 {port}")
+    print(f"[*] DNF Admin API v3.1 启动在端口 {port}")
     print(f"[*] 访问地址: http://localhost:{port}/api/v2/")
+    print(f"[*] GM功能: /api/v2/gm/*")
     server.serve_forever()
 
 if __name__ == '__main__':

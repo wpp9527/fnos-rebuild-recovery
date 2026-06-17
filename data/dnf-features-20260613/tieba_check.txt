@@ -1,0 +1,2 @@
+total_posts	forums	earliest	latest
+104	1	2026-06-13 10:28:58	2026-06-13 13:07:01

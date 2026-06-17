@@ -1,0 +1,2 @@
+total_items	chars_with_items	unique_items
+22	1	22

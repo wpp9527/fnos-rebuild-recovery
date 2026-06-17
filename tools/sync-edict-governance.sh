@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SRC="/root/.openclaw/.openclaw/workspace"
+DST="/tmp/fnos-rebuild-recovery-export"
+REMOTE="https://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@github.com/wpp9527/fnos-rebuild-recovery.git"
+BRANCH="main"
+GIT_NAME="wpp9527"
+GIT_EMAIL="wangpengpeng9527@gmail.com"
+
+SRC="${GITHUB_SYNC_SRC:-$SRC}"
+DST="${GITHUB_SYNC_DST:-$DST}"
+REMOTE="${GITHUB_SYNC_REMOTE:-$REMOTE}"
+BRANCH="${GITHUB_SYNC_BRANCH:-$BRANCH}"
+GIT_NAME="${GITHUB_SYNC_GIT_NAME:-$GIT_NAME}"
+GIT_EMAIL="${GITHUB_SYNC_GIT_EMAIL:-$GIT_EMAIL}"
+
+if [ ! -d "$SRC" ]; then
+  echo "[ERR] source repo not found: $SRC" >&2
+  exit 1
+fi
+
+bootstrap_repo() {
+  rm -rf "$DST"
+  git clone --depth 1 --branch "$BRANCH" "$REMOTE" "$DST"
+}
+
+if [ ! -d "$DST/.git" ]; then
+  bootstrap_repo
+else
+  git -C "$DST" remote set-url origin "$REMOTE"
+  if ! git -C "$DST" fetch origin "$BRANCH" || \
+     ! git -C "$DST" checkout "$BRANCH" || \
+     ! git -C "$DST" pull --ff-only origin "$BRANCH"; then
+    bootstrap_repo
+  fi
+fi
+
+git -C "$DST" config user.name "$GIT_NAME"
+git -C "$DST" config user.email "$GIT_EMAIL"
+
+rsync -a --delete \
+  --max-size="${GITHUB_SYNC_MAX_SIZE:-95m}" \
+  --exclude='.git' \
+  --exclude='node_modules' \
+  --exclude='dist' \
+  --exclude='__pycache__' \
+  --exclude='.pytest_cache' \
+  --exclude='1panel-v*-linux-*' \
+  --exclude='state/backup/staging' \
+  --exclude='*.tar.gz' \
+  --exclude='*.tgz' \
+  --exclude='*.zip' \
+  --exclude='*.7z' \
+  --exclude='*.rar' \
+  --exclude='*.dmg' \
+  --exclude='*.iso' \
+  --exclude='*.deb' \
+  --exclude='*.rpm' \
+  --exclude='*.apk' \
+  --exclude='*.exe' \
+  --exclude='*.msi' \
+  --exclude='*.AppImage' \
+  "$SRC"/ "$DST"/
+
+git -C "$DST" add .
+if git -C "$DST" diff --cached --quiet; then
+  echo "[OK] no changes to sync"
+  exit 0
+fi
+
+STAMP="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+git -C "$DST" commit -m "sync: recovery workspace snapshot ($STAMP)"
+git -C "$DST" push origin "$BRANCH"
+
+echo "[OK] synced to $REMOTE"

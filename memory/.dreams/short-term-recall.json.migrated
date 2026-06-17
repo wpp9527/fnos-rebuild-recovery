@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "updatedAt": "2026-05-31T15:35:49.089Z",
+  "entries": {
+    "memory:memory/daily/2026-05-08.md:1:27": {
+      "key": "memory:memory/daily/2026-05-08.md:1:27",
+      "path": "memory/daily/2026-05-08.md",
+      "startLine": 1,
+      "endLine": 27,
+      "source": "memory",
+      "snippet": "# 2026-05-08 Daily Notes ## 网络架构记录 - **主路由**: 192.168.1.1，账号 root / 930803 - 运行 Lucky 反代服务，通用端口 5000 处理所有网页反代 - 外网域名如 openclaw.19930901.xyz:5000 通过 Lucky 反代到内网服务 - **PVE 服务器**: 192.168.1.190，账号 root / wp930803 - 虚拟机 192.168.1.212 → FNOS（飞牛云 NAS），也是 OpenClaw 本机所在 - 虚拟机/容器 192.168.1.213 → 代理容器，端口 7890 ## 模型测试结果（19:53） - ✅ 可用: cpa/deepseek-v4-pro, cpa/minimax-m2.7, baidu/glm-5.1, qtcool/deepseek-v4-flash - ❌ 限流: cpa/gpt-5.5, cpa/gpt-5.4 - ❌ 超时: ollama/qwen3:4b（contextWindow 从 200k 降到 8k 已修复） - ❌ 不适用: ollama/qwen3-embedding:0.6b（嵌入模型不支持对话） ## 修复记录 1. 添加 `https://openclaw.19930901.xyz:5000` 到 Control UI allowedOrigins 2. 批准 Win32 设备配对请求（operator 角色） 3. 添加 gateway.trustedProxies（127",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2.6319425733603468,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-09T08:48:13.067Z",
+      "lastRecalledAt": "2026-05-19T14:53:08.213Z",
+      "queryHashes": [
+        "c3eac5d63b2d",
+        "f49f8535ce48",
+        "ff0398b39062"
+      ],
+      "recallDays": [
+        "2026-05-09",
+        "2026-05-13",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "embedding",
+        "gateway",
+        "gpt",
+        "网络",
+        "192.168.1.1",
+        "openclaw.19930901.xyz",
+        "192.168.1.190",
+        "192.168.1.212"
+      ]
+    },
+    "memory:memory/2026-05-08.md:40:72": {
+      "key": "memory:memory/2026-05-08.md:40:72",
+      "path": "memory/2026-05-08.md",
+      "startLine": 40,
+      "endLine": 72,
+      "source": "memory",
+      "snippet": "| qbittorrent | 8086 | 下载器，host 网络 | | jackett | 9117 | 索引器，host 网络 | | radarr | 7878 | 电影管理，host 网络 | | sonarr | 8989 | 电视剧管理，host 网络 | | prowlarr | 9696 | 索引聚合，host 网络 | | bazarr | 6767 | 字幕，host 网络 | | seerr | 5055 | 请求管理，host 网络 | | stash | 9999 | JAV管理，host 网络 | | feishu | host | 飞书频道，本地构建 | | cliproxyapi | host | AI代理 | ## 飞书频道凭证 - APP_ID: cli_a94fc9a45978de17 - APP_SECRET: tMe9QlSFdQAc0eVjcwP2TZYrYG7shgQe - TARGET_OPEN_ID: ou_667e83f2936ba15a84513bd4cf60c262 ## Homarr 凭证 - 用户名: bandas - 密码: wp930803 - 加密key: 7032fe5f1bf89cb32866e9bb99c036d8c919003873a79630cd3468c1671b5941 ## 教训 - FNOS 的 Docker 配置在 `/etc/docker/daemon.json`，不是 FNOS 自己管理 - FNOS Compass 管理的容器在 `/vol1/1000/docker/`，手动",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-11T11:53:14.432Z",
+      "lastRecalledAt": "2026-05-12T17:30:36.725Z",
+      "queryHashes": [
+        "a756aec3f25e",
+        "f49f8535ce48"
+      ],
+      "recallDays": [
+        "2026-05-11",
+        "2026-05-13"
+      ],
+      "conceptTags": [
+        "网络",
+        "app-id",
+        "cli-a94fc9a45978de17",
+        "app-secret",
+        "target-open-id",
+        "etc/docker/daemon.json",
+        "vol1/1000/docker",
+        "qbittorrent"
+      ]
+    },
+    "memory:memory/2026-05-08.md:66:94": {
+      "key": "memory:memory/2026-05-08.md:66:94",
+      "path": "memory/2026-05-08.md",
+      "startLine": 66,
+      "endLine": 94,
+      "source": "memory",
+      "snippet": "/root/.openclaw/.openclaw/workspace/memory/2026-05-08.md ## Tailscale Docker 安装 - 容器名：tailscale，镜像：tailscale/tailscale:latest - 配置路径：`/vol1/1000/docker/media-stack/tailscale/docker-compose.yml` - 数据卷：`/vol1/1000/docker/media-stack/tailscale/data` → `/var/lib/tailscale` - Tailscale IP：100.90.163.108，主机名：fnos - 首次 auth 失败：`tag:server` 未在 Tailscale 后台定义，去掉 tag 后重新 auth 成功 - network_mode: host，privileged: true，CAP_NET_ADMIN + CAP_SYS_MODULE ## 1Panel 重建 - 原因：1Panel 数据在 `/opt/fnos-media-stack/1panel/`，清理旧目录时被删，SQLite 丢失报 \"out of memory\" - 解决：重新安装 1Panel v1.10.34-lts - 新数据目录：`/vol1/1000/1panel/` - 登录地址：`http://192.168.1.212:40015/ec861ddb10` - 默认用户：`5edd71a529`，默认密码：`1479552d50` - 需要登录后立即修改用户名密码",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 3,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-11T11:53:14.432Z",
+      "lastRecalledAt": "2026-05-18T17:13:50.125Z",
+      "queryHashes": [
+        "a756aec3f25e",
+        "f49f8535ce48",
+        "1b17d59fac96"
+      ],
+      "recallDays": [
+        "2026-05-11",
+        "2026-05-13",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "network",
+        "tailscale/tailscale",
+        "var/lib/tailscale",
+        "100.90.163.108",
+        "network-mode",
+        "cap-net-admin",
+        "cap-sys-module",
+        "opt/fnos-media-stack/1panel"
+      ]
+    },
+    "memory:memory/2026-05-08.md:88:99": {
+      "key": "memory:memory/2026-05-08.md:88:99",
+      "path": "memory/2026-05-08.md",
+      "startLine": 88,
+      "endLine": 99,
+      "source": "memory",
+      "snippet": "2. 删除 `security_tripwire_accessed_from_public_internet` 触发器 3. 设置 `dangerous_allow_public_without_auth: true`（已有反代保护） - 现在反代访问需登录认证 ## RSSHub Docker 安装 - 容器名：rsshub，镜像：diygod/rsshub:latest - 配置路径：`/vol1/1000/docker/media-stack/rsshub/docker-compose.yml` - 端口：1200，Access Key：wp930803 - 调用格式：`http://192.168.1.212:1200/<路由>?key=wp930803` - 已验证路由：36kr/newsflashes 等 - 注意：B站等需 Playwright/Chromium 的路由暂不可用",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-11T11:53:14.432Z",
+      "lastRecalledAt": "2026-05-12T17:30:36.725Z",
+      "queryHashes": [
+        "a756aec3f25e",
+        "f49f8535ce48"
+      ],
+      "recallDays": [
+        "2026-05-11",
+        "2026-05-13"
+      ],
+      "conceptTags": [
+        "diygod/rsshub",
+        "192.168.1.212",
+        "36kr/newsflashes",
+        "playwright/chromium",
+        "删除",
+        "触发",
+        "设置",
+        "true"
+      ]
+    },
+    "memory:memory/2026-05-09.md:1:34": {
+      "key": "memory:memory/2026-05-09.md:1:34",
+      "path": "memory/2026-05-09.md",
+      "startLine": 1,
+      "endLine": 34,
+      "source": "memory",
+      "snippet": "# 2026-05-09 日志 ## MetaTube 刮削器安装 → 删除 - 装了 MetaTube API 服务 (ghcr.io/metatube-community/metatube-server:1.4.0) - 皇上要的是能自动重命名+下载封面的刮削器，MetaTube 只是 API，不符合需求 - 已删除 MetaTube 容器、镜像、数据 ## Movie Data Capture / MDC 安装 - 镜像: `ghcr.io/vergilgao/mdc:latest` - Compose 目录: `/vol1/1000/docker/mdc` - 配置: `/vol1/1000/docker/mdc/config/mdc.ini` - 媒体库挂载: `/mnt/nas/media/jav -> /data` - 代理: `http://192.168.1.213:7890` - 测试文件 `MIFD-046.mp4` 跑通，生成 NFO + 封面 + poster - 单文件测试 `JUR-422` 成功 ## MDC 输出路径调整 - 原来 `success_output_folder = JAV_output`，改为 `success_output_folder = .` - 最终结构: `/mnt/nas/media/jav/番号/番号.mp4` + NFO + 图片 - 已把测试的 JUR-422 从 JAV_output 移回根目录 ## MDC 整库整理 - 启动全库整理，共 62 个文件 - 每 30-40 秒处理一个，预计 30-4",
+      "recallCount": 4,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 4,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-11T11:53:14.432Z",
+      "lastRecalledAt": "2026-05-18T17:13:50.125Z",
+      "queryHashes": [
+        "a756aec3f25e",
+        "f49f8535ce48",
+        "868c66f0abf0",
+        "1b17d59fac96"
+      ],
+      "recallDays": [
+        "2026-05-11",
+        "2026-05-13",
+        "2026-05-15",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "1.4.0",
+        "ghcr.io/vergilgao/mdc",
+        "vol1/1000/docker/mdc",
+        "mnt/nas/media/jav",
+        "192.168.1.213",
+        "mifd-046.mp4",
+        "jur-422",
+        "success-output-folder"
+      ]
+    },
+    "memory:memory/2026-05-08.md:1:22": {
+      "key": "memory:memory/2026-05-08.md:1:22",
+      "path": "memory/2026-05-08.md",
+      "startLine": 1,
+      "endLine": 22,
+      "source": "memory",
+      "snippet": "# 2026-05-08 日志 ## 备份系统修复 - 仓库 `wpp9527/fnos-rebuild-recovery` 路径全部从旧 `/opt/fnos-media/services/openclaw/home/.openclaw/` 更新到新 `/root/.openclaw/` - 修改文件：config.env.example, orchestrator.sh, collect_openclaw.sh, collect_fnos.sh, publish_github.sh, publish_secrets.sh, bootstrap_fnos_stack.sh, sync-edict-governance.sh - GitHub remote 从 SSH 改为 HTTPS+token - 首次完整备份成功：OpenClaw workspace + PVE + FNOS + 12 容器卷 + LXC 代理 + Secrets + GitHub 同步 - OpenClaw cron 配置：每日 02:00 增量备份 + 每周日 03:00 全量快照 ## README 编写 - 为 fnos-rebuild-recovery 仓库写了完整 README：架构图、备份内容、三种恢复方式、配置说明、仓库结构、离线恢复、故障排除 ## NAS 备份架构确认 - `/mnt/nas/backup/` 下 6 层：container-volumes/fnos/pve/services/openclaw/lxc-proxy + shared/secrets - 每层有 la",
+      "recallCount": 4,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 4,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-12T17:30:36.725Z",
+      "lastRecalledAt": "2026-05-31T15:35:49.089Z",
+      "queryHashes": [
+        "f49f8535ce48",
+        "868c66f0abf0",
+        "2b79c9321dba",
+        "e5d66e6fbf6b"
+      ],
+      "recallDays": [
+        "2026-05-13",
+        "2026-05-15",
+        "2026-05-31"
+      ],
+      "conceptTags": [
+        "backup",
+        "备份",
+        "wpp9527/fnos-rebuild-recovery",
+        "config.env.example",
+        "orchestrator.sh",
+        "collect-openclaw.sh",
+        "collect-fnos.sh",
+        "publish-github.sh"
+      ]
+    },
+    "memory:memory/2026-05-09.md:28:51": {
+      "key": "memory:memory/2026-05-09.md:28:51",
+      "path": "memory/2026-05-09.md",
+      "startLine": 28,
+      "endLine": 51,
+      "source": "memory",
+      "snippet": "- cron: 每 2 小时（偶数整点）自动运行 - 逻辑: 检测 MDC 已在跑则跳过 - 日志: `/vol1/1000/docker/mdc/config/.mlogs/auto-mdc.log` - 流程: qBittorrent RSS 下载 → 新视频落盘 → cron 触发 MDC → Jellyfin 读取 ## DNF 服务器远程连接 - 皇上在墨西哥想连上家里的 DNF 服务器 - 当前问题: 客户端无法连接，可能需要改为域名连接 - DNF 私有部署仓库: wpp9527/dnf-private-deploy (Shell) - DNF 公开后台: wpp9527/dnf-public-admin (Go) - 需要查看 DNF 服务器配置和网络暴露情况 ## OpenClaw 升级与修复 - 已确认 `/root/.openclaw-bin/node_modules/@qingchencloud/openclaw-zh` 为 `2026.5.7-zh.1`，CLI 显示 `OpenClaw 2026.5.7 (eeef486)` - 备份: `/root/backups/openclaw/openclaw-config-workspace-20260509-200843.tar.gz` - 修复 workspace 路径兼容: `/root/.openclaw/workspace -> /root/.openclaw/.openclaw/workspace` - 修正 `/root/.openclaw-bin/VERSION` 的版本记录为 `202",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 3,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-15T10:14:10.441Z",
+      "lastRecalledAt": "2026-05-31T15:35:49.089Z",
+      "queryHashes": [
+        "868c66f0abf0",
+        "1b17d59fac96",
+        "e5d66e6fbf6b"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-19",
+        "2026-05-31"
+      ],
+      "conceptTags": [
+        "backup",
+        "backups",
+        "备份",
+        "网络",
+        "vol1/1000/docker/mdc/config",
+        "mlogs/auto-mdc.log",
+        "wpp9527/dnf-private-deploy",
+        "wpp9527/dnf-public-admin"
+      ]
+    },
+    "memory:memory/daily/2026-05-18.md:1:4": {
+      "key": "memory:memory/daily/2026-05-18.md:1:4",
+      "path": "memory/daily/2026-05-18.md",
+      "startLine": 1,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "## 操作偏好 - 皇上明确要求：后续处理本机/FNOS/OpenClaw/Hermes 问题时，默认不要使用 QGA；优先使用 OpenClaw 宿主 system service、宿主 Gateway、直连 SSH/系统服务或飞书入口自身链路。QGA 只作为救援/旁路通道，除非明确授权或其他通道不可用。",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-19T14:53:08.213Z",
+      "lastRecalledAt": "2026-05-19T14:53:08.213Z",
+      "queryHashes": [
+        "ff0398b39062"
+      ],
+      "recallDays": [
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "gateway",
+        "后续处理本机/fnos/openclaw/hermes",
+        "ssh/系统服务或飞书入口自身链路",
+        "只作为救援/旁路通道",
+        "操作",
+        "偏好",
+        "皇上",
+        "明确"
+      ]
+    }
+  }
+}

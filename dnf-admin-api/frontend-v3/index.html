@@ -61,6 +61,7 @@
                 <li onclick="showSection('version')">🔄 版本监控</li>
                 <li onclick="showSection('check')">🔍 数据自检</li>
                 <li onclick="showSection('pvf')">📋 PVF解析</li>
+                <li onclick="showSection('gm')">🎮 GM管理</li>
             </ul>
         </div>
         
@@ -89,6 +90,28 @@
                     </div>
                     <div id="characters-table"></div>
                     <div id="character-detail" style="margin-top: 20px; display: none;"></div>
+                </div>
+                <!-- 发送邮件弹窗 -->
+                <div id="send-mail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+                    <div style="background: white; margin: 100px auto; padding: 20px; width: 500px; border-radius: 8px;">
+                        <h3>发送邮件到: <span id="mail-recipient"></span></h3>
+                        <div style="margin-top: 20px;">
+                            <label>物品ID:</label>
+                            <input type="number" id="mail-item-id" placeholder="物品ID" style="width: 100%; padding: 8px; margin: 5px 0;">
+                        </div>
+                        <div>
+                            <label>数量:</label>
+                            <input type="number" id="mail-item-count" placeholder="数量" value="1" style="width: 100%; padding: 8px; margin: 5px 0;">
+                        </div>
+                        <div>
+                            <label>金币:</label>
+                            <input type="number" id="mail-gold" placeholder="金币数量" value="0" style="width: 100%; padding: 8px; margin: 5px 0;">
+                        </div>
+                        <div style="margin-top: 20px; text-align: right;">
+                            <button onclick="closeSendMailModal()" style="padding: 8px 16px; margin-right: 10px;">取消</button>
+                            <button onclick="submitSendMail()" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px;">发送</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -240,6 +263,65 @@
                 </div>
             </div>
             
+            <!-- GM管理 -->
+            <div id="gm" class="section">
+                <div class="header">
+                    <h1>🎮 GM管理</h1>
+                </div>
+                <div class="card">
+                    <h3>公告管理</h3>
+                    <div style="margin-bottom: 10px;">
+                        <textarea id="gm-notice" rows="4" style="width: 100%; padding: 10px;" placeholder="请输入公告内容"></textarea>
+                    </div>
+                    <button onclick="saveNotice()" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px;">保存公告</button>
+                    <button onclick="loadNotice()" style="padding: 8px 16px; margin-left: 10px;">加载公告</button>
+                </div>
+                
+                <div class="card">
+                    <h3>GM命令</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <div>
+                            <h4>发送物品</h4>
+                            <input type="number" id="gm-item-charac" placeholder="角色ID" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <input type="number" id="gm-item-id" placeholder="物品ID" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <input type="number" id="gm-item-count" placeholder="数量" value="1" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <input type="number" id="gm-item-upgrade" placeholder="强化等级" value="0" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <button onclick="gmSendItem()" style="padding: 8px 16px; background: #52c41a; color: white; border: none; border-radius: 4px;">发送物品</button>
+                        </div>
+                        <div>
+                            <h4>设置等级</h4>
+                            <input type="number" id="gm-level-charac" placeholder="角色ID" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <input type="number" id="gm-level" placeholder="等级" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <button onclick="gmSetLevel()" style="padding: 8px 16px; background: #faad14; color: white; border: none; border-radius: 4px;">设置等级</button>
+                        </div>
+                        <div>
+                            <h4>添加金币</h4>
+                            <input type="number" id="gm-gold-charac" placeholder="角色ID" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <input type="number" id="gm-gold" placeholder="金币数量" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <button onclick="gmAddGold()" style="padding: 8px 16px; background: #722ed1; color: white; border: none; border-radius: 4px;">添加金币</button>
+                        </div>
+                        <div>
+                            <h4>用户管理</h4>
+                            <input type="number" id="gm-user-uid" placeholder="用户UID" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="gmKickUser()" style="padding: 8px 16px; background: #ff4d4f; color: white; border: none; border-radius: 4px;">踢出</button>
+                                <button onclick="gmBanUser()" style="padding: 8px 16px; background: #ff4d4f; color: white; border: none; border-radius: 4px;">封禁</button>
+                                <button onclick="gmUnbanUser()" style="padding: 8px 16px; background: #52c41a; color: white; border: none; border-radius: 4px;">解封</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>充值管理</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="number" id="gm-recharge-uid" placeholder="用户UID" style="padding: 8px;">
+                        <input type="number" id="gm-recharge-amount" placeholder="充值金额" style="padding: 8px;">
+                        <button onclick="gmRecharge()" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px;">充值</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- PVF解析 -->
             <div id="pvf" class="section">
                 <div class="header">
@@ -251,6 +333,7 @@
                         <button onclick="searchPVF()">搜索</button>
                     </div>
                     <div id="pvf-table"></div>
+                    <div id="pvf-pagination"></div>
                 </div>
             </div>
         </div>
@@ -282,6 +365,7 @@
                 case 'punish': loadPunish(); break;
                 case 'postal': loadPostal(); break;
                 case 'pvf': loadPVF(); break;
+                case 'gm': loadNotice(); break;
             }
         }
 
@@ -345,10 +429,52 @@
                 { key: 'c_name', title: '角色名' },
                 { key: 'c_level', title: '等级' },
                 { key: 'c_job', title: '职业', render: v => getJobName(v) },
-                { key: 'c_fatigue', title: '疲劳' },
+                { key: 'village', title: '所属', render: v => ({0:'贝尔玛尔',1:'暗精灵',2:'虚祖',3:'德洛斯',4:'天界',5:'魔界'}[v] || '-') },
+                { key: 'c_fatigue', title: '疲劳', render: (v, row) => `${v || 0}/${row.max_fatigue || 156}` },
                 { key: 'last_play_time', title: '最后登录' },
-                { key: 'c_no', title: '操作', render: v => `<button onclick="showCharacterDetail(${v})">详情</button>` }
+                { key: 'c_no', title: '操作', render: (v, row) => `<button onclick="showCharacterDetail(${v})">详情</button> <button onclick="openSendMailModal(${v}, '${row.c_name}')">发邮件</button>` }
             ]);
+        }
+        
+        // 发送邮件弹窗
+        let currentMailCharId = 0;
+        function openSendMailModal(charId, charName) {
+            currentMailCharId = charId;
+            document.getElementById('mail-recipient').textContent = charName;
+            document.getElementById('send-mail-modal').style.display = 'block';
+        }
+        
+        function closeSendMailModal() {
+            document.getElementById('send-mail-modal').style.display = 'none';
+        }
+        
+        async function submitSendMail() {
+            const itemId = document.getElementById('mail-item-id').value;
+            const itemCount = document.getElementById('mail-item-count').value;
+            const gold = document.getElementById('mail-gold').value;
+            
+            if (!itemId) {
+                alert('请输入物品ID');
+                return;
+            }
+            
+            const data = await api('mail/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    receive_charac_no: currentMailCharId,
+                    item_id: parseInt(itemId),
+                    item_count: parseInt(itemCount) || 1,
+                    gold: parseInt(gold) || 0
+                })
+            });
+            
+            if (data.error) {
+                alert('发送失败: ' + data.error);
+            } else {
+                alert('发送成功!');
+                closeSendMailModal();
+            }
         }
         
         // 显示角色详情
@@ -377,6 +503,17 @@
                     <p><strong>创建时间:</strong> ${char.create_time || '-'}</p>
                 </div>
             `;
+            
+            // 显示背包物品
+            if (char.inventory && char.inventory.length > 0) {
+                html += `<h3 style="margin-top: 20px;">背包物品 (${char.inventory_count || 0}个)</h3>`;
+                html += '<table><tr><th>槽位</th><th>物品名称</th><th>物品ID</th></tr>';
+                char.inventory.forEach(item => {
+                    html += `<tr><td>${item.slot_name || item.slot}</td><td>${item.item_name || '-'}</td><td>${item.it_id}</td></tr>`;
+                });
+                html += '</table>';
+            }
+            
             document.getElementById('character-detail').innerHTML = html;
             document.getElementById('character-detail').style.display = 'block';
         }
@@ -539,9 +676,10 @@
             const data = await api(`skill/by-job?job=${jobId}`);
             const skills = data.skills || [];
             let html = `<h3>${data.job_name || '未知职业'} (${data.total || 0}个技能)</h3>`;
-            html += '<table><tr><th>技能ID</th><th>名称</th><th>类型</th><th>等级</th></tr>';
+            html += '<table><tr><th>技能ID</th><th>名称</th><th>类型</th><th>等级</th><th>描述</th></tr>';
             skills.forEach(s => {
-                html += `<tr><td>${s.skill_index}</td><td>${s.name}</td><td>${s.type || '-'}</td><td>${s.required_level || '-'}</td></tr>`;
+                const typeNames = {0: '主动', 1: '被动', 2: '通用'};
+                html += `<tr><td>${s.skill_index}</td><td>${s.name}</td><td>${typeNames[s.type] || s.type || '-'}</td><td>${s.required_level || '-'}</td><td title="${s.skill_explain || ''}">${(s.basic_explain || '-').substring(0, 40)}${(s.basic_explain||'').length > 40 ? '...' : ''}</td></tr>`;
             });
             html += '</table>';
             document.getElementById('skills-table').innerHTML = html;
@@ -549,13 +687,14 @@
         
         // 搜索技能
         async function searchSkills() {
-            const job = document.getElementById('skill-job').value;
-            const data = await api(`skill/by-job?job=${job}`);
-            const skills = data.skills || [];
-            let html = `<h3>${data.job_name || '未知职业'} (${data.total || 0}个技能)</h3>`;
-            html += '<table><tr><th>技能ID</th><th>名称</th><th>类型</th><th>等级</th></tr>';
+            const keyword = document.getElementById('skill-search').value;
+            if (!keyword) { loadSkills(); return; }
+            const data = await api(`skill/search?q=${encodeURIComponent(keyword)}`);
+            const skills = data.data || [];
+            let html = `<h3>搜索结果 (${skills.length}个技能)</h3>`;
+            html += '<table><tr><th>技能ID</th><th>职业</th><th>名称</th><th>等级</th><th>描述</th></tr>';
             skills.forEach(s => {
-                html += `<tr><td>${s.skill_index}</td><td>${s.name}</td><td>${s.type || '-'}</td><td>${s.required_level || '-'}</td></tr>`;
+                html += `<tr><td>${s.skill_index}</td><td>${getJobName(s.job_index)}</td><td>${s.name}</td><td>${s.required_level || '-'}</td><td title="${s.skill_explain || ''}">${(s.basic_explain || '-').substring(0, 40)}${(s.basic_explain||'').length > 40 ? '...' : ''}</td></tr>`;
             });
             html += '</table>';
             document.getElementById('skills-table').innerHTML = html;
@@ -716,25 +855,170 @@
         }
 
         // 加载PVF数据
-        async function loadPVF() {
-            const data = await api('pvf/list?page=1&page_size=20');
+        // PVF翻页状态
+        let pvfPage = 1;
+        let pvfPageSize = 50;
+        let pvfTotal = 0;
+        let pvfKeyword = '';
+        
+        async function loadPVF(page) {
+            pvfPage = page || 1;
+            const data = await api(`pvf/list?page=${pvfPage}&page_size=${pvfPageSize}`);
+            pvfTotal = data.total || 0;
             renderTable('pvf-table', data.data || [], [
                 { key: 'id', title: 'ID' },
                 { key: 'name', title: '名称' },
                 { key: 'category', title: '类型' }
             ]);
+            renderPVFPagination();
+        }
+        
+        function renderPVFPagination() {
+            const totalPages = Math.ceil(pvfTotal / pvfPageSize);
+            if (totalPages <= 1) return;
+            
+            let html = '<div style="margin-top:20px;text-align:center;">';
+            if (pvfPage > 1) {
+                html += `<button onclick="loadPVF(${pvfPage - 1})" style="margin:0 5px;padding:5px 10px;">上一页</button>`;
+            }
+            html += ` <span>第 ${pvfPage} 页 / 共 ${totalPages} 页 (${pvfTotal} 条)</span> `;
+            if (pvfPage < totalPages) {
+                html += `<button onclick="loadPVF(${pvfPage + 1})" style="margin:0 5px;padding:5px 10px;">下一页</button>`;
+            }
+            html += '</div>';
+            document.getElementById('pvf-pagination').innerHTML = html;
+        }
+        
+        // GM管理功能
+        async function saveNotice() {
+            const content = document.getElementById('gm-notice').value;
+            if (!content) { alert('请输入公告内容'); return; }
+            const data = await api('gm/notice/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            alert(data.status === 'success' ? '公告已保存' : '保存失败: ' + (data.error || ''));
+        }
+        
+        async function loadNotice() {
+            const data = await api('gm/notice');
+            document.getElementById('gm-notice').value = data.content || '';
+        }
+        
+        async function gmSendItem() {
+            const charac_no = document.getElementById('gm-item-charac').value;
+            const item_id = document.getElementById('gm-item-id').value;
+            const count = document.getElementById('gm-item-count').value;
+            const upgrade = document.getElementById('gm-item-upgrade').value;
+            
+            if (!charac_no || !item_id) { alert('请输入角色ID和物品ID'); return; }
+            
+            const data = await api('gm/send-item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ charac_no: parseInt(charac_no), item_id: parseInt(item_id), count: parseInt(count), upgrade: parseInt(upgrade) })
+            });
+            alert(data.message || data.error);
+        }
+        
+        async function gmSetLevel() {
+            const charac_no = document.getElementById('gm-level-charac').value;
+            const level = document.getElementById('gm-level').value;
+            
+            if (!charac_no || !level) { alert('请输入角色ID和等级'); return; }
+            
+            const data = await api('gm/set-level', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ charac_no: parseInt(charac_no), level: parseInt(level) })
+            });
+            alert(data.message || data.error);
+        }
+        
+        async function gmAddGold() {
+            const charac_no = document.getElementById('gm-gold-charac').value;
+            const gold = document.getElementById('gm-gold').value;
+            
+            if (!charac_no || !gold) { alert('请输入角色ID和金币数量'); return; }
+            
+            const data = await api('gm/add-gold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ charac_no: parseInt(charac_no), gold: parseInt(gold) })
+            });
+            alert(data.message || data.error);
+        }
+        
+        async function gmKickUser() {
+            const uid = document.getElementById('gm-user-uid').value;
+            if (!uid) { alert('请输入用户UID'); return; }
+            
+            const data = await api('gm/kick', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: parseInt(uid) })
+            });
+            alert(data.message || data.error);
+        }
+        
+        async function gmBanUser() {
+            const uid = document.getElementById('gm-user-uid').value;
+            if (!uid) { alert('请输入用户UID'); return; }
+            
+            const reason = prompt('请输入封禁原因:', '违规操作');
+            if (!reason) return;
+            
+            const duration = prompt('请输入封禁天数 (0=永久):', '0');
+            if (!duration) return;
+            
+            const data = await api('gm/ban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: parseInt(uid), reason, duration: parseInt(duration) })
+            });
+            alert(data.message || data.error);
+        }
+        
+        async function gmUnbanUser() {
+            const uid = document.getElementById('gm-user-uid').value;
+            if (!uid) { alert('请输入用户UID'); return; }
+            
+            const data = await api('gm/unban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: parseInt(uid) })
+            });
+            alert(data.message || data.error);
+        }
+        
+        async function gmRecharge() {
+            const uid = document.getElementById('gm-recharge-uid').value;
+            const amount = document.getElementById('gm-recharge-amount').value;
+            
+            if (!uid || !amount) { alert('请输入用户UID和充值金额'); return; }
+            
+            const data = await api('gm/recharge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: parseInt(uid), cera: parseInt(amount) })
+            });
+            alert(data.message || data.error);
         }
         
         // 搜索PVF数据
         async function searchPVF() {
-            const keyword = document.getElementById('pvf-search').value;
-            if (!keyword) { loadPVF(); return; }
-            const data = await api(`pvf/search?q=${encodeURIComponent(keyword)}`);
+            pvfKeyword = document.getElementById('pvf-search').value;
+            if (!pvfKeyword) { loadPVF(1); return; }
+            pvfPage = 1;
+            const data = await api(`pvf/search?q=${encodeURIComponent(pvfKeyword)}&page=${pvfPage}&page_size=${pvfPageSize}`);
+            pvfTotal = data.total || 0;
             renderTable('pvf-table', data.data || [], [
                 { key: 'id', title: 'ID' },
                 { key: 'name', title: '名称' },
                 { key: 'category', title: '类型' }
             ]);
+            renderPVFPagination();
         }
 
         // 渲染表格

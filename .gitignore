@@ -1,0 +1,44 @@
+# Large directories (excluded from git)
+.openclaw-bin-archive/
+state/
+dnf-admin/
+dnf-server-public/
+dnf-server-web-public/
+dnf-admin-v4/
+dnf-private-deploy/
+dnf-public-admin/
+edict/
+jellyfin-config/
+jellyfin-config.bak/
+1panel-*/
+dnf-admin-*/
+
+# Large files
+*.tar.gz
+*.zip
+*.7z
+*.deb
+*.rpm
+
+# Build artifacts
+node_modules/
+__pycache__/
+*.pyc
+.cache/
+
+# OpenClaw internal
+.openclaw/
+.clawhub/
+.learnings/
+
+# Temp files
+*.tmp
+*.log
+.DS_Store
+
+# Reports (old)
+CLEANUP_REPORT_*.md
+DEPENDENCY_AUDIT_*.md
+FINAL_WRAPUP_REPORT_*.md
+SKILLS_ARCHITECTURE_*.md
+MODEL_TRUTH_FASTPATH.md

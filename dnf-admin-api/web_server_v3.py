@@ -8,7 +8,7 @@ import os
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import urllib.request
 
-API_BASE = "http://127.0.0.1:18883/api"
+API_BASE = "http://127.0.0.1:18883"
 
 class WebHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -28,7 +28,7 @@ class WebHandler(SimpleHTTPRequestHandler):
     
     def proxy_api(self):
         try:
-            url = f"{API_BASE}{self.path[4:]}"
+            url = f"{API_BASE}{self.path}"
             req = urllib.request.Request(url)
             with urllib.request.urlopen(req, timeout=10) as response:
                 data = response.read()
@@ -45,7 +45,7 @@ class WebHandler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     port = 18884
-    os.chdir('/root/.openclaw/workspace/dnf-admin-api/frontend-v3')
+    os.chdir('/root/.openclaw/workspace/dnf-admin-api/frontend-v4')
     server = HTTPServer(('0.0.0.0', port), WebHandler)
     print(f"[*] DNF Admin Web 服务器启动在端口 {port}")
     server.serve_forever()
