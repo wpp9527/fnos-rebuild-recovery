@@ -1,0 +1,17 @@
+services:
+  bazarr:
+    image: linuxserver/bazarr:latest
+    container_name: bazarr
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/bazarr/config:/config
+      - /mnt/nas/media/movies:/movies
+      - /mnt/nas/media/tv:/tv
+      - /mnt/nas/media/jav:/jav
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+      - PORT=6767
+    restart: unless-stopped

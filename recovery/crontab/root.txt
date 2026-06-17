@@ -1,0 +1,16 @@
+# DNF 后台管理系统定时任务
+# 每小时运行数据采集
+0 * * * * /root/.openclaw/workspace/scripts/dnf-data-collector.sh all >> /var/log/dnf-data-collector.log 2>&1
+
+# 每天凌晨 2 点运行自检
+0 2 * * * /root/.openclaw/workspace/scripts/dnf-self-check.sh >> /var/log/dnf-self-check.log 2>&1
+
+# 每 6 小时抓取贴吧
+0 */6 * * * cd /root/.openclaw/workspace && python3 scripts/tieba-scraper.py "台服dnf" --pages 5 --output /root/.openclaw/workspace/data/tieba/latest.json >> /var/log/dnf-tieba.log 2>&1
+
+# 每天凌晨 3 点导入贴吧数据到数据库
+0 3 * * * /root/.openclaw/workspace/scripts/dnf-tieba-import.sh >> /var/log/dnf-tieba-import.log 2>&1
+
+# 每周日凌晨 4 点生成周报
+0 4 * * 0 /root/.openclaw/workspace/scripts/dnf-weekly-report.sh >> /var/log/dnf-weekly-report.log 2>&1
+*/30 * * * * /usr/sbin/logrotate /etc/logrotate.d/rsyslog > /dev/null 2>&1

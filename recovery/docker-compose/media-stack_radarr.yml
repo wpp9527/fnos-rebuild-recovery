@@ -1,0 +1,15 @@
+services:
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/radarr/config:/config
+      - /mnt/nas/media/movies:/movies
+      - /mnt/nas/media/downloads:/downloads
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped

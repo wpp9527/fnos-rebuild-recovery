@@ -1,0 +1,15 @@
+services:
+  halo:
+    image: halohub/halo:latest
+    container_name: halo-blog
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - /vol1/1000/docker/media-stack/halo/config:/root/.halo
+      - /vol1/1000/docker/media-stack/halo/content:/root/.halo/content
+    environment:
+      - TZ=Asia/Shanghai
+      - HALO_SECURITY_INITIALIZER_PASSWORD=wp930803
+      - HALO_SERVER_PORT=8090
+    user: "0:0"

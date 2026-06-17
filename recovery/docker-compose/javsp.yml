@@ -1,0 +1,48 @@
+services:
+  javsp:
+    build:
+      context: .
+      dockerfile: Dockerfile.hermes
+    image: local/javsp:latest
+    container_name: javsp
+    working_dir: /app
+    volumes:
+      - ./config/config.yml:/config.yml:ro
+      - /mnt/nas/media/jav:/video
+      - ./logs:/logs
+    environment:
+      - TZ=Asia/Shanghai
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - |
+        mkdir -p /usr/local/lib/python3.11/site-packages/image /usr/local/lib/python3.11/site-packages/data /logs
+        if [ -d /app/image ]; then
+          cp -f /app/image/*.png /usr/local/lib/python3.11/site-packages/image/ 2>/dev/null || true
+        fi
+        if [ -d /app/data ]; then
+          cp -f /app/data/* /usr/local/lib/python3.11/site-packages/data/ 2>/dev/null || true
+        fi
+        echo "[$$(date '+%F %T')] JavSP service started. Waiting for /logs/run-request" >> /logs/service.log
+        javsp --help > /logs/startup-help.log 2>&1 || true
+        while true; do
+          if [ -f /logs/run-request ]; then
+            rm -f /logs/run-request
+            if [ -f /logs/running ]; then
+              echo "[$$(date '+%F %T')] run requested but already running" >> /logs/service.log
+            else
+              touch /logs/running
+              echo "[$$(date '+%F %T')] javsp run started" >> /logs/service.log
+              javsp -c /config.yml -i /video >> /logs/javsp-run.log 2>&1
+              rc=$$?
+              echo "[$$(date '+%F %T')] javsp run finished rc=$$rc" >> /logs/service.log
+              rm -f /logs/running
+            fi
+          fi
+          sleep 5
+        done
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

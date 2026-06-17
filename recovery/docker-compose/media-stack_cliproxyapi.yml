@@ -1,0 +1,12 @@
+services:
+  cliproxyapi:
+    image: eceasy/cli-proxy-api:latest
+    container_name: cli-proxy-api
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/cliproxyapi/config.yaml:/CLIProxyAPI/config.yaml
+      - /vol1/1000/docker/media-stack/cliproxyapi/auths:/root/.cli-proxy-api
+      - /vol1/1000/docker/media-stack/cliproxyapi/logs:/CLIProxyAPI/logs
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped

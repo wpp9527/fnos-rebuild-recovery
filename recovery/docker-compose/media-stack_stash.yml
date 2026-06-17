@@ -1,0 +1,18 @@
+services:
+  stash:
+    image: stashapp/stash:latest
+    container_name: stash
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/stash/config:/root/.stash
+      - /mnt/nas/media/jav:/data
+      - /vol1/1000/docker/media-stack/stash/metadata:/metadata
+      - /vol1/1000/docker/media-stack/stash/cache:/cache
+      - /vol1/1000/docker/media-stack/stash/blobs:/blobs
+      - /vol1/1000/docker/media-stack/stash/generated:/generated
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Asia/Shanghai
+      - UMASK=000
+    restart: unless-stopped
+    user: "0:0"

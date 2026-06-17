@@ -1,0 +1,15 @@
+services:
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/sonarr/config:/config
+      - /mnt/nas/media/tv:/tv
+      - /mnt/nas/media/downloads:/downloads
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+    restart: unless-stopped

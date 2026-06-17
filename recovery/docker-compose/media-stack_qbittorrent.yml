@@ -1,0 +1,16 @@
+services:
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: host
+    volumes:
+      - /vol1/1000/docker/media-stack/qbittorrent/config:/config
+      - /mnt/nas/media/downloads:/downloads
+      - /mnt/nas/media/jav:/jav
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=0
+      - PGID=0
+      - UMASK=000
+      - WEBUI_PORT=8086
+    restart: unless-stopped

@@ -1,0 +1,14 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    network_mode: host
+    volumes:
+      - /mnt/nas/media:/media
+      - /vol1/1000/docker/media-stack/jellyfin/config:/config
+      - /vol1/1000/docker/media-stack/jellyfin/cache:/cache
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    privileged: true
+    user: "0:0"

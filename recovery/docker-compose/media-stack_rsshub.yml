@@ -1,0 +1,15 @@
+services:
+  rsshub:
+    image: diygod/rsshub:latest
+    container_name: rsshub
+    network_mode: host
+    environment:
+      - TZ=Asia/Shanghai
+      - NODE_ENV=production
+      - CACHE_TYPE=memory
+      - CACHE_EXPIRE=3600
+      - CACHE_CONTENT_EXPIRE=1800
+      - ACCESS_KEY=wp930803
+      - ALLOWLIST=
+      - PROXY_URI=http://192.168.1.213:7890
+    restart: unless-stopped

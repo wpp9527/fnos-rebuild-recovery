@@ -1,0 +1,20 @@
+services:
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:v1.59.2
+    container_name: homarr
+    restart: unless-stopped
+    ports:
+      - "7575:7575"
+    volumes:
+      - /vol1/1000/docker/media-stack/homarr/config:/app/data/config
+      - /vol1/1000/docker/media-stack/homarr/icons:/app/public/icons
+      - /vol1/1000/docker/media-stack/homarr/custom-css:/app/public/custom-css
+      - /vol1/1000/docker/media-stack/homarr/appdata:/appdata
+    environment:
+      - TZ=Asia/Shanghai
+      - AUTH_ENABLED=true
+      - AUTH_USERNAME=bandas
+      - AUTH_PASSWORD=wp930803
+      - AUTH_STRATEGY=basic
+      - SECRET_ENCRYPTION_KEY=7032fe5f1bf89cb32866e9bb99c036d8c919003873a79630cd3468c1671b5941
+    user: "0:0"
