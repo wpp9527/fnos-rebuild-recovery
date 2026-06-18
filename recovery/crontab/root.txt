@@ -14,3 +14,9 @@
 # 每周日凌晨 4 点生成周报
 0 4 * * 0 /root/.openclaw/workspace/scripts/dnf-weekly-report.sh >> /var/log/dnf-weekly-report.log 2>&1
 */30 * * * * /usr/sbin/logrotate /etc/logrotate.d/rsyslog > /dev/null 2>&1
+
+# === 自动备份任务 ===
+# 每天凌晨 5 点 GitHub 轻量备份
+0 5 * * * /root/.openclaw/workspace/scripts/backup-github.sh >> /var/log/backup-github.log 2>&1
+# 每周日凌晨 3 点 TrueNAS 全量备份
+0 3 * * 0 /root/.openclaw/workspace/scripts/backup-truenas.sh >> /var/log/backup-truenas.log 2>&1

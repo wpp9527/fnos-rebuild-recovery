@@ -8,7 +8,7 @@
     "providers": {
       "cpa": {
         "baseUrl": "https://cpi.19930901.xyz:1234/v1",
-        "apiKey": "REDACTED",
+        "apiKey": "***",
         "api": "openai-completions",
         "models": [
           {
@@ -31,7 +31,7 @@
       },
       "ollama": {
         "baseUrl": "http://127.0.0.1:11434/v1",
-        "apiKey": "REDACTED",
+        "apiKey": "***",
         "api": "openai-completions",
         "models": [
           {
@@ -48,7 +48,7 @@
       },
       "baidu": {
         "baseUrl": "https://qianfan.baidubce.com/v2/coding",
-        "apiKey": "REDACTED",
+        "apiKey": "***",
         "api": "openai-completions",
         "models": [
           {
@@ -64,7 +64,7 @@
       },
       "qtcool": {
         "baseUrl": "https://gpt.qt.cool/v1",
-        "apiKey": "REDACTED",
+        "apiKey": "***",
         "api": "openai-completions",
         "models": [
           {
@@ -79,7 +79,7 @@
       },
       "deepseek": {
         "baseUrl": "https://api.deepseek.com",
-        "apiKey": "REDACTED",
+        "apiKey": "***",
         "api": "openai-completions",
         "models": [
           {
@@ -94,7 +94,7 @@
       },
       "xiaomimimo": {
         "baseUrl": "https://token-plan-sgp.xiaomimimo.com/v1",
-        "apiKey": "REDACTED",
+        "apiKey": "***",
         "api": "openai-completions",
         "models": [
           {
@@ -375,7 +375,7 @@
     "port": 18789,
     "auth": {
       "mode": "token",
-      "token": "REDACTED"
+      "token": "***"
     },
     "controlUi": {
       "enabled": true,
