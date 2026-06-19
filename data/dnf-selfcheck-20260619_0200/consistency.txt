@@ -1,2 +1,0 @@
-check_item	linked_chars	total_chars	status
-角色-物品关联	1	2	正常

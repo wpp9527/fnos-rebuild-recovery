@@ -1,4 +1,0 @@
-check_item	value	status
-物品总数	22	正常
-物品种类	22	正常
-装备物品数	21	正常

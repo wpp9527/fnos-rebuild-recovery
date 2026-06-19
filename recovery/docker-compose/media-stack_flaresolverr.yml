@@ -1,0 +1,16 @@
+services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    ports:
+      - "8191:8191"
+    environment:
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+      - PROMETHEX_ENABLED=false
+      - HTTP_PROXY=http://192.168.1.213:7890
+      - HTTPS_PROXY=http://192.168.1.213:7890
+      - NO_PROXY=localhost,127.0.0.1,192.168.1.0/24
+    volumes:
+      - /vol1/1000/docker/media-stack/flaresolverr/config:/config

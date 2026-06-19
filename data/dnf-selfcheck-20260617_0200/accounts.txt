@@ -1,4 +1,0 @@
-check_item	value	status
-账号总数	2	正常
-管理员账号	1	正常
-VIP账号	0	正常

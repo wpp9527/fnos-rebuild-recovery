@@ -1,2 +1,0 @@
-total_transactions	transaction_types	earliest	latest
-46	1	2026-05-04 01:29:09	2026-05-04 01:33:04

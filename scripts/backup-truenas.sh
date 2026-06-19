@@ -124,7 +124,65 @@ git bundle create "$WORKSPACE_BACKUP/workspace_${DATE}.bundle" --all 2>/dev/null
 find "$WORKSPACE_BACKUP" -name "*.bundle" -mtime +${RETENTION_DAYS} -delete 2>/dev/null
 
 # ============================================================
-# 7. 生成备份清单
+# 7. Docker 镜像备份（增量：只保存新增/更新的镜像）
+# ============================================================
+log "备份 Docker 镜像..."
+IMAGE_BACKUP="$NAS_BACKUP/docker-images"
+mkdir -p "$IMAGE_BACKUP"
+
+SAVED_COUNT=0
+SKIPPED_COUNT=0
+FAILED_COUNT=0
+
+# 获取所有非 none 镜像
+IMAGE_LIST=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -v "<none>")
+
+for image in $IMAGE_LIST; do
+  # 生成安全文件名
+  safe_name=$(echo "$image" | tr '/:' '__')
+  tar_file="$IMAGE_BACKUP/${safe_name}.tar"
+
+  # 获取镜像 ID
+  image_id=$(docker inspect --format='{{.Id}}' "$image" 2>/dev/null)
+
+  # 如果 tar 已存在，检查是否同一镜像（通过 tar 内的 manifest）
+  if [ -f "$tar_file" ]; then
+    saved_id=$(tar -xf "$tar_file" manifest.json -O 2>/dev/null | grep -o '"Config":"[^"]*"' | head -1 | cut -d'"' -f4 | sed 's|.*sha256/||;s|.*sha256:||')
+    current_id=$(echo "$image_id" | sed 's|.*sha256:||')
+    if [ "$saved_id" = "$current_id" ] && [ -n "$saved_id" ]; then
+      SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+      continue
+    fi
+  fi
+
+  log "  保存 $image ..."
+  if docker save -o "$tar_file" "$image" 2>/dev/null; then
+    size=$(du -sh "$tar_file" | cut -f1)
+    log "  ✅ $image → $size"
+    SAVED_COUNT=$((SAVED_COUNT + 1))
+  else
+    log "  ⚠️ $image 保存失败"
+    FAILED_COUNT=$((FAILED_COUNT + 1))
+  fi
+done
+
+# 清理已不存在的镜像对应的 tar（保留 30 天后删除）
+for tar_file in "$IMAGE_BACKUP"/*.tar; do
+  [ -f "$tar_file" ] || continue
+  if [ $(find "$tar_file" -mtime +${RETENTION_DAYS} -print 2>/dev/null | wc -l) -gt 0 ]; then
+    base=$(basename "$tar_file" .tar)
+    orig=$(echo "$base" | sed 's|__|/|g; s|_|:|')
+    if ! echo "$IMAGE_LIST" | grep -qx "$orig" 2>/dev/null; then
+      log "  清理过期镜像备份: $base"
+      rm -f "$tar_file"
+    fi
+  fi
+done
+
+log "✅ Docker 镜像备份完成（保存: $SAVED_COUNT, 跳过: $SKIPPED_COUNT, 失败: $FAILED_COUNT）"
+
+# ============================================================
+# 8. 生成备份清单
 # ============================================================
 log "生成备份清单..."
 cat > "$NAS_BACKUP/backup_manifest_${DATE}.txt" << EOF
@@ -149,6 +207,9 @@ $(ls -lh "$NGINX_BACKUP/" 2>/dev/null | head -5)
 ## Git 仓库
 $(ls -lh "$WORKSPACE_BACKUP/"*${DATE}* 2>/dev/null || echo "无")
 
+## Docker 镜像
+$(ls -lh "$IMAGE_BACKUP/"*.tar 2>/dev/null | wc -l) 个镜像，共 $(du -sh "$IMAGE_BACKUP" 2>/dev/null | cut -f1)
+
 ## 备份总大小
 $(du -sh "$NAS_BACKUP" 2>/dev/null)
 
@@ -156,6 +217,7 @@ $(du -sh "$NAS_BACKUP" 2>/dev/null)
 - 数据库: 最近 ${RETENTION_DAYS} 天
 - 配置文件: 最新一份
 - Git 仓库: 最近 ${RETENTION_DAYS} 天
+- Docker 镜像: 增量保存，已删除镜像的 tar 保留 30 天
 EOF
 
 log "✅ 备份清单已生成"
