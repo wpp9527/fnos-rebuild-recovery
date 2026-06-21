@@ -12,41 +12,28 @@
   - 用户: dnf_readonly / dnf_readonly_2024
   - 数据库: d_taiwan, taiwan_cain, taiwan_login 等
 
-#### 核心功能
-1. ✅ 角色列表查询（支持筛选）
-2. ✅ 角色详情查看（基础/战斗属性）
-3. ✅ 装备栏查看（9/12 槽位有装备）
-4. ✅ 背包查看（31 个物品，分 4 类）
-5. ✅ 角色编辑（等级、HP、MP、攻击、防御、疲劳）
-6. ✅ 登录认证（JWT）
-7. ✅ PVF 物品查询（83977 个物品）
-
-#### 技术细节
-- 装备栏解析: equipslot blob (61 字节/槽位, item_no offset 2-3)
-- 背包解析: inventory blob (zlib 压缩, 8 字节/物品)
-- 数据库编码: charset=latin1 避免双重编码
-- Unicode 解码: latin1 编码的 UTF-8 字符处理
-
-#### 部署流程
-1. 本地修改 → npm run build
-2. scp dist/* 到服务器 frontend/assets/
-3. 复制 index.html 到 frontend/dist/
-4. 重启 Go 二进制 (kill + nohup)
-
 ---
 
 ## 系统配置
 
 ### 网络架构
-- **主路由**: 192.168.1.1 (Lucky 反代, 端口 5000 → 1234)
+- **主路由**: 192.168.1.1 (Lucky 反代, 端口 1234)
 - **PVE**: 192.168.1.190
 - **FNOS**: 192.168.1.212 (本机)
 - **代理**: 192.168.1.213:7890
+- **VM105**: 192.168.1.119 (WoW Linux 服务端)
+- **VM106**: 192.168.1.187 (天蓝端 Win10)
+
+### Tailscale 网络
+- FNOS: 100.90.163.108
+- VM105: 100.115.4.113
+- VM106: 100.124.221.63
+- junkking: 100.113.63.109
 
 ### OpenClaw 配置
 - **Gateway 端口**: 18789
 - **外网访问**: https://openclaw.19930901.xyz:1234
-- **主会话模型**: xiaomimimo/mimo-v2.5-pro (MiMo v2.5 Pro)
+- **主会话模型**: xiaomimimo/mimo-v2.5-pro
 - **飞书渠道**: 使用 Gateway 端点 + openclaw 模型
 
 ### 服务清单
@@ -58,65 +45,77 @@
 | DNF 后端 | 18882 | ✅ |
 | DNF 前端 | 18883 | ✅ |
 | qBittorrent | 52000 | ✅ |
+| VM105 authserver | 3724 | ✅ |
+| VM105 worldserver | 8085 | ✅ |
+| VM106 authserver | 3724 | ✅ |
+| VM106 worldserver | 8085 | ✅ |
+
+---
+
+## WoW 魔兽世界
+
+### VM105 - Linux 标准端
+- **编译方式**: Docker 容器 + Clang
+- **版本**: AzerothCore rev. 8037e4c719d2
+- **模块**: mod-playerbots (500 随机 bot), Beastmaster, AutoBalance
+- **数据库**: MySQL 8.0 (Docker)
+- **GM 账号**: admin / admin123
+
+### VM106 - 天蓝定制版
+- **版本**: AzerothCore rev. 333ae4556ea6+ 2026-04-02
+- **模块**: BotAffinity, Beastmaster, MythicPlus, ChallengeModes, ItemUpgrade, Transmog
+- **数据库**: MySQL 5.7.32
+- **Bot 数量**: 800
+- **特色功能**: 好感度/记忆/大秘境/挑战模式/装备升级/幻化
+- **账号**: user1 / user2 (密码同名)
+- **硬件**: 2核 / 8GB / 64GB
+
+### 天蓝端模块详解
+1. **BotAffinity** - 好感度系统
+   - 提升方式: 组队/副本/聊天
+   - 等级: 陌生→熟悉→亲密→挚友
+   - 礼物系统: 好感度 ≥200 收到邮件礼物
+2. **Beastmaster** - 宠物系统
+   - 命令: `.beastmaster`
+   - 默认猎人专用，可配置开放
+3. **MythicPlus** - 大秘境
+   - 默认关闭，需在配置中开启
+   - 死亡扣 15 秒
+4. **ChallengeModes** - 挑战模式
+   - Hardcore (永久死亡)
+   - SemiHardcore (死亡丢装备)
+   - SelfCrafted (只能穿自制装备)
+   - IronManMode (铁人模式)
+5. **ItemUpgrade** - 装备升级
+6. **Transmog** - 幻化系统
+7. **超级炉石** - 增强版炉石
+8. **DeepSeek AI** - AI 聊天 (需 API Key)
+
+### 踩坑记录
+1. **天蓝端高级功能需要天蓝 exe** - 好感度/记忆/大秘境是 C++ 实现
+2. **VM105 Linux 版不支持天蓝端功能** - 只有标准 mod-playerbots
+3. **4GB/6GB 内存不足** - MySQL InnoDB 缓冲池导致崩溃
+4. **8GB 内存稳定运行** - 空闲约 5GB
+5. **MSI 安装需要 iphlpsvc 服务** - IPv6 Helper Service
+6. **Tailscale 手动安装** - 从 MSI 提取 exe 手动注册服务
+7. **realmlist 需要修改** - 地址改为 Tailscale IP
 
 ---
 
 ## 近期修复
 
 ### 飞书渠道修复 (2026-06-12)
-**问题**: ConnectionError(MaxRetryError('HTTPSConnectionPool(host=\'cpi.19930901.xyz\', port=5000)'))
-
-**原因**:
-1. 飞书 observer 使用旧代理端口 5000
-2. requests 库代理配置问题导致超时
-
-**修复**:
-1. 更新 observer.py 使用 Gateway 端点 (18789)
-2. 添加代理禁用补丁
-3. 使用 Gateway Token + openclaw 模型
-
-**关键配置**:
-- 容器: feishu-observe
-- 文件: /app/observer.py
-- Gateway: http://192.168.1.212:18789
-- Token: 8c96c8284dff43ca5c1b95fcfff2914a5e8a95838a5e7ba6
-- 模型: openclaw (自动路由到主会话模型)
-
----
+- 更新 observer.py 使用 Gateway 端点 (18789)
+- 添加代理禁用补丁
+- 使用 Gateway Token + openclaw 模型
 
 ### CPA 管理面板修复 (2026-06-11)
-**问题**: 面板白屏，无法访问
-
-**原因**:
-1. Nginx 配置错误，静态文件无法正确返回
-2. 管理面板 HTML 的 __CPA_CONFIG__ 配置问题
-
-**修复**:
-1. 修复 Nginx 配置 (location = / 精确匹配根路径)
-2. 确保静态文件优先，API 代理正确
-3. 验证管理密钥 cpa2026admin
-
-**关键配置**:
-- 容器: cpa-panel (nginx:alpine)
-- 端口: 8320
-- 配置: /vol1/1000/docker/media-stack/cliproxyapi/nginx/nginx.conf
-- 面板: management.html (1MB)
-- API: /v0/management/config
-
----
+- 修复 Nginx 配置 (location = / 精确匹配根路径)
+- 验证管理密钥 cpa2026admin
 
 ### 代理端口变更 (2026-06-11)
-**变更**: 5000 → 1234
-
-**影响**:
-- https://cpi.19930901.xyz:1234 (CLIProxyAPI)
-- https://openclaw.19930901.xyz:1234 (OpenClaw)
-- https://clawpanel.19930901.xyz:1234 (CPA 面板)
-
-**已更新**:
-- OpenClaw 配置 (openclaw.json)
-- 飞书 observer (observer.py)
-- Nginx 代理配置
+- 5000 → 1234
+- 影响所有 *.19930901.xyz 域名
 
 ---
 
@@ -125,39 +124,28 @@
 ### Nginx 配置
 - 静态文件优先: `location = /` 精确匹配根路径
 - API 代理: `location /v0/` 优先匹配
-- try_files 会先查找静态文件，找不到再代理到后端
-- 管理面板 HTML 需要正确配置 __CPA_CONFIG__ 注入
 
 ### 飞书渠道
-- 飞书 observer 容器使用 host 网络，可直接访问宿主机端口
 - requests 库可能存在代理配置问题，需显式禁用代理
 - Gateway 端点 (18789) 需要正确的 Token 认证
-- openclaw 模型会自动路由到配置的 primary 模型
 
 ### 模型配置
 - CPA 额度有限，gpt-5.5/gpt-5.4 经常限流
-- Ollama qwen3:4b 在高负载时容易超时，需限制 contextWindow
-- 飞书渠道使用 openclaw 模型可自动路由到主会话模型
+- Ollama qwen3:4b 在高负载时容易超时
 
 ### OpenClaw 配置
-- gateway.controlUi.allowedOrigins 是受保护字段，需直接编辑 openclaw.json
+- gateway.controlUi.allowedOrigins 是受保护字段
 - 反代环境需配置 trustedProxies
-- Gateway Token 用于 API 认证
 
----
+### Tailscale
+- MSI 安装需要 iphlpsvc 服务 (IPv6 Helper)
+- 可以从 MSI 提取 exe 手动注册服务
+- realmlist 表地址需要改为 Tailscale IP
 
-## 待优化项
-
-### DNF Admin Pro
-- 部分装备（如 36192）在 dnf_item_info 中无定义
-- 可添加装备强化、增幅功能
-- 可添加物品修改、删除功能
-- 可添加数据统计功能
-
-### 系统优化
-- 定期清理归档旧日志文件
-- 监控飞书渠道连接状态
-- 优化模型选择策略（限流时自动 fallback）
+### Windows 服务
+- `sc create` 语法: `binPath=` 后有空格
+- 服务启动需要管理员权限
+- SSH 会话可能没有完整权限
 
 ---
 
@@ -166,20 +154,27 @@
 ### 服务地址
 - OpenClaw: https://openclaw.19930901.xyz:1234
 - CPA 面板: https://cpi.19930901.xyz:1234
-- DNF 后端: http://192.168.1.204:18882
-- DNF 前端: http://192.168.1.204:18883
+- DNF 后台: http://192.168.1.204:18882
+- VM105 WoW: 100.115.4.113:8085
+- VM106 天蓝端: 100.124.221.63:8085
 
 ### 账号信息
 - DNF 后台: admin / admin123
 - MySQL 只读: dnf_readonly / dnf_readonly_2024
 - Gateway Token: 8c96c8284dff43ca5c1b95fcfff2914a5e8a95838a5e7ba6
 - CPA 管理密钥: cpa2026admin
+- VM105 GM: admin / admin123
+- VM106 天蓝端: user1 / user2
+
+### SSH 连接
+- PVE: root@192.168.1.190 (密码: wp930803)
+- VM105: root@192.168.1.119 (密码: wp930803)
+- VM106: Administrator@192.168.1.187 (密码: wp930803)
 
 ### 模型配置
 - 主会话: xiaomimimo/mimo-v2.5-pro
 - 飞书渠道: openclaw (自动路由)
-- Fallback: deepseek/deepseek-v4-pro, xiaomimimo/mimo-v2.5
 
 ---
 
-*最后更新: 2026-06-12 00:35*
+*最后更新: 2026-06-22*

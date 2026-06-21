@@ -14,10 +14,12 @@
 ## 快速参考
 
 - **网络**: 主路由 192.168.1.1 → PVE .190 → FNOS .212（本机）+ 代理 .213
+- **VM105**: 192.168.1.119 (WoW Linux 标准端, Tailscale 100.115.4.113)
+- **VM106**: 192.168.1.187 (天蓝端 Win10, Tailscale 100.124.221.63)
 - **GitHub**: wpp9527 / 6 仓库（含 claw-code 100K+ stars）
 - **DNF 后台 v4**: 单文件架构（server.py + dashboard.html），端口 18885
-- **模型主力**: cpa/gpt-5.5（常限流）→ fallback baidu/glm-5.1
-- **OpenClaw**: 端口 18789，外网 openclaw.19930901.xyz:1234（代理端口已从 5000 改为 1234）
+- **模型主力**: xiaomimimo/mimo-v2.5-pro
+- **OpenClaw**: 端口 18789，外网 openclaw.19930901.xyz:1234
 
 ## 主题索引
 
@@ -35,54 +37,83 @@
 | 系统优化 | [memory/2026-06-02-system-optimization.md](memory/2026-06-02-system-optimization.md) |
 | 深度记忆 | [memory/deep-memory-2026-06.md](memory/deep-memory-2026-06.md) |
 
-## 近期重要修复 (2026-06-13)
+## WoW 魔兽世界服务端
 
-### 飞书渠道修复 (最新)
-- **问题**: observer.py fallback 到 CPA 外网代理，但 CPA 没有 `openclaw` 模型
-- **修复**: 修改 `load_model_proxy_defaults()` 始终走本地 Gateway (127.0.0.1:18789)
-- **配置**: Gateway 的 `openclaw` 模型别名正常工作
-- **文件**: /app/observer.py (feishu-observe 容器)
-- **验证**: WebSocket 连接正常，消息发送成功
+### VM105 - Linux 标准端
+- **地址**: 192.168.1.119 (Tailscale: 100.115.4.113)
+- **版本**: AzerothCore rev. 8037e4c719d2
+- **模块**: mod-playerbots (500 随机 bot), Beastmaster, AutoBalance
+- **数据库**: MySQL 8.0 (Docker, 密码: 123)
+- **GM**: admin / admin123
+- **配置**: /opt/wow-server/etc/
+
+### VM106 - 天蓝定制版
+- **地址**: 192.168.1.187 (Tailscale: 100.124.221.63)
+- **版本**: AzerothCore rev. 333ae4556ea6+ 2026-04-02
+- **模块**: BotAffinity, Beastmaster, MythicPlus, ChallengeModes, ItemUpgrade, Transmog
+- **数据库**: MySQL 5.7.32 (root/123)
+- **Bot**: 800 个 AI 玩家
+- **账号**: user1 / user2 (密码同名)
+- **硬件**: 2核 / 8GB / 64GB
+- **配置**: C:\azbotcore\configs\
+
+### 天蓝端特色功能
+1. **BotAffinity** - 好感度系统 (组队/副本/聊天提升)
+2. **Beastmaster** - 宠物系统 (`.beastmaster`)
+3. **MythicPlus** - 大秘境 (默认关闭)
+4. **ChallengeModes** - 挑战模式 (Hardcore/IronMan等)
+5. **ItemUpgrade** - 装备升级
+6. **Transmog** - 幻化系统
+7. **超级炉石** - 增强版炉石
+8. **DeepSeek AI** - AI 聊天 (需 API Key)
+
+### 关键发现
+- **天蓝端高级功能需要天蓝 exe** - 好感度/记忆/大秘境是 C++ 实现
+- **VM105 Linux 版不支持天蓝端功能** - 只有标准 mod-playerbots
+- **8GB 内存稳定运行** - 4GB/6GB 不够
+
+## Tailscale 网络
+
+| 设备 | Tailscale IP | 系统 |
+|------|-------------|------|
+| FNOS | 100.90.163.108 | Linux |
+| VM105 (WoW) | 100.115.4.113 | Linux |
+| VM106 (天蓝端) | 100.124.221.63 | Windows |
+| junkking | 100.113.63.109 | Windows |
+
+## 近期重要修复
+
+### 天蓝端迁移 (2026-06-22)
+- NAS → VM106 完整迁移 (6.7GB)
+- Tailscale 穿透配置 (iphlpsvc 服务问题)
+- realmlist 修改为 Tailscale IP
 
 ### 飞书渠道修复 (2026-06-12)
-- **问题**: 飞书 observer 使用旧代理端口 5000，requests 库超时
-- **修复**: 更新 observer.py 使用 Gateway 端点 (18789)，添加代理禁用补丁
-- **配置**: Gateway Token + openclaw 模型，与主会话模型一致
-- **文件**: /app/observer.py (feishu-observe 容器)
+- observer.py 使用 Gateway 端点 (18789)
+- 代理禁用补丁 + Gateway Token
 
-### CPA 管理面板修复
-- **问题**: 面板白屏，Nginx 配置错误
-- **修复**: 修复 Nginx 配置，静态文件优先，API 代理正确
-- **配置**: cpa-panel 容器 (端口 8320) → CLIProxyAPI (8317)
-- **访问**: https://cpi.19930901.xyz:1234
+### CPA 管理面板修复 (2026-06-11)
+- Nginx 配置修复
+- 管理密钥: cpa2026admin
 
-### 代理端口变更
-- **旧端口**: 5000
-- **新端口**: 1234
-- **影响**: 所有使用 cpi.19930901.xyz 的服务
-- **已更新**: OpenClaw 配置、飞书 observer
+### 代理端口变更 (2026-06-11)
+- 5000 → 1234
+- 影响所有 *.19930901.xyz 域名
 
-## 深度记忆
+## SSH 连接
 
-详见 [memory/deep-memory-2026-06.md](memory/deep-memory-2026-06.md) 获取完整项目、配置和经验摘要。
+- PVE: root@192.168.1.190 (密码: wp930803)
+- VM105: root@192.168.1.119 (密码: wp930803)
+- VM106: Administrator@192.168.1.187 (密码: wp930803)
+- DNF 服务器: root@192.168.1.204 (密码: wp930803)
 
 ## 快速参考
 
-- **qBittorrent**: 端口 52000 (IPv6 可达)，代理 192.168.1.213:7890
-- **JAVSP**: 每30分钟自动刮削，广告文件自动清理
-- **视频文件**: 已修复特殊字符文件名
-- **飞书渠道**: 使用本地 Gateway (127.0.0.1:18789) + openclaw 模型
-- **CPA 面板**: 端口 8320，管理密钥 cpa2026admin
-- **DNF 后台**: http://192.168.1.204:18885 (v4.0)，管理员密码: admin123
-- **DNF 后台旧版**: 已全部清理（dnf-public-admin、dnf-admin-api、Go 版本均已删除）
-- **DNF 数据库**: 已采集账号、角色、物品、邮件、交易记录，贴吧帖子 104 条
-- **贴吧抓取**: scripts/dnf-data-collector.sh 一键采集游戏+贴吧数据
-- **自检系统**: scripts/dnf-self-check.sh 每日自检数据完整性
-- **功能扩展**: data/dnf-features-20260613/feature_suggestions.md 详细方案
-- **API 服务器**: /opt/dnf-admin-v4/server.py 端口 18885，单文件 Python 后端
-- **数据库端口**: 3000 (宿主机) → 4000 (容器内部)
-- **定时任务**: 每小时采集、每天自检、每6小时抓贴吧、每周生成周报
-- **RSSHub**: 127.0.0.1:1200，已运行 179 小时
-- **WoW 魔兽世界服务端**: VM105 (192.168.1.119)，Tailscale IP 100.115.4.113，端口 3724+8085
-- **WoW 游戏账号**: 账号 1，密码 1
-- **Tailscale 网络**: FNOS 100.90.163.108, VM105 100.115.4.113, Windows 100.113.63.109
+- **OpenClaw**: https://openclaw.19930901.xyz:1234
+- **CPA 面板**: https://cpi.19930901.xyz:1234
+- **DNF 后台**: http://192.168.1.204:18882
+- **VM105 WoW**: 100.115.4.113:8085
+- **VM106 天蓝端**: 100.124.221.63:8085
+- **Gateway Token**: 8c96c8284dff43ca5c1b95fcfff2914a5e8a95838a5e7ba6
+
+*最后更新: 2026-06-22*

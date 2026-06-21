@@ -1,34 +1,56 @@
-# 📝 踩坑记录
+# 踩坑记录
 
-## OpenClaw 配置
+## Tailscale 安装 (2026-06-22)
+- **问题**: MSI 安装失败 (错误 1603)
+- **原因**: `iphlpsvc` 服务 (IPv6 Helper) 被禁用
+- **解决**: 启用 `iphlpsvc` 服务: `sc config iphlpsvc start= demand && sc start iphlpsvc`
+- **备选**: 从 MSI 提取 exe 手动注册服务
 
-- **gateway.controlUi.allowedOrigins** 是受保护字段，`config.patch` 无法修改，必须直接编辑 `openclaw.json`
-- **Ollama 模型 contextWindow 默认 200k**，4b 小模型根本跑不动，必须手动限制到 8k
-- **反代环境需配置 trustedProxies**，否则 WebSocket 连接被识别为远程，日志会报警告
-- **设备配对请求**存储在 `/root/.openclaw/devices/pending.json`，可通过修改文件 + 重启来批准
+## Windows 服务创建 (2026-06-22)
+- **问题**: `sc create` 命令语法错误
+- **原因**: `binPath=` 后需要空格
+- **正确**: `sc create 服务名 binPath= C:\path\to\exe start= auto`
 
-## 网络架构
+## SSH 会话权限 (2026-06-22)
+- **问题**: MSI 安装在 SSH 会话中失败
+- **原因**: SSH 会话没有完整管理员权限
+- **解决**: 使用 `cmd /c` 或 PowerShell 执行
 
-- TRIM 系统的 nginx 配置在 `/usr/trim/nginx/`，不是 `/etc/nginx/`
-- TRIM nginx HTTPS 端口是 5666/5667，不是 443
-- 外网 5000 端口由 Lucky (主路由) 反代到内网各服务
+## AzerothCore 编译 (2026-06-19)
+- **问题**: GCC/Clang 段错误
+- **原因**: VM105 内存不足
+- **解决**: 使用 Docker 容器编译
 
-## 模型
+## MySQL 认证 (2026-06-19)
+- **问题**: MySQL 使用 auth_socket 无法远程连接
+- **原因**: 默认认证方式不支持密码登录
+- **解决**: 修改为 mysql_native_password
 
-- CPA 额度有限，gpt-5.5/gpt-5.4 经常限流
-- Ollama qwen3:4b 在高负载（load>8）时容易超时，需等负载下降
-- 飞书渠道使用 openclaw 模型可自动路由到主会话模型
+## 配置文件路径 (2026-06-19)
+- **问题**: 二进制文件硬编码了 `/azerothcore/env/dist/etc/` 路径
+- **原因**: 编译时路径固定
+- **解决**: 创建符号链接
 
-## 飞书渠道
+## 飞书渠道 (2026-06-12)
+- **问题**: ConnectionError 超时
+- **原因**: requests 库代理配置问题
+- **解决**: 显式禁用代理 + 使用 Gateway 端点
 
-- 飞书 observer 容器使用 host 网络，可直接访问宿主机端口
-- requests 库可能存在代理配置问题，需显式禁用代理
-- Gateway 端点 (18789) 需要正确的 Token 认证
-- openclaw 模型会自动路由到配置的 primary 模型
+## CPA 面板 (2026-06-11)
+- **问题**: 面板白屏
+- **原因**: Nginx 配置错误
+- **解决**: `location = /` 精确匹配根路径
 
-## Nginx 代理
+## 代理端口 (2026-06-11)
+- **问题**: 端口 5000 不可用
+- **原因**: 端口冲突
+- **解决**: 改用 1234 端口
 
-- 静态文件优先：`location = /` 精确匹配根路径
-- API 代理：`location /v0/` 优先匹配
-- try_files 会先查找静态文件，找不到再代理到后端
-- 管理面板 HTML 需要正确配置 __CPA_CONFIG__ 注入
+## VMap 版本不匹配 (2026-06-19)
+- **问题**: VMap height checking disabled
+- **原因**: VMap 数据版本与代码不匹配
+- **解决**: 禁用 VMap 功能
+
+---
+
+*最后更新: 2026-06-22*
