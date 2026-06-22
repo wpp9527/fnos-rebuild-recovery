@@ -1,56 +1,75 @@
-# 踩坑记录
+# 📝 踩坑记录 & 经验教训
 
-## Tailscale 安装 (2026-06-22)
-- **问题**: MSI 安装失败 (错误 1603)
-- **原因**: `iphlpsvc` 服务 (IPv6 Helper) 被禁用
-- **解决**: 启用 `iphlpsvc` 服务: `sc config iphlpsvc start= demand && sc start iphlpsvc`
-- **备选**: 从 MSI 提取 exe 手动注册服务
+## 系统 & Docker
 
-## Windows 服务创建 (2026-06-22)
-- **问题**: `sc create` 命令语法错误
-- **原因**: `binPath=` 后需要空格
-- **正确**: `sc create 服务名 binPath= C:\path\to\exe start= auto`
+| 问题 | 根因 | 解决方案 |
+|------|------|----------|
+| Docker data-root 迁移失败 | 停 docker 顺序错误 | 必须先停 containerd 再停 docker |
+| 1Panel 数据丢失 | 清理旧目录时误删 | 重建，数据迁到 /vol1/1000/1panel/ |
+| FNOS Compass 容器位置 | 与手动 compose 路径不同 | Compass: /vol1/1000/docker/，手动: /var/lib/docker/ |
+| NFS rsync 超时 | 小文件写入慢 + --delete 扫描 | timeout 120s → 600s |
+| `while read` 子 shell 计数器 | 子 shell 变量不传回父 shell | 用管道或临时文件 |
+| 僵尸 rclone 进程 | cloud_storage_dav 未回收 | 重启服务回收 |
 
-## SSH 会话权限 (2026-06-22)
-- **问题**: MSI 安装在 SSH 会话中失败
-- **原因**: SSH 会话没有完整管理员权限
-- **解决**: 使用 `cmd /c` 或 PowerShell 执行
+## 网络 & 反代
 
-## AzerothCore 编译 (2026-06-19)
-- **问题**: GCC/Clang 段错误
-- **原因**: VM105 内存不足
-- **解决**: 使用 Docker 容器编译
+| 问题 | 根因 | 解决方案 |
+|------|------|----------|
+| 代理端口变更 | 5000 → 1234 | 更新所有 *.19930901.xyz 配置 |
+| 飞书渠道失效 | observer.py 用旧端口/旧 CLI | 改用 Gateway API (18789) + openclaw 模型 |
+| CPA 400 错误 | Gateway 不接受 provider/model 格式 | 必须用 `openclaw` 特殊路由名 |
+| Stash 反代安全拦截 | 公网访问触发保护 | 添加认证 + 删除 tripwire |
+| qBittorrent 下载慢 | 端口 52345 被封 | 换 52000 + 配置 Tracker + 代理分离 |
 
-## MySQL 认证 (2026-06-19)
-- **问题**: MySQL 使用 auth_socket 无法远程连接
-- **原因**: 默认认证方式不支持密码登录
-- **解决**: 修改为 mysql_native_password
+## Nginx
 
-## 配置文件路径 (2026-06-19)
-- **问题**: 二进制文件硬编码了 `/azerothcore/env/dist/etc/` 路径
-- **原因**: 编译时路径固定
-- **解决**: 创建符号链接
+| 问题 | 根因 | 解决方案 |
+|------|------|----------|
+| CPA 面板 404 | location 匹配优先级 | `location = /` 精确匹配根路径 |
 
-## 飞书渠道 (2026-06-12)
-- **问题**: ConnectionError 超时
-- **原因**: requests 库代理配置问题
-- **解决**: 显式禁用代理 + 使用 Gateway 端点
+## 编码
 
-## CPA 面板 (2026-06-11)
-- **问题**: 面板白屏
-- **原因**: Nginx 配置错误
-- **解决**: `location = /` 精确匹配根路径
+| 字段 | 编码 | 解码方式 |
+|------|------|----------|
+| DNF 物品名称 | UTF-8 | `value.decode('utf-8')` |
+| DNF 技能描述 | Big5 | `value.decode('big5')` |
+| DNF 角色名称 | UTF-8 | `value.decode('utf-8')` |
 
-## 代理端口 (2026-06-11)
-- **问题**: 端口 5000 不可用
-- **原因**: 端口冲突
-- **解决**: 改用 1234 端口
+## WoW 服务端
 
-## VMap 版本不匹配 (2026-06-19)
-- **问题**: VMap height checking disabled
-- **原因**: VMap 数据版本与代码不匹配
-- **解决**: 禁用 VMap 功能
+| 问题 | 根因 | 解决方案 |
+|------|------|----------|
+| 编译 OOM | 15GB RAM 不够 -j2/-j4 | 改用 -j1 |
+| debug 构建太大 | 17GB+ | 改用 Release 构建 |
+| libmodules.a ar 失败 | 链接命令问题 | 手动执行 link.txt |
+| creature 表 schema 变更 | id→id1/id2/id3 | 重建 acore_world |
+| MySQL 认证失败 | auth_socket 默认 | 改为 mysql_native_password |
+| 配置路径硬编码 | /azerothcore/env/dist/etc/ | 创建符号链接 |
+| MSI 安装失败 1603 | iphlpsvc 服务被禁用 | 启用后安装成功 |
+| 天蓝端功能不可用 | C++ 实现，Linux 版不支持 | 只能用 Windows 天蓝 exe |
+| 4GB/6GB 内存不足 | MySQL InnoDB 缓冲池 | 升级到 8GB |
 
----
+## MDC/JAV 刮削
 
-*最后更新: 2026-06-22*
+| 问题 | 根因 | 解决方案 |
+|------|------|----------|
+| storyline 500 错误 | iqq2.xyz 站点故障 | 关闭 storyline 站点 |
+| JavDB 返回 403 | 站点反爬 | 更新配置添加域名过滤 |
+| 视频文件损坏 | 下载未完成/写入失败 | 检测脚本 + 删除损坏文件 |
+| 文件名特殊字符 | @、.com、.xyz 等 | 批量重命名提取番号 |
+
+## OpenClaw
+
+| 问题 | 根因 | 解决方案 |
+|------|------|----------|
+| 重复安装警告 | 残留目录 | 清理 /usr/lib/node_modules/.openclaw-update-stage-* |
+| 反代配置 | trustedProxies 未配置 | 添加 192.168.1.0/24 等 |
+| Gateway controlUi | allowedOrigins 受保护 | 需要在配置中正确设置 |
+
+## 模型 & API
+
+| 问题 | 根因 | 解决方案 |
+|------|------|----------|
+| CPA 限流 | 额度有限 | fallback 到其他模型 |
+| Ollama qwen3 超时 | context 过大 | 限制 context 为 8k |
+| MiMo 401 | 间歇性认证问题 | 重启 Hermes gateway |

@@ -12,8 +12,20 @@
 | [credentials.md](credentials.md) | 账号密码 Token（敏感） | 凭证变更时 |
 | [github.md](github.md) | 仓库清单、项目状态 | 仓库变更时 |
 | [lessons.md](lessons.md) | 踩坑记录、经验教训 | 每次踩坑时 |
-| [daily/](daily/) | 每日操作日志 | 每次会话 |
-| [deep-memory-2026-06.md](deep-memory-2026-06.md) | 6月深度记忆摘要 | 月度整理 |
+| [wow-server.md](wow-server.md) | WoW 服务端 (VM105/VM106) | 配置变更时 |
+| [dnf-server.md](dnf-server.md) | DNF 服务端 + Admin Pro | 功能变更时 |
+| [docker-services.md](docker-services.md) | Docker 容器清单、配置 | 容器变更时 |
+| [backup-system.md](backup-system.md) | 备份架构、定时任务、恢复 | 备份变更时 |
+| [engineering-cybernetics-qian-xuesen.md](engineering-cybernetics-qian-xuesen.md) | 工程控制论思想框架 | 不常变 |
+| [learnings-from-hermes.md](learnings-from-hermes.md) | Hermes 代理学习记录 | 不常变 |
+
+## 每日日志
+
+| 目录 | 说明 |
+|------|------|
+| [daily/](daily/) | 每日操作日志 |
+| [deep-memory-2026-06.md](deep-memory-2026-06.md) | 6 月深度记忆摘要 |
+| [2026-06-02-system-optimization.md](2026-06-02-system-optimization.md) | 系统全面优化记录 |
 
 ## 维护规则
 
