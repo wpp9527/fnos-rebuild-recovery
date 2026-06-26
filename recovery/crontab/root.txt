@@ -20,3 +20,5 @@
 0 5 * * * /root/.openclaw/workspace/scripts/backup-github.sh >> /var/log/backup-github.log 2>&1
 # 每周日凌晨 3 点 TrueNAS 全量备份
 0 3 * * 0 /root/.openclaw/workspace/scripts/backup-truenas.sh >> /var/log/backup-truenas.log 2>&1
+# 每周日凌晨 3 点 PVE 整机备份
+0 3 * * 0 /root/.openclaw/workspace/scripts/pve-full-backup.sh >> /var/log/pve-backup.log 2>&1
